@@ -15,9 +15,11 @@
     .felt{background:radial-gradient(ellipse,#206452,#104438);border:8px solid #34504a;box-shadow:0 0 0 2px #c6a26844,inset 0 0 70px #001d21aa;border-radius:3rem}
     .card{display:inline-flex;flex-direction:column;justify-content:space-between;width:56px;height:78px;background:#f6f4e9;color:#183535;border-radius:8px;padding:6px;font-size:20px;font-weight:800;box-shadow:0 4px 12px #0003;line-height:1}.card span:last-child{align-self:flex-end}.red{color:#be3851}.back{background:repeating-linear-gradient(45deg,#23494c,#23494c 5px,#31575a 5px,#31575a 7px);color:#c9dcd4;border:2px solid #91b3a5}.empty{background:#052f2c55;box-shadow:none;border:1px dashed #ffffff30;color:transparent}
     .seat{background:#082b2ccc;border:1px solid #ffffff15;border-radius:1rem;padding:1rem;min-width:0}.acting{border-color:#e8bc70;box-shadow:0 0 0 2px #e8bc7025}.folded{opacity:.5}
+    .own-seat{max-width:420px;margin:1.5rem auto 0;text-align:center;border-color:#e8bc7055;background:#062c2ddd}
+    #myCards .card{width:74px;height:104px;font-size:28px;padding:9px}#players .card{width:42px;height:60px;font-size:17px}
     input{background:#082427;color:white;border:1px solid #ffffff25;border-radius:.7rem;padding:.7rem;min-width:0}input:focus{outline:2px solid #e8bc70}input[type=number]{width:130px}
     [hidden]{display:none!important}#notice{min-height:1.5rem;color:#f6d195}
-    @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}}
+    @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}}
   </style>
 </head>
 <body>
@@ -46,14 +48,26 @@
       <section id="aidPanel" class="panel p-5 mb-6" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
       <div class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10</span></div>
       <section class="felt p-4 md:p-8">
-        <div class="text-center mb-6"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
-        <div id="players" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+        <div id="players" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" aria-label="Adversaires"></div>
+        <div class="text-center"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
         <p id="empty" class="text-center text-emerald-100/60 py-7">La table vous attend. Rejoignez-la avec un ami.</p>
+        <section id="mySeat" class="seat own-seat" aria-label="Votre place" hidden>
+          <div class="flex justify-center items-center gap-2"><p class="text-xs uppercase tracking-[.2em] text-[#e8bc70]">Votre main</p><span id="myDealer" class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1" hidden>D</span></div>
+          <p class="text-sm text-emerald-100/70 mt-2"><span id="myNick"></span> · <span id="myStack"></span> jetons</p>
+          <div id="myCards" class="flex justify-center gap-3 my-4" aria-label="Vos cartes privées"></div>
+          <button id="toggleCards" type="button" class="btn text-sm" aria-controls="myCards">Cacher mes cartes</button>
+          <p id="myStatus" class="text-xs text-emerald-100/65 mt-3"></p>
+        </section>
       </section>
       <p id="result" class="text-center text-sm text-[#f2d59d] my-5" role="status"></p>
       <section class="panel p-5">
         <div class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : 500 jetons · Vous récupérez vos jetons restants en quittant la table.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
         <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
+      </section>
+      <section class="panel p-5 mt-5" aria-labelledby="historyTitle">
+        <div class="flex justify-between items-center gap-3 mb-3"><h2 id="historyTitle" class="font-semibold">Historique de la table</h2><span class="text-xs text-emerald-200/60">En direct</span></div>
+        <p id="historyEmpty" class="text-sm text-emerald-100/50">Les actions des joueurs apparaîtront ici.</p>
+        <ol id="history" class="max-h-56 overflow-y-auto space-y-2 text-sm" tabindex="0" aria-label="Actions de la table" aria-live="polite" aria-relevant="additions"></ol>
       </section>
       <p class="text-xs text-center text-emerald-100/45 mt-5">30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p>
       <p class="text-xs text-center text-emerald-100/45 mt-2">1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p>
@@ -66,7 +80,7 @@
     const money = n => n.toLocaleString('fr-FR');
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
-    let state, authMode = 'login', lastDecision = '';
+    let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0;
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
       $('loginTab').classList.toggle('gold', !register); $('registerTab').classList.toggle('gold', register);
@@ -77,7 +91,8 @@
       $('notice').textContent = '';
     }
     function showLogin(message = '') {
-      state = null; lastDecision = ''; socket.disconnect();
+      state = null; lastDecision = ''; cardsHidden = false; socket.disconnect();
+      lastLogId = 0; $('history').replaceChildren(); $('historyEmpty').hidden = false;
       $('login').hidden = false; $('game').hidden = true;
       $('password').value = ''; $('passwordConfirm').value = '';
       $('connection').textContent = '○ Non connecté'; $('notice').textContent = message;
@@ -94,6 +109,37 @@
       if (!c) return '<span class="card empty" aria-label="Carte à venir">·</span>';
       if (c === '??') return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
       return `<span class="card ${'hd'.includes(c[1]) ? 'red' : ''}" aria-label="${c}"><span>${c[0] === 'T' ? '10' : c[0]}</span><span>${symbols[c[1]]}</span></span>`;
+    }
+    function renderOwnHand() {
+      const me = state?.players.find(p => p.id === state.me);
+      $('mySeat').hidden = !me;
+      if (!me) { $('myCards').innerHTML = ''; return; }
+      $('mySeat').className = `seat own-seat ${state.turn === me.id ? 'acting' : ''} ${me.folded ? 'folded' : ''}`;
+      $('myNick').textContent = me.nick; $('myStack').textContent = money(me.stack); $('myDealer').hidden = !me.dealer;
+      $('myCards').innerHTML = (me.cards.length ? me.cards : [null, null])
+        .map(c => card(cardsHidden && c ? '??' : c)).join('');
+      $('toggleCards').textContent = cardsHidden ? 'Afficher mes cartes' : 'Cacher mes cartes';
+      $('toggleCards').disabled = !socket.connected || !me.cards.length;
+      $('myStatus').textContent = me.leaving ? 'Sortie en attente' : me.folded ? 'Vous êtes couché'
+        : !me.cards.length ? 'Vos cartes apparaîtront à la distribution'
+        : me.stack === 0 ? 'Vous êtes à tapis' : state.turn === me.id ? 'À vous de jouer' : 'Vous êtes à table';
+    }
+    $('toggleCards').onclick = () => { cardsHidden = !cardsHidden; renderOwnHand(); };
+    function renderHistory(entries = []) {
+      const history = $('history');
+      const follow = !history.children.length || history.scrollHeight - history.scrollTop - history.clientHeight < 30;
+      for (const entry of entries) {
+        if (entry.id <= lastLogId) continue;
+        const row = document.createElement('li'), time = document.createElement('time'), text = document.createElement('span');
+        row.className = 'flex gap-3 text-emerald-100/80';
+        time.className = 'text-xs text-emerald-100/40 shrink-0 pt-0.5';
+        time.dateTime = new Date(entry.time).toISOString();
+        time.textContent = new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        text.textContent = entry.message; row.append(time, text); history.append(row); lastLogId = entry.id;
+      }
+      while (history.children.length > 100) history.firstElementChild.remove();
+      $('historyEmpty').hidden = history.children.length > 0;
+      if (follow) history.scrollTop = history.scrollHeight;
     }
     function send(event, data = {}) {
       if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; return; }
@@ -165,8 +211,8 @@
       $('profit').className = s.profit < 0 ? 'text-rose-300' : 'text-emerald-300';
       $('stage').textContent = `Main ${s.hand} · ${{waiting:'En attente',preflop:'Préflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Résultat'}[s.phase]}`;
       $('board').innerHTML = Array.from({length:5}, (_, i) => card(s.board[i])).join('');
-      $('players').innerHTML = s.players.map(p => `<article class="seat ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
-        <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}${p.id === s.me ? ' · vous' : ''}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
+      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article class="seat ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
+        <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
         <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
         <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
       $('empty').hidden = s.players.length > 0;
@@ -186,7 +232,9 @@
         $('raise').disabled = !s.canRaise || max <= s.currentBet;
         $('allin').disabled = max > s.currentBet && !s.canRaise;
         $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
-      } else $('hint').textContent = 'Entrée : 500 jetons · Vous récupérez vos jetons restants en quittant la table.';
+      } else $('hint').textContent = `Entrée : ${money(s.buyIn)} jetons · Vous récupérez vos jetons restants en quittant la table.`;
+      renderOwnHand();
+      renderHistory(s.logs);
       renderAid();
     });
     setInterval(() => {
