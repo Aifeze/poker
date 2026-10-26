@@ -1,10 +1,11 @@
 // server.js — node server.js (Node >= 18). Dépendances installées au premier lancement.
-// Prototype : argent fictif, comptes par pseudo sans mot de passe, stockage en mémoire.
+// Argent fictif. Comptes sauvegardés dans POKER_DATA_DIR ; sur Render, monter un disque persistant.
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
-const { randomInt } = require('node:crypto');
+const { randomInt, randomBytes, scrypt: scryptCallback, timingSafeEqual } = require('node:crypto');
+const { promisify } = require('node:util');
 const { createRequire } = require('node:module');
 const { spawnSync } = require('node:child_process');
 const runtime = process.env.POKER_RUNTIME_DIR || path.join(os.tmpdir(), `poker-runtime-${os.userInfo().username}`);
@@ -20,13 +21,47 @@ catch {
   if (r.error || r.status !== 0) { console.error('Installation impossible.', r.error || ''); process.exit(1); }
 }
 const app = load('express')();
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(load('express').json({ limit: '4kb' }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  next();
+});
+const sameOrigin = req => {
+  try { return !req.headers.origin || new URL(req.headers.origin).host === req.headers.host; }
+  catch { return false; }
+};
 const server = http.createServer(app);
-const io = new (load('socket.io').Server)(server, { maxHttpBufferSize: 8192 });
+const io = new (load('socket.io').Server)(server, {
+  maxHttpBufferSize: 8192,
+  allowRequest: (req, done) => done(null, sameOrigin(req))
+});
 app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000;
+const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
+const scrypt = promisify(scryptCallback);
 const users = new Map();
+const sessions = new Map(), authAttempts = new Map();
+const dataDir = process.env.POKER_DATA_DIR || path.join(__dirname, '.poker-data');
+fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+const dataFile = path.join(dataDir, 'accounts.json');
+if (fs.existsSync(dataFile)) {
+  // Une sauvegarde illisible arrête le serveur : ne jamais effacer les comptes silencieusement.
+  const saved = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+  if (saved.version !== 1 || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
+  for (const u of saved.users) {
+    if (typeof u.id !== 'string' || typeof u.nick !== 'string' ||
+      !/^[a-f0-9]{32}$/.test(u.salt) || !/^[a-f0-9]{128}$/.test(u.hash) ||
+      !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
+      !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
+      !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || users.has(u.id))
+      throw Error('Sauvegarde de comptes invalide.');
+    users.set(u.id, { ...u, socket: null });
+  }
+}
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
   hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false };
@@ -35,6 +70,109 @@ const active = () => !['waiting', 'showdown'].includes(table.phase);
 const live = () => table.players.filter(p => !p.folded);
 const canAct = p => !p.folded && p.stack > 0 && !p.leaving;
 const seat = id => table.players.find(p => p.id === id);
+function bankroll(id) {
+  const p = seat(id);
+  return users.get(id).wallet + (p ? p.stack + p.total : 0);
+}
+function persist() {
+  // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
+  const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, salt: u.salt, hash: u.hash,
+    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
+  const temporary = dataFile + '.tmp';
+  const fd = fs.openSync(temporary, 'w', 0o600);
+  try { fs.writeFileSync(fd, JSON.stringify({ version: 1, users: rows })); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
+  fs.renameSync(temporary, dataFile);
+}
+function aidStatus(id) {
+  const u = users.get(id), nextAt = u.lastAidAt ? u.lastAidAt + DAY : 0;
+  return { eligible: !seat(id) && bankroll(id) < BUY_IN && Date.now() >= nextAt, nextAt };
+}
+function sessionFor(req) {
+  const token = /(?:^|;\s*)river_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
+  const session = sessions.get(token);
+  if (!session || session.expires <= Date.now()) { if (token) sessions.delete(token); return null; }
+  return { ...session, token };
+}
+function createSession(req, res, id) {
+  for (const [token, s] of sessions) if (s.id === id) sessions.delete(token);
+  const token = randomBytes(32).toString('hex');
+  sessions.set(token, { id, expires: Date.now() + 7 * DAY });
+  res.cookie('river_session', token, { httpOnly: true, sameSite: 'strict', secure: req.secure,
+    maxAge: 7 * DAY, path: '/' });
+  res.json({ ok: true, nick: users.get(id).nick });
+}
+function consumeAttempt(key, limit) {
+  const now = Date.now();
+  let value = authAttempts.get(key);
+  if (!value || value.until <= now) { value = { count: 0, until: now + 15 * 60000 }; authAttempts.set(key, value); }
+  return ++value.count <= limit;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, v] of authAttempts) if (v.until <= now) authAttempts.delete(key);
+  for (const [key, v] of sessions) if (v.expires <= now) sessions.delete(key);
+}, 60000).unref();
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée.' });
+  next();
+});
+for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, res) => {
+  try {
+    const { nick, password } = req.body || {};
+    if (!consumeAttempt('ip:' + req.ip, 40)) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+    if (typeof nick !== 'string' || !/^[\p{L}\p{N}_ -]{2,20}$/u.test(nick.trim()) ||
+      typeof password !== 'string' || password.length < 8 || password.length > 128)
+      return res.status(400).json({ error: 'Pseudo : 2 à 20 caractères. Mot de passe : 8 à 128 caractères.' });
+    const id = nick.trim().normalize('NFKC').toLocaleLowerCase('fr');
+    if (!consumeAttempt('user:' + id, 15)) return res.status(429).json({ error: 'Trop de tentatives sur ce compte. Réessayez dans 15 minutes.' });
+    let u = users.get(id);
+    if (mode === 'register') {
+      if (u) return res.status(409).json({ error: 'Ce pseudo est déjà pris. Connectez-vous.' });
+      const salt = randomBytes(16).toString('hex');
+      const hash = (await scrypt(password, salt, 64)).toString('hex');
+      if (users.has(id)) return res.status(409).json({ error: 'Ce pseudo est déjà pris.' });
+      u = { nick: nick.trim(), salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null };
+      users.set(id, u);
+      try { persist(); } catch (error) { users.delete(id); throw error; }
+    } else {
+      const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
+      if (!u || !timingSafeEqual(hash, Buffer.from(u.hash, 'hex')))
+        return res.status(401).json({ error: 'Pseudo ou mot de passe incorrect.' });
+      if (u.socket) return res.status(409).json({ error: 'Ce compte est déjà connecté. Fermez son autre session.' });
+    }
+    if (res.destroyed) return;
+    createSession(req, res, id);
+  } catch (error) {
+    console.error('Échec de l’authentification ou de la sauvegarde :', error.code || error.name);
+    res.status(500).json({ error: 'Service indisponible. Réessayez plus tard.' });
+  }
+});
+app.get('/api/session', (req, res) => {
+  const s = sessionFor(req);
+  if (!s) return res.status(401).json({ error: 'Connectez-vous.' });
+  res.json({ ok: true, nick: users.get(s.id).nick });
+});
+app.post('/api/logout', (req, res) => {
+  const s = sessionFor(req);
+  if (s) {
+    sessions.delete(s.token);
+    const socket = io.sockets.sockets.get(users.get(s.id).socket);
+    if (socket?.data.session === s.token) socket.disconnect(true);
+  }
+  res.clearCookie('river_session', { httpOnly: true, sameSite: 'strict', secure: req.secure, path: '/' });
+  res.json({ ok: true });
+});
+app.use((err, req, res, next) => res.status(400).json({ error: 'Requête invalide.' }));
+io.use((socket, next) => {
+  const session = sessionFor(socket.request);
+  if (!session) return next(Error('Connexion requise.'));
+  if (users.get(session.id).socket) return next(Error('Ce compte est déjà connecté dans une autre fenêtre.'));
+  socket.data.uid = session.id; socket.data.session = session.token;
+  users.get(session.id).socket = socket.id;
+  next();
+});
 function pay(p, amount) {
   amount = Math.min(p.stack, amount);
   p.stack -= amount; p.bet += amount; p.total += amount;
@@ -52,6 +190,7 @@ function mayRaise(p) {
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
   return { me: id, nick: u.nick, wallet: u.wallet, buyIn: BUY_IN,
+    bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn,
     deadline: table.deadline, currentBet: table.currentBet, minRaise: table.minRaise,
     pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result,
@@ -61,6 +200,7 @@ function stateFor(id) {
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
 }
 function broadcast() {
+  persist();
   for (const s of io.sockets.sockets.values()) if (s.data.uid) s.emit('state', stateFor(s.data.uid));
 }
 function cleanup() {
@@ -132,7 +272,7 @@ function finish() {
       p.stack += gain; gains.set(p.id, (gains.get(p.id) || 0) + gain);
     });
   }
-  table.result = gains.size ? [...gains].map(([id, gain]) => `${users.get(id).nick} gagne ${gain} $${
+  table.result = gains.size ? [...gains].map(([id, gain]) => `${users.get(id).nick} gagne ${gain} jetons${
     table.reveal ? ` (${labels[Math.floor(scores.get(id) / 15 ** 5)]})` : ''}`).join(' · ')
     : 'Main terminée : mises remboursées.';
   ps.forEach(p => { p.bet = 0; p.total = 0; });
@@ -173,7 +313,7 @@ function start() {
   clearTimeout(timer);
   const dealer = nextAfter(table.dealer, () => true);
   table.dealer = dealer.id; table.hand++; table.phase = 'preflop'; table.board = [];
-  table.result = `Main ${table.hand} — petites / grosses blindes : ${SMALL} / ${BIG} $.`;
+  table.result = `Main ${table.hand} — petites / grosses blindes : ${SMALL} / ${BIG} jetons.`;
   table.reveal = false; table.currentBet = BIG; table.minRaise = BIG; table.acted.clear();
   table.deck = [...'23456789TJQKA'].flatMap(r => [...'shdc'].map(s => r + s));
   for (let i = table.deck.length - 1; i > 0; i--) {
@@ -220,32 +360,31 @@ function leave(id) {
 }
 io.on('connection', socket => {
   let windowStart = Date.now(), events = 0;
-  const on = (event, handler, authenticated = true) => socket.on(event, (data, ack) => {
+  const on = (event, handler) => socket.on(event, (data, ack) => {
     if (Date.now() - windowStart > 1000) { windowStart = Date.now(); events = 0; }
     try {
       if (++events > 20) throw Error('Trop de requêtes, patientez.');
-      if (authenticated && !socket.data.uid) throw Error('Connectez-vous.');
+      if (!socket.data.uid) throw Error('Connectez-vous.');
+      const session = sessions.get(socket.data.session);
+      if (!session || session.expires <= Date.now()) {
+        socket.emit('session-expired'); socket.disconnect(true); return;
+      }
       handler(data && typeof data === 'object' ? data : {});
       broadcast(); if (typeof ack === 'function') ack({ ok: true });
     } catch (e) { if (typeof ack === 'function') ack({ error: e.message }); }
   });
-  on('login', ({ nick }) => {
-    if (socket.data.uid) throw Error('Déjà connecté.');
-    if (typeof nick !== 'string' || !/^[\p{L}\p{N}_ -]{2,20}$/u.test(nick.trim()))
-      throw Error('Pseudo : 2 à 20 lettres, chiffres, espaces, tirets ou _.');
-    nick = nick.trim(); const id = nick.normalize('NFKC').toLocaleLowerCase('fr');
-    let u = users.get(id);
-    if (u?.socket) throw Error('Ce pseudo est déjà connecté.');
-    if (!u) { u = { nick, wallet: 1000, socket: null }; users.set(id, u); }
-    u.socket = socket.id; socket.data.uid = id;
-  }, false);
-  on('recharge', () => { users.get(socket.data.uid).wallet += 500; });
+  broadcast();
+  on('claim-aid', () => {
+    const id = socket.data.uid, u = users.get(id);
+    if (!aidStatus(id).eligible) throw Error('Seconde chance : hors table, sous 500 jetons, une fois toutes les 24 h.');
+    u.wallet += 500; u.granted += 500; u.lastAidAt = Date.now();
+  });
   on('join', () => {
     const id = socket.data.uid, u = users.get(id);
     if (active()) throw Error('Attendez la fin de la main pour rejoindre.');
     if (seat(id)) throw Error('Vous êtes déjà à table.');
     if (table.players.length >= 6) throw Error('Table complète (6 joueurs).');
-    if (u.wallet < BUY_IN) throw Error('Solde insuffisant. Utilisez Recharger.');
+    if (u.wallet < BUY_IN) throw Error('Il faut 500 jetons pour rejoindre. Consultez votre seconde chance.');
     u.wallet -= BUY_IN;
     table.players.push({ id, nick: u.nick, stack: BUY_IN, bet: 0, total: 0, hole: [], folded: false, leaving: false });
   });
@@ -255,10 +394,11 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     const id = socket.data.uid;
     if (!id) return;
-    users.get(id).socket = null; leave(id); broadcast();
+    if (users.get(id).socket === socket.id) users.get(id).socket = null;
+    leave(id); broadcast();
   });
 });
 if (require.main === module) server.listen(Number(process.env.PORT) || 3000, '0.0.0.0', () => {
-  console.log(`Poker fictif démarré sur le port ${server.address().port}. Ouvrez deux navigateurs avec deux pseudos.`);
+  console.log(`Poker fictif démarré sur le port ${server.address().port}. Créez deux comptes pour jouer.`);
 });
 module.exports = { server, io, table, users, five, best };

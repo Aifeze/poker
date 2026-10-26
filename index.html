@@ -28,38 +28,68 @@
     </header>
     <section id="login" class="panel max-w-md mx-auto p-7 mt-14">
       <p class="text-[#e8bc70] text-sm mb-3">PRENEZ PLACE</p><h2 class="text-2xl font-semibold mb-3">Une table. Votre prochain coup.</h2>
-      <p class="text-emerald-100/60 text-sm mb-6">Choisissez un pseudo et recevez 1 000 $ fictifs. Invitez un ami : deux joueurs suffisent.</p>
-      <form id="loginForm" class="flex flex-col gap-3"><label for="nick" class="text-sm">Votre pseudo</label><input id="nick" autocomplete="nickname" maxlength="20" minlength="2" placeholder="Ex. RiverRunner" required><button class="btn gold">Entrer au club →</button></form>
-      <p class="text-xs text-emerald-100/50 mt-5">Démo sans mot de passe. Aucun paiement réel. Les comptes disparaissent au redémarrage du serveur.</p>
+      <p class="text-emerald-100/60 text-sm mb-5">Votre capital, vos décisions. Créez votre compte avec 1 000 jetons de départ, puis faites-les fructifier à table.</p>
+      <div class="flex gap-2 mb-5" role="group" aria-label="Accès au compte"><button id="loginTab" type="button" class="btn gold flex-1" aria-pressed="true">Connexion</button><button id="registerTab" type="button" class="btn flex-1" aria-pressed="false">Créer un compte</button></div>
+      <form id="loginForm" class="flex flex-col gap-3">
+        <label for="nick" class="text-sm">Votre pseudo</label><input id="nick" autocomplete="username" maxlength="20" minlength="2" placeholder="Ex. RiverRunner" required>
+        <label for="password" class="text-sm">Mot de passe</label><input id="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="8 caractères minimum" required>
+        <div id="confirmation" class="flex flex-col gap-3" hidden><label for="passwordConfirm" class="text-sm">Confirmer le mot de passe</label><input id="passwordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="128"></div>
+        <button id="authSubmit" class="btn gold mt-2">Se connecter →</button>
+      </form>
+      <p class="text-xs text-emerald-100/50 mt-5">Aucun achat, aucun retrait, aucun argent réel. Un compte est nécessaire pour jouer.</p>
     </section>
     <div id="game" hidden>
       <section class="panel p-4 md:p-5 flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div><p id="identity" class="text-sm text-emerald-100/60"></p><p class="text-xl font-semibold"><span id="wallet">0</span> <span class="text-sm font-normal text-emerald-100/50">$ · portefeuille</span></p></div>
-        <div class="flex flex-wrap gap-2"><button id="recharge" class="btn">Recharger +500 $</button><button id="join" class="btn gold">Rejoindre · 500 $</button><button id="leave" class="btn" hidden>Quitter la table</button></div>
+        <div><p id="identity" class="text-sm text-emerald-100/60"></p><p class="text-xl font-semibold"><span id="wallet">0</span> <span class="text-sm font-normal text-emerald-100/50">jetons disponibles</span></p><p class="text-xs text-emerald-100/60 mt-1">Capital total : <span id="bankroll">0</span> · Résultat aux tables : <span id="profit">0</span></p></div>
+        <div class="flex flex-wrap gap-2"><button id="join" class="btn gold">Rejoindre · 500 jetons</button><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
       </section>
-      <div class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10 $</span></div>
+      <section id="aidPanel" class="panel p-5 mb-6" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
+      <div class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10</span></div>
       <section class="felt p-4 md:p-8">
-        <div class="text-center mb-6"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-xl">$</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
+        <div class="text-center mb-6"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
         <div id="players" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
         <p id="empty" class="text-center text-emerald-100/60 py-7">La table vous attend. Rejoignez-la avec un ami.</p>
       </section>
       <p id="result" class="text-center text-sm text-[#f2d59d] my-5" role="status"></p>
       <section class="panel p-5">
-        <div class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Buy-in : 500 $ · Les jetons restants reviennent au portefeuille à la sortie.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
+        <div class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : 500 jetons · Vous récupérez vos jetons restants en quittant la table.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
         <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
       </section>
       <p class="text-xs text-center text-emerald-100/45 mt-5">30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p>
+      <p class="text-xs text-center text-emerald-100/45 mt-2">1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p>
     </div>
     <p id="notice" class="text-sm text-center mt-5" role="alert"></p>
   </main>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const $ = id => document.getElementById(id), socket = io();
+    const $ = id => document.getElementById(id), socket = io({autoConnect:false});
     const money = n => n.toLocaleString('fr-FR');
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
-    let state, desiredNick = '', lastDecision = '';
-    try { $('nick').value = localStorage.getItem('riverNick') || ''; } catch {}
+    let state, authMode = 'login', lastDecision = '';
+    function chooseMode(mode) {
+      authMode = mode; const register = mode === 'register';
+      $('loginTab').classList.toggle('gold', !register); $('registerTab').classList.toggle('gold', register);
+      $('loginTab').setAttribute('aria-pressed', String(!register)); $('registerTab').setAttribute('aria-pressed', String(register));
+      $('confirmation').hidden = !register; $('passwordConfirm').required = register;
+      $('password').autocomplete = register ? 'new-password' : 'current-password';
+      $('authSubmit').textContent = register ? 'Créer mon compte · 1 000 jetons' : 'Se connecter →';
+      $('notice').textContent = '';
+    }
+    function showLogin(message = '') {
+      state = null; lastDecision = ''; socket.disconnect();
+      $('login').hidden = false; $('game').hidden = true;
+      $('password').value = ''; $('passwordConfirm').value = '';
+      $('connection').textContent = '○ Non connecté'; $('notice').textContent = message;
+    }
+    async function api(route, data) {
+      const response = await fetch('/api/' + route, { method: data ? 'POST' : 'GET',
+        credentials: 'same-origin', headers: data ? {'Content-Type':'application/json'} : {},
+        body: data ? JSON.stringify(data) : undefined });
+      const reply = await response.json();
+      if (!response.ok) throw Error(reply.error || 'Service indisponible.');
+      return reply;
+    }
     function card(c) {
       if (!c) return '<span class="card empty" aria-label="Carte à venir">·</span>';
       if (c === '??') return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
@@ -69,13 +99,30 @@
       if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; return; }
       socket.timeout(5000).emit(event, data, (err, reply) => {
         $('notice').textContent = err ? 'Le serveur ne répond pas.' : reply?.error || '';
-        if (event === 'login' && !err && reply?.ok) {
-          try { localStorage.setItem('riverNick', desiredNick); } catch {}
-        }
       });
     }
-    $('loginForm').onsubmit = e => { e.preventDefault(); desiredNick = $('nick').value.trim(); send('login', {nick:desiredNick}); };
-    for (const event of ['recharge','join','leave','start']) $(event).onclick = () => send(event);
+    $('loginTab').onclick = () => chooseMode('login'); $('registerTab').onclick = () => chooseMode('register');
+    $('loginForm').onsubmit = async e => {
+      e.preventDefault();
+      if (authMode === 'register' && $('password').value !== $('passwordConfirm').value) {
+        $('notice').textContent = 'Les mots de passe ne correspondent pas.'; return;
+      }
+      $('authSubmit').disabled = true; $('loginTab').disabled = true; $('registerTab').disabled = true;
+      $('notice').textContent = '';
+      try {
+        await api(authMode, { nick:$('nick').value.trim(), password:$('password').value });
+        $('password').value = ''; $('passwordConfirm').value = ''; socket.connect();
+      } catch (e) { $('notice').textContent = e.message; }
+      finally { $('authSubmit').disabled = false; $('loginTab').disabled = false; $('registerTab').disabled = false; }
+    };
+    $('logout').onclick = async () => {
+      $('logout').disabled = true;
+      try { await api('logout', {}); showLogin(); }
+      catch (e) { $('notice').textContent = e.message; }
+      finally { $('logout').disabled = false; }
+    };
+    for (const event of ['join','leave','start']) $(event).onclick = () => send(event);
+    $('claimAid').onclick = () => send('claim-aid');
     $('fold').onclick = () => send('action', {type:'fold'});
     $('call').onclick = () => send('action', {type:'call'});
     $('raise').onclick = () => send('action', {type:'raise',amount:Number($('raiseTo').value)});
@@ -85,25 +132,43 @@
     };
     socket.on('connect', () => {
       $('connection').textContent = '● Connecté';
-      if (desiredNick) send('login', {nick:desiredNick});
     });
-    socket.on('disconnect', () => {
+    socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
+    socket.on('disconnect', reason => {
+      if (!state) return;
+      if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
       $('connection').textContent = '○ Reconnexion…';
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
       $('notice').textContent = 'Connexion perdue : sortie de table automatique (un tapis reste en jeu).';
     });
-    socket.on('connect_error', () => { $('connection').textContent = '○ Serveur indisponible'; });
+    socket.on('connect_error', async error => {
+      $('connection').textContent = '○ Connexion interrompue'; $('notice').textContent = error.message;
+      try { await api('session'); } catch { showLogin('Connectez-vous pour rejoindre le club.'); }
+    });
+    function renderAid() {
+      if (!state) return;
+      const seated = state.players.some(p => p.id === state.me);
+      const remaining = Math.max(0, state.aid.nextAt - Date.now());
+      $('aidPanel').hidden = state.bankroll >= state.buyIn;
+      $('claimAid').disabled = !socket.connected || seated || remaining > 0 || state.bankroll >= state.buyIn;
+      $('aidStatus').textContent = seated ? 'Quittez d’abord la table pour récupérer vos jetons restants.' : remaining
+        ? `Disponible dans ${Math.floor(remaining / 3600000)} h ${Math.ceil((remaining % 3600000) / 60000)} min.`
+        : 'Disponible maintenant. Votre résultat aux tables restera inchangé.';
+    }
     socket.on('state', s => {
       state = s; $('login').hidden = true; $('game').hidden = false;
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
       $('identity').textContent = s.nick; $('wallet').textContent = money(s.wallet); $('pot').textContent = money(s.pot);
+      $('bankroll').textContent = money(s.bankroll);
+      $('profit').textContent = `${s.profit > 0 ? '+' : ''}${money(s.profit)}`;
+      $('profit').className = s.profit < 0 ? 'text-rose-300' : 'text-emerald-300';
       $('stage').textContent = `Main ${s.hand} · ${{waiting:'En attente',preflop:'Préflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Résultat'}[s.phase]}`;
       $('board').innerHTML = Array.from({length:5}, (_, i) => card(s.board[i])).join('');
       $('players').innerHTML = s.players.map(p => `<article class="seat ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
         <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}${p.id === s.me ? ' · vous' : ''}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
-        <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} $</p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
-        <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)} $` : ''}</p></article>`).join('');
+        <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
+        <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
       $('empty').hidden = s.players.length > 0;
       $('join').hidden = !!me; $('join').disabled = playing || s.players.length >= 6 || s.wallet < s.buyIn;
       $('leave').hidden = !me; $('leave').disabled = !!me?.leaving;
@@ -114,19 +179,25 @@
       $('turn').textContent = mine ? 'À vous de jouer' : playing ? `Au tour de ${s.players.find(p => p.id === s.turn)?.nick || '…'}` : me ? (s.players.length < 2 ? 'En attente d’un autre joueur…' : 'Prêts pour la prochaine main ?') : 'Rejoignez la table pour jouer.';
       if (me) {
         const max = me.stack + me.bet, min = Math.min(max,s.currentBet+s.minRaise);
-        $('call').textContent = due ? `Suivre ${money(Math.min(due,me.stack))} $` : 'Check';
+        $('call').textContent = due ? `Suivre ${money(Math.min(due,me.stack))}` : 'Check';
         $('raiseTo').min = min; $('raiseTo').max = max;
         const decision = `${s.hand}/${s.phase}/${s.currentBet}/${s.turn}`;
         if (lastDecision !== decision) { $('raiseTo').value = min; lastDecision = decision; }
         $('raise').disabled = !s.canRaise || max <= s.currentBet;
         $('allin').disabled = max > s.currentBet && !s.canRaise;
-        $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} $ · À suivre : ${money(due)} $ · Relance totale minimale : ${money(min)} $.`;
-      } else $('hint').textContent = 'Buy-in : 500 $ · Les jetons restants reviennent au portefeuille à la sortie.';
+        $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
+      } else $('hint').textContent = 'Entrée : 500 jetons · Vous récupérez vos jetons restants en quittant la table.';
+      renderAid();
     });
     setInterval(() => {
       if (state?.deadline && socket.connected) $('connection').textContent = `● Connecté · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s`;
       else if (socket.connected) $('connection').textContent = '● Connecté';
+      renderAid();
     }, 250);
+    (async () => {
+      try { const session = await api('session'); $('nick').value = session.nick; socket.connect(); }
+      catch { showLogin(); }
+    })();
   </script>
 </body>
 </html>
