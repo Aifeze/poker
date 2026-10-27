@@ -148,11 +148,16 @@ async function initializeStorage() {
     connectionTimeoutMillis: 15000, query_timeout: 15000, idleTimeoutMillis: 30000,
     allowExitOnIdle: true, application_name: 'river-club', enableChannelBinding: true });
   pool.on('error', error => console.error('[stockage] Connexion inactive fermée :', error.code || error.name));
-  await pool.query(`CREATE TABLE IF NOT EXISTS river_club_state (
+  // Schéma privé : les hachages et les soldes ne sont pas exposés par l'API publique de Supabase.
+  await pool.query('CREATE SCHEMA IF NOT EXISTS river_club_private');
+  await pool.query('REVOKE ALL ON SCHEMA river_club_private FROM PUBLIC');
+  await pool.query(`CREATE TABLE IF NOT EXISTS river_club_private.state (
     id INTEGER PRIMARY KEY CHECK (id = 1), revision BIGINT NOT NULL DEFAULT 0, payload JSONB NOT NULL)`);
-  await pool.query(`INSERT INTO river_club_state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
+  await pool.query('ALTER TABLE river_club_private.state ENABLE ROW LEVEL SECURITY');
+  await pool.query('REVOKE ALL ON TABLE river_club_private.state FROM PUBLIC');
+  await pool.query(`INSERT INTO river_club_private.state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
     [JSON.stringify({ version: 1, capitalResetVersion: 1, users: [] })]);
-  const { rows } = await pool.query('SELECT revision, payload FROM river_club_state WHERE id = 1');
+  const { rows } = await pool.query('SELECT revision, payload FROM river_club_private.state WHERE id = 1');
   const saved = validateAccounts(rows[0].payload);
   dbRevision = rows[0].revision; capitalResetVersion = Math.max(1, saved.capitalResetVersion ?? 0);
   for (const u of saved.users) users.set(u.id, { ...u, socket: null });
@@ -184,7 +189,7 @@ async function persist() {
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
   const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows });
   if (postgres) {
-    const result = await pool.query(`UPDATE river_club_state SET payload = $1::jsonb, revision = revision + 1
+    const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
       WHERE id = 1 AND revision = $2 RETURNING revision`, [payload, dbRevision]);
     if (result.rowCount !== 1) throw Object.assign(Error('Une autre instance a modifié les comptes.'), { code: 'STORAGE_CONFLICT' });
     dbRevision = result.rows[0].revision; return;
