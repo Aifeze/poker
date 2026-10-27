@@ -39,35 +39,87 @@ const io = new (load('socket.io').Server)(server, {
   allowRequest: (req, done) => done(null, sameOrigin(req))
 });
 app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/health', (_, res) => res.json({ ok: true }));
+app.get('/health', (_, res) => res.status(storageUnavailable ? 503 : 200).json({ ok: !storageUnavailable }));
 
 const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
-const CAPITAL_RESET_VERSION = 1; // Remise à 1 000 jetons une seule fois pour cette nouvelle saison.
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
-const dataDir = process.env.POKER_DATA_DIR || path.join(__dirname, '.poker-data');
+const defaultDataDir = path.join(__dirname, '.poker-data');
+const renderDataDir = '/var/data/poker';
+const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
+  (process.env.RENDER && fs.existsSync('/var/data') ? renderDataDir : defaultDataDir));
 fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
 const dataFile = path.join(dataDir, 'accounts.json');
-let needsCapitalReset = false;
-if (fs.existsSync(dataFile)) {
-  // Une sauvegarde illisible arrête le serveur : ne jamais effacer les comptes silencieusement.
-  const saved = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+let capitalResetVersion = 1; // Marqueur historique conservé ; aucune remise à zéro automatique.
+function readAccounts(file) {
+  const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (saved.version !== 1 || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
   const previousReset = saved.capitalResetVersion ?? 0;
-  if (!Number.isSafeInteger(previousReset) || previousReset < 0 || previousReset > CAPITAL_RESET_VERSION)
+  if (!Number.isSafeInteger(previousReset) || previousReset < 0)
     throw Error('Version de remise à zéro non prise en charge.');
-  needsCapitalReset = previousReset < CAPITAL_RESET_VERSION;
+  const ids = new Set();
   for (const u of saved.users) {
     if (typeof u.id !== 'string' || typeof u.nick !== 'string' ||
       !/^[a-f0-9]{32}$/.test(u.salt) || !/^[a-f0-9]{128}$/.test(u.hash) ||
       !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
-      !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || users.has(u.id))
+      !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id))
       throw Error('Sauvegarde de comptes invalide.');
-    users.set(u.id, { ...u, ...(needsCapitalReset ? { wallet: 1000, granted: 1000, lastAidAt: 0 } : {}), socket: null });
+    ids.add(u.id);
   }
+  return saved;
 }
+function findAccounts(file) {
+  // Le fichier principal est prioritaire. Un fichier incomplet ne remplace jamais une sauvegarde valide.
+  let empty, invalid;
+  for (const candidate of [file, file + '.tmp', file + '.bak']) {
+    if (!fs.existsSync(candidate)) continue;
+    try {
+      const saved = readAccounts(candidate);
+      const found = { file: candidate, saved };
+      if (saved.users.length) return found;
+      empty ||= found;
+    } catch (error) {
+      if (error.code === 'EACCES' || error.code === 'EPERM') throw error;
+      invalid ||= error;
+      console.error(`[stockage] Sauvegarde inutilisable : ${candidate}. Son contenu est conservé.`);
+    }
+  }
+  return empty || (invalid ? { invalid } : null);
+}
+let source = findAccounts(dataFile);
+if (!source?.saved?.users.length) {
+  const alternatives = [...new Set([defaultDataDir, renderDataDir, '/var/data'].map(p =>
+    path.join(path.resolve(p), 'accounts.json')))].filter(file => file !== dataFile)
+    .map(file => findAccounts(file)).filter(found => found?.saved?.users.length);
+  if (alternatives.length > 1 && alternatives.some(found =>
+    !fs.readFileSync(found.file).equals(fs.readFileSync(alternatives[0].file))))
+    throw Error('Plusieurs sauvegardes différentes existent. Indiquez leur dossier correct dans POKER_DATA_DIR ; aucun compte n’a été remplacé.');
+  if (alternatives.length) source = alternatives[0];
+}
+if (source?.invalid) throw source.invalid;
+if (source?.saved && source.file !== dataFile) {
+  // Préserver le fichier remplacé et l'original avant une récupération, sans fusion ni changement de solde.
+  if (fs.existsSync(dataFile)) {
+    const preserved = dataFile + `.before-recovery-${Date.now()}-${randomBytes(4).toString('hex')}`;
+    fs.copyFileSync(dataFile, preserved, fs.constants.COPYFILE_EXCL);
+    fs.chmodSync(preserved, 0o600);
+  }
+  const recoveryFile = dataFile + '.recover-' + randomBytes(6).toString('hex');
+  fs.copyFileSync(source.file, recoveryFile, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(recoveryFile, 0o600);
+  fs.renameSync(recoveryFile, dataFile);
+  console.log(`[stockage] Sauvegarde récupérée depuis ${source.file} ; identifiants et soldes conservés.`);
+}
+if (source?.saved) {
+  capitalResetVersion = Math.max(1, source.saved.capitalResetVersion ?? 0);
+  for (const u of source.saved.users) users.set(u.id, { ...u, socket: null });
+}
+// Sur Render, un stockage disparu doit être restauré : ne pas recréer silencieusement une base vide.
+const storageUnavailable = !!process.env.RENDER && !users.size && process.env.POKER_ALLOW_NEW_STORE !== 'true';
+console.log(`[stockage] ${users.size} compte(s) chargé(s) depuis ${dataFile}.`);
+if (storageUnavailable) console.error('[stockage] Aucun compte retrouvé. Vérifiez le disque persistant et POKER_DATA_DIR ou restaurez une sauvegarde. Pour une première installation uniquement : POKER_ALLOW_NEW_STORE=true.');
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
   hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [] };
@@ -87,18 +139,20 @@ function bankroll(id) {
   return users.get(id).wallet + (p ? p.stack + p.total : 0);
 }
 function persist() {
+  if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, salt: u.salt, hash: u.hash,
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
   const temporary = dataFile + '.tmp';
   const fd = fs.openSync(temporary, 'w', 0o600);
-  try { fs.writeFileSync(fd, JSON.stringify({ version: 1, capitalResetVersion: CAPITAL_RESET_VERSION, users: rows })); fs.fsyncSync(fd); }
+  try { fs.writeFileSync(fd, JSON.stringify({ version: 1, capitalResetVersion, users: rows })); fs.fsyncSync(fd); }
   finally { fs.closeSync(fd); }
+  if (fs.existsSync(dataFile)) {
+    fs.copyFileSync(dataFile, dataFile + '.bak.tmp');
+    fs.chmodSync(dataFile + '.bak.tmp', 0o600);
+    fs.renameSync(dataFile + '.bak.tmp', dataFile + '.bak');
+  }
   fs.renameSync(temporary, dataFile);
-}
-if (needsCapitalReset) {
-  persist();
-  console.log(`Nouveau départ : ${users.size} compte(s) remis à 1 000 jetons. Identifiants conservés.`);
 }
 function aidStatus(id) {
   const u = users.get(id), nextAt = u.lastAidAt ? u.lastAidAt + DAY : 0;
@@ -132,6 +186,7 @@ setInterval(() => {
 app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée.' });
+  if (storageUnavailable) return res.status(503).json({ error: 'Les comptes sont temporairement indisponibles. Leur sauvegarde doit être rétablie par l’administrateur.' });
   next();
 });
 for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, res) => {

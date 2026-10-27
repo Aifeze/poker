@@ -102,7 +102,9 @@
         credentials: 'same-origin', headers: data ? {'Content-Type':'application/json'} : {},
         body: data ? JSON.stringify(data) : undefined });
       const reply = await response.json();
-      if (!response.ok) throw Error(reply.error || 'Service indisponible.');
+      if (!response.ok) {
+        const error = Error(reply.error || 'Service indisponible.'); error.status = response.status; throw error;
+      }
       return reply;
     }
     function card(c) {
@@ -244,7 +246,7 @@
     }, 250);
     (async () => {
       try { const session = await api('session'); $('nick').value = session.nick; socket.connect(); }
-      catch { showLogin(); }
+      catch (error) { showLogin(error.status === 503 ? error.message : ''); }
     })();
   </script>
 </body>
