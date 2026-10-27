@@ -80,7 +80,7 @@
     const money = n => n.toLocaleString('fr-FR');
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
-    let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0;
+    let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
       $('loginTab').classList.toggle('gold', !register); $('registerTab').classList.toggle('gold', register);
@@ -91,7 +91,7 @@
       $('notice').textContent = '';
     }
     function showLogin(message = '') {
-      state = null; lastDecision = ''; cardsHidden = false; socket.disconnect();
+      state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
       lastLogId = 0; $('history').replaceChildren(); $('historyEmpty').hidden = false;
       $('login').hidden = false; $('game').hidden = true;
       $('password').value = ''; $('passwordConfirm').value = '';
@@ -145,7 +145,7 @@
     }
     function send(event, data = {}) {
       if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; return; }
-      socket.timeout(5000).emit(event, data, (err, reply) => {
+      socket.timeout(35000).emit(event, data, (err, reply) => {
         $('notice').textContent = err ? 'Le serveur ne répond pas.' : reply?.error || '';
       });
     }
@@ -182,6 +182,11 @@
       $('connection').textContent = '● Connecté';
     });
     socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
+    socket.on('storage-error', data => {
+      storageBlocked = true; $('notice').textContent = data.message;
+      document.querySelectorAll('#game button').forEach(b => b.disabled = true);
+      $('logout').disabled = false;
+    });
     socket.on('disconnect', reason => {
       if (!state) return;
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
@@ -198,13 +203,13 @@
       const seated = state.players.some(p => p.id === state.me);
       const remaining = Math.max(0, state.aid.nextAt - Date.now());
       $('aidPanel').hidden = state.bankroll >= state.buyIn;
-      $('claimAid').disabled = !socket.connected || seated || remaining > 0 || state.bankroll >= state.buyIn;
+      $('claimAid').disabled = storageBlocked || !socket.connected || seated || remaining > 0 || state.bankroll >= state.buyIn;
       $('aidStatus').textContent = seated ? 'Quittez d’abord la table pour récupérer vos jetons restants.' : remaining
         ? `Disponible dans ${Math.floor(remaining / 3600000)} h ${Math.ceil((remaining % 3600000) / 60000)} min.`
         : 'Disponible maintenant. Votre résultat aux tables restera inchangé.';
     }
     socket.on('state', s => {
-      state = s; $('login').hidden = true; $('game').hidden = false;
+      state = s; storageBlocked = false; $('login').hidden = true; $('game').hidden = false;
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
       $('identity').textContent = s.nick; $('wallet').textContent = money(s.wallet); $('pot').textContent = money(s.pot);
@@ -240,7 +245,8 @@
       renderAid();
     });
     setInterval(() => {
-      if (state?.deadline && socket.connected) $('connection').textContent = `● Connecté · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s`;
+      if (storageBlocked) $('connection').textContent = '○ Partie suspendue';
+      else if (state?.deadline && socket.connected) $('connection').textContent = `● Connecté · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s`;
       else if (socket.connected) $('connection').textContent = '● Connecté';
       renderAid();
     }, 250);

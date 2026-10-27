@@ -1,5 +1,5 @@
 // server.js — node server.js (Node >= 18). Dépendances installées au premier lancement.
-// Argent fictif. Comptes sauvegardés dans POKER_DATA_DIR ; sur Render, monter un disque persistant.
+// Render : définir DATABASE_URL (PostgreSQL). Hors Render : fichier local dans POKER_DATA_DIR.
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
@@ -11,15 +11,16 @@ const { spawnSync } = require('node:child_process');
 const runtime = process.env.POKER_RUNTIME_DIR || path.join(os.tmpdir(), `poker-runtime-${os.userInfo().username}`);
 fs.mkdirSync(runtime, { recursive: true, mode: 0o700 });
 const load = createRequire(path.join(runtime, 'package.json'));
-try { load.resolve('express'); load.resolve('socket.io'); }
+try { load.resolve('express'); load.resolve('socket.io'); load.resolve('pg'); }
 catch {
   const r = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', [
     'install', '--prefix', runtime, '--no-save', '--package-lock=false', '--no-audit', '--no-fund',
     '--fetch-retries=1', '--fetch-timeout=20000',
-    'express@5.1.0', 'socket.io@4.8.1'
+    'express@5.1.0', 'socket.io@4.8.1', 'pg@8.16.3'
   ], { stdio: 'inherit' });
   if (r.error || r.status !== 0) { console.error('Installation impossible.', r.error || ''); process.exit(1); }
 }
+if (process.argv.includes('--install')) { console.log('Dépendances prêtes.'); process.exit(0); }
 const app = load('express')();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
@@ -39,21 +40,24 @@ const io = new (load('socket.io').Server)(server, {
   allowRequest: (req, done) => done(null, sameOrigin(req))
 });
 app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/health', (_, res) => res.status(storageUnavailable ? 503 : 200).json({ ok: !storageUnavailable }));
+app.get('/health', (_, res) => res.status(storageReady && !storageUnavailable ? 200 : 503)
+  .json({ ok: storageReady && !storageUnavailable }));
 
 const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
+const postgres = !!process.env.DATABASE_URL;
+const STORAGE_MESSAGE = 'Le stockage est temporairement indisponible. La partie est suspendue pour protéger vos jetons.';
+let pool, dbRevision, storageReady = false, storageUnavailable = false;
+let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false;
 const defaultDataDir = path.join(__dirname, '.poker-data');
 const renderDataDir = '/var/data/poker';
 const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
   (process.env.RENDER && fs.existsSync('/var/data') ? renderDataDir : defaultDataDir));
-fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
 const dataFile = path.join(dataDir, 'accounts.json');
 let capitalResetVersion = 1; // Marqueur historique conservé ; aucune remise à zéro automatique.
-function readAccounts(file) {
-  const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+function validateAccounts(saved) {
   if (saved.version !== 1 || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
   const previousReset = saved.capitalResetVersion ?? 0;
   if (!Number.isSafeInteger(previousReset) || previousReset < 0)
@@ -70,6 +74,7 @@ function readAccounts(file) {
   }
   return saved;
 }
+function readAccounts(file) { return validateAccounts(JSON.parse(fs.readFileSync(file, 'utf8'))); }
 function findAccounts(file) {
   // Le fichier principal est prioritaire. Un fichier incomplet ne remplace jamais une sauvegarde valide.
   let empty, invalid;
@@ -88,38 +93,72 @@ function findAccounts(file) {
   }
   return empty || (invalid ? { invalid } : null);
 }
-let source = findAccounts(dataFile);
-if (!source?.saved?.users.length) {
-  const alternatives = [...new Set([defaultDataDir, renderDataDir, '/var/data'].map(p =>
-    path.join(path.resolve(p), 'accounts.json')))].filter(file => file !== dataFile)
-    .map(file => findAccounts(file)).filter(found => found?.saved?.users.length);
-  if (alternatives.length > 1 && alternatives.some(found =>
-    !fs.readFileSync(found.file).equals(fs.readFileSync(alternatives[0].file))))
-    throw Error('Plusieurs sauvegardes différentes existent. Indiquez leur dossier correct dans POKER_DATA_DIR ; aucun compte n’a été remplacé.');
-  if (alternatives.length) source = alternatives[0];
-}
-if (source?.invalid) throw source.invalid;
-if (source?.saved && source.file !== dataFile) {
-  // Préserver le fichier remplacé et l'original avant une récupération, sans fusion ni changement de solde.
-  if (fs.existsSync(dataFile)) {
-    const preserved = dataFile + `.before-recovery-${Date.now()}-${randomBytes(4).toString('hex')}`;
-    fs.copyFileSync(dataFile, preserved, fs.constants.COPYFILE_EXCL);
-    fs.chmodSync(preserved, 0o600);
+function loadLocalAccounts() {
+  fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  let source = findAccounts(dataFile);
+  if (!source?.saved?.users.length) {
+    const alternatives = [...new Set([defaultDataDir, renderDataDir, '/var/data'].map(p =>
+      path.join(path.resolve(p), 'accounts.json')))].filter(file => file !== dataFile)
+      .map(file => findAccounts(file)).filter(found => found?.saved?.users.length);
+    if (alternatives.length > 1 && alternatives.some(found =>
+      !fs.readFileSync(found.file).equals(fs.readFileSync(alternatives[0].file))))
+      throw Error('Plusieurs sauvegardes différentes existent. Indiquez leur dossier correct dans POKER_DATA_DIR ; aucun compte n’a été remplacé.');
+    if (alternatives.length) source = alternatives[0];
   }
-  const recoveryFile = dataFile + '.recover-' + randomBytes(6).toString('hex');
-  fs.copyFileSync(source.file, recoveryFile, fs.constants.COPYFILE_EXCL);
-  fs.chmodSync(recoveryFile, 0o600);
-  fs.renameSync(recoveryFile, dataFile);
-  console.log(`[stockage] Sauvegarde récupérée depuis ${source.file} ; identifiants et soldes conservés.`);
+  if (source?.invalid) throw source.invalid;
+  if (source?.saved && source.file !== dataFile) {
+    // Préserver le fichier remplacé et l'original avant une récupération, sans fusion ni changement de solde.
+    if (fs.existsSync(dataFile)) {
+      const preserved = dataFile + `.before-recovery-${Date.now()}-${randomBytes(4).toString('hex')}`;
+      fs.copyFileSync(dataFile, preserved, fs.constants.COPYFILE_EXCL);
+      fs.chmodSync(preserved, 0o600);
+    }
+    const recoveryFile = dataFile + '.recover-' + randomBytes(6).toString('hex');
+    fs.copyFileSync(source.file, recoveryFile, fs.constants.COPYFILE_EXCL);
+    fs.chmodSync(recoveryFile, 0o600);
+    fs.renameSync(recoveryFile, dataFile);
+    console.log(`[stockage] Sauvegarde récupérée depuis ${source.file} ; identifiants et soldes conservés.`);
+  }
+  if (source?.saved) {
+    capitalResetVersion = Math.max(1, source.saved.capitalResetVersion ?? 0);
+    for (const u of source.saved.users) users.set(u.id, { ...u, socket: null });
+  }
+  console.log(`[stockage] ${users.size} compte(s) chargé(s) depuis ${dataFile}.`);
 }
-if (source?.saved) {
-  capitalResetVersion = Math.max(1, source.saved.capitalResetVersion ?? 0);
-  for (const u of source.saved.users) users.set(u.id, { ...u, socket: null });
+async function initializeStorage() {
+  if (!postgres) {
+    if (process.env.RENDER) throw Object.assign(Error('DATABASE_URL doit être configurée sur Render.'), { code: 'DATABASE_URL_MISSING' });
+    loadLocalAccounts(); storageReady = true; return;
+  }
+  const url = new URL(process.env.DATABASE_URL);
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) throw Error('URL PostgreSQL invalide.');
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  const sslmode = url.searchParams.get('sslmode');
+  if (!local && sslmode === 'disable') throw Error('TLS est obligatoire pour une base distante.');
+  let ssl = false;
+  if (!local || (sslmode && sslmode !== 'disable')) {
+    ssl = { rejectUnauthorized: true };
+    for (const [query, option] of [['sslrootcert', 'ca'], ['sslcert', 'cert'], ['sslkey', 'key']]) {
+      const file = url.searchParams.get(query); if (file) ssl[option] = fs.readFileSync(file, 'utf8');
+    }
+  }
+  // Conserver explicitement la validation du certificat, même si l'URL contient sslmode=require.
+  for (const key of ['sslmode', 'sslrootcert', 'sslcert', 'sslkey']) url.searchParams.delete(key);
+  pool = new (load('pg').Pool)({ connectionString: url.toString(), ssl, max: 2,
+    connectionTimeoutMillis: 15000, query_timeout: 15000, idleTimeoutMillis: 30000,
+    allowExitOnIdle: true, application_name: 'river-club', enableChannelBinding: true });
+  pool.on('error', error => console.error('[stockage] Connexion inactive fermée :', error.code || error.name));
+  await pool.query(`CREATE TABLE IF NOT EXISTS river_club_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1), revision BIGINT NOT NULL DEFAULT 0, payload JSONB NOT NULL)`);
+  await pool.query(`INSERT INTO river_club_state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
+    [JSON.stringify({ version: 1, capitalResetVersion: 1, users: [] })]);
+  const { rows } = await pool.query('SELECT revision, payload FROM river_club_state WHERE id = 1');
+  const saved = validateAccounts(rows[0].payload);
+  dbRevision = rows[0].revision; capitalResetVersion = Math.max(1, saved.capitalResetVersion ?? 0);
+  for (const u of saved.users) users.set(u.id, { ...u, socket: null });
+  storageReady = true;
+  console.log(`[stockage] PostgreSQL connecté : ${users.size} compte(s) chargé(s).`);
 }
-// Sur Render, un stockage disparu doit être restauré : ne pas recréer silencieusement une base vide.
-const storageUnavailable = !!process.env.RENDER && !users.size && process.env.POKER_ALLOW_NEW_STORE !== 'true';
-console.log(`[stockage] ${users.size} compte(s) chargé(s) depuis ${dataFile}.`);
-if (storageUnavailable) console.error('[stockage] Aucun compte retrouvé. Vérifiez le disque persistant et POKER_DATA_DIR ou restaurez une sauvegarde. Pour une première installation uniquement : POKER_ALLOW_NEW_STORE=true.');
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
   hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [] };
@@ -138,14 +177,21 @@ function bankroll(id) {
   const p = seat(id);
   return users.get(id).wallet + (p ? p.stack + p.total : 0);
 }
-function persist() {
+async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, salt: u.salt, hash: u.hash,
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
+  const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows });
+  if (postgres) {
+    const result = await pool.query(`UPDATE river_club_state SET payload = $1::jsonb, revision = revision + 1
+      WHERE id = 1 AND revision = $2 RETURNING revision`, [payload, dbRevision]);
+    if (result.rowCount !== 1) throw Object.assign(Error('Une autre instance a modifié les comptes.'), { code: 'STORAGE_CONFLICT' });
+    dbRevision = result.rows[0].revision; return;
+  }
   const temporary = dataFile + '.tmp';
   const fd = fs.openSync(temporary, 'w', 0o600);
-  try { fs.writeFileSync(fd, JSON.stringify({ version: 1, capitalResetVersion, users: rows })); fs.fsyncSync(fd); }
+  try { fs.writeFileSync(fd, payload); fs.fsyncSync(fd); }
   finally { fs.closeSync(fd); }
   if (fs.existsSync(dataFile)) {
     fs.copyFileSync(dataFile, dataFile + '.bak.tmp');
@@ -153,6 +199,34 @@ function persist() {
     fs.renameSync(dataFile + '.bak.tmp', dataFile + '.bak');
   }
   fs.renameSync(temporary, dataFile);
+}
+function storageFailed(error) {
+  storageUnavailable = true; clearTimeout(timer);
+  console.error('[stockage] Sauvegarde indisponible :', error.code || error.name);
+  if (error.code === 'DATABASE_URL_MISSING') console.error('[stockage] Définissez DATABASE_URL dans Render → Environment. Aucun compte ne sera enregistré sur le disque éphémère.');
+  io.emit('storage-error', { message: STORAGE_MESSAGE });
+}
+function enqueue(action, save = true) {
+  const result = mutationQueue.then(async () => {
+    await ready;
+    if (storageUnavailable) throw Error(STORAGE_MESSAGE);
+    const before = structuredClone({ users, table, logSequence });
+    clearTimeout(timer); inMutation = true; turnChanged = false;
+    let writing = false;
+    try {
+      const value = action();
+      if (save) { writing = true; await persist(); }
+      if (turnChanged && table.turn) table.deadline = Date.now() + TURN_MS;
+      inMutation = false; scheduleTurn(); broadcast(); return value;
+    } catch (error) {
+      users.clear(); for (const [id, u] of before.users) users.set(id, u);
+      Object.assign(table, before.table); logSequence = before.logSequence; inMutation = false;
+      if (writing) { storageFailed(error); throw Error(STORAGE_MESSAGE); }
+      scheduleTurn(); throw error;
+    }
+  });
+  mutationQueue = result.catch(() => {});
+  return result;
 }
 function aidStatus(id) {
   const u = users.get(id), nextAt = u.lastAidAt ? u.lastAidAt + DAY : 0;
@@ -183,10 +257,12 @@ setInterval(() => {
   for (const [key, v] of authAttempts) if (v.until <= now) authAttempts.delete(key);
   for (const [key, v] of sessions) if (v.expires <= now) sessions.delete(key);
 }, 60000).unref();
-app.use('/api', (req, res, next) => {
+app.use('/api', async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée.' });
-  if (storageUnavailable) return res.status(503).json({ error: 'Les comptes sont temporairement indisponibles. Leur sauvegarde doit être rétablie par l’administrateur.' });
+  if (req.path === '/logout') return next();
+  try { await ready; } catch { return res.status(503).json({ error: STORAGE_MESSAGE }); }
+  if (storageUnavailable) return res.status(503).json({ error: STORAGE_MESSAGE });
   next();
 });
 for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, res) => {
@@ -198,26 +274,30 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
       return res.status(400).json({ error: 'Pseudo : 2 à 20 caractères. Mot de passe : 8 à 128 caractères.' });
     const id = nick.trim().normalize('NFKC').toLocaleLowerCase('fr');
     if (!consumeAttempt('user:' + id, 15)) return res.status(429).json({ error: 'Trop de tentatives sur ce compte. Réessayez dans 15 minutes.' });
-    let u = users.get(id);
+    const u = users.get(id);
     if (mode === 'register') {
-      if (u) return res.status(409).json({ error: 'Ce pseudo est déjà pris. Connectez-vous.' });
       const salt = randomBytes(16).toString('hex');
       const hash = (await scrypt(password, salt, 64)).toString('hex');
-      if (users.has(id)) return res.status(409).json({ error: 'Ce pseudo est déjà pris.' });
-      u = { nick: nick.trim(), salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null };
-      users.set(id, u);
-      try { persist(); } catch (error) { users.delete(id); throw error; }
+      await enqueue(() => {
+        if (users.has(id)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
+        users.set(id, { nick: nick.trim(), salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
+      });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
-      if (!u || !timingSafeEqual(hash, Buffer.from(u.hash, 'hex')))
-        return res.status(401).json({ error: 'Pseudo ou mot de passe incorrect.' });
-      if (u.socket) return res.status(409).json({ error: 'Ce compte est déjà connecté. Fermez son autre session.' });
+      await enqueue(() => {
+        const current = users.get(id);
+        if (!current || !u || current.hash !== u.hash || !timingSafeEqual(hash, Buffer.from(current.hash, 'hex')))
+          throw Object.assign(Error('Pseudo ou mot de passe incorrect.'), { status: 401 });
+        if (current.socket && io.sockets.sockets.has(current.socket))
+          throw Object.assign(Error('Ce compte est déjà connecté. Fermez son autre session.'), { status: 409 });
+      });
     }
     if (res.destroyed) return;
     createSession(req, res, id);
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
     console.error('Échec de l’authentification ou de la sauvegarde :', error.code || error.name);
-    res.status(500).json({ error: 'Service indisponible. Réessayez plus tard.' });
+    res.status(503).json({ error: STORAGE_MESSAGE });
   }
 });
 app.get('/api/session', (req, res) => {
@@ -225,24 +305,26 @@ app.get('/api/session', (req, res) => {
   if (!s) return res.status(401).json({ error: 'Connectez-vous.' });
   res.json({ ok: true, nick: users.get(s.id).nick });
 });
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', async (req, res) => {
   const s = sessionFor(req);
   if (s) {
     sessions.delete(s.token);
     const socket = io.sockets.sockets.get(users.get(s.id).socket);
     if (socket?.data.session === s.token) socket.disconnect(true);
   }
+  await mutationQueue;
   res.clearCookie('river_session', { httpOnly: true, sameSite: 'strict', secure: req.secure, path: '/' });
   res.json({ ok: true });
 });
 app.use((err, req, res, next) => res.status(400).json({ error: 'Requête invalide.' }));
 io.use((socket, next) => {
-  const session = sessionFor(socket.request);
-  if (!session) return next(Error('Connexion requise.'));
-  if (users.get(session.id).socket) return next(Error('Ce compte est déjà connecté dans une autre fenêtre.'));
-  socket.data.uid = session.id; socket.data.session = session.token;
-  users.get(session.id).socket = socket.id;
-  next();
+  enqueue(() => {
+    const session = sessionFor(socket.request);
+    if (!session) throw Error('Connexion requise.');
+    const u = users.get(session.id);
+    if (u.socket && io.sockets.sockets.has(u.socket)) throw Error('Ce compte est déjà connecté dans une autre fenêtre.');
+    socket.data.uid = session.id; socket.data.session = session.token; u.socket = socket.id;
+  }, false).then(() => next(), () => next(Error(storageUnavailable ? STORAGE_MESSAGE : 'Connexion refusée : session invalide ou déjà utilisée.')));
 });
 function pay(p, amount) {
   amount = Math.min(p.stack, amount);
@@ -271,7 +353,7 @@ function stateFor(id) {
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
 }
 function broadcast() {
-  persist();
+  if (inMutation || storageUnavailable) return;
   for (const s of io.sockets.sockets.values()) if (s.data.uid) s.emit('state', stateFor(s.data.uid));
 }
 function cleanup() {
@@ -360,12 +442,19 @@ function finish() {
   cleanup(); broadcast();
 }
 function setTurn(p) {
-  clearTimeout(timer); table.turn = p.id; table.deadline = Date.now() + TURN_MS;
+  clearTimeout(timer); table.turn = p.id; table.deadline = Date.now() + TURN_MS; turnChanged = true;
+}
+function scheduleTurn() {
+  clearTimeout(timer);
+  if (!table.turn || !active() || storageUnavailable) return;
+  const id = table.turn, deadline = table.deadline;
   timer = setTimeout(() => {
-    if (table.turn === p.id && active()) {
-      act(p, { type: p.bet === table.currentBet ? 'call' : 'fold' }, true); broadcast();
-    }
-  }, TURN_MS);
+    enqueue(() => {
+      if (table.turn === id && table.deadline === deadline && active()) {
+        const p = seat(id); act(p, { type: p.bet === table.currentBet ? 'call' : 'fold' }, true);
+      }
+    }).catch(() => {});
+  }, Math.max(0, deadline - Date.now()));
 }
 function advance(after) {
   if (live().length <= 1) return finish();
@@ -456,20 +545,22 @@ function leave(id, disconnected = false) {
 }
 io.on('connection', socket => {
   let windowStart = Date.now(), events = 0;
-  const on = (event, handler) => socket.on(event, (data, ack) => {
+  const on = (event, handler) => socket.on(event, async (data, ack) => {
     if (Date.now() - windowStart > 1000) { windowStart = Date.now(); events = 0; }
     try {
       if (++events > 20) throw Error('Trop de requêtes, patientez.');
-      if (!socket.data.uid) throw Error('Connectez-vous.');
-      const session = sessions.get(socket.data.session);
-      if (!session || session.expires <= Date.now()) {
-        socket.emit('session-expired'); socket.disconnect(true); return;
-      }
-      handler(data && typeof data === 'object' ? data : {});
-      broadcast(); if (typeof ack === 'function') ack({ ok: true });
+      await enqueue(() => {
+        if (!socket.data.uid || !socket.connected) throw Error('Connectez-vous.');
+        const session = sessions.get(socket.data.session);
+        if (!session || session.expires <= Date.now()) {
+          socket.emit('session-expired'); socket.disconnect(true); throw Error('Session expirée.');
+        }
+        handler(data && typeof data === 'object' ? data : {});
+      });
+      if (typeof ack === 'function') ack({ ok: true });
     } catch (e) { if (typeof ack === 'function') ack({ error: e.message }); }
   });
-  broadcast();
+  enqueue(() => {}, false).catch(() => socket.emit('storage-error', { message: STORAGE_MESSAGE }));
   on('claim-aid', () => {
     const id = socket.data.uid, u = users.get(id);
     if (!aidStatus(id).eligible) throw Error(`Seconde chance : hors table, sous ${BUY_IN} jetons, une fois toutes les 24 h.`);
@@ -491,11 +582,16 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     const id = socket.data.uid;
     if (!id) return;
-    if (users.get(id).socket === socket.id) users.get(id).socket = null;
-    leave(id, true); broadcast();
+    enqueue(() => {
+      if (users.get(id).socket === socket.id) users.get(id).socket = null;
+      leave(id, true);
+    }).catch(() => {});
   });
 });
+const ready = initializeStorage().catch(error => { storageFailed(error); throw Error(STORAGE_MESSAGE); });
+ready.catch(() => {});
 if (require.main === module) server.listen(Number(process.env.PORT) || 3000, '0.0.0.0', () => {
-  console.log(`Poker fictif démarré sur le port ${server.address().port}. Créez deux comptes pour jouer.`);
+  console.log(`Poker fictif sur le port ${server.address().port}. Vérifiez /health avant de jouer.`);
 });
-module.exports = { server, io, table, users, five, best };
+module.exports = { server, io, table, users, five, best, ready,
+  closeStorage: () => pool ? pool.end() : Promise.resolve() };
