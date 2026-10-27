@@ -19,6 +19,49 @@
     #myCards .card{width:74px;height:104px;font-size:28px;padding:9px}#players .card{width:42px;height:60px;font-size:17px}
     input{background:#082427;color:white;border:1px solid #ffffff25;border-radius:.7rem;padding:.7rem;min-width:0}input:focus{outline:2px solid #e8bc70}input[type=number]{width:130px}
     [hidden]{display:none!important}#notice{min-height:1.5rem;color:#f6d195}
+    #gameLayout{display:grid;gap:1rem;margin-top:1rem}#tableColumn{display:grid;gap:.75rem;min-width:0}#sidebar{display:flex;flex-direction:column;gap:.75rem;min-width:0}
+    #historyPanel{min-height:0}#history{overflow-wrap:anywhere}#tableNotes{font-size:11px;line-height:1.5;color:#a7c9bb99;padding:0 .5rem}#tableNotes p+p{margin-top:.5rem}
+    #result{overflow-wrap:anywhere}#result:empty,#notice:empty{display:none}
+    .felt{position:relative}.card{transform-origin:center bottom}#pot{display:inline-block}.log-entry{animation:log-in .25s ease-out}.win-spark{position:absolute;left:50%;top:58%;pointer-events:none;color:#f2d59d;font-size:18px;text-shadow:0 0 12px #e8bc7088;animation:win-spark 1.2s ease-out both;z-index:2}
+    @keyframes log-in{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes win-spark{from{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}to{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--spin)) scale(.7)}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+    @media(min-width:1024px){
+      body.in-club{min-height:0}body.in-club main{height:100dvh;max-width:1440px;padding:12px 16px;display:flex;flex-direction:column}
+      body.in-club header{flex-shrink:0;margin-bottom:10px;gap:8px}body.in-club header h1{font-size:24px;line-height:28px}body.in-club header>div>p:first-child{margin-bottom:0;font-size:10px;line-height:14px}
+      #game{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px}
+      #accountBar{padding:10px 14px;gap:12px}#accountBar .text-xl{font-size:18px;line-height:24px}#accountBar #identity{line-height:18px}
+      #game .btn{padding:8px 12px;font-size:13px;line-height:20px}#game input{padding:8px;font-size:13px;line-height:20px}#raiseTo{width:90px}
+      #gameLayout{grid-template-columns:minmax(0,1fr) 260px;gap:12px;margin:0;min-height:0}
+      #tableColumn{grid-template-rows:minmax(0,1fr) auto;gap:10px;min-height:0}
+      .felt{min-height:0;padding:12px 16px;border-width:6px;border-radius:2rem;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+      #tableStage{margin:0;font-size:11px;line-height:16px}
+      #players{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;margin:0}#players:empty{display:none}
+      #players .seat{padding:6px;border-radius:10px}#players .seat>div:first-child{font-size:12px;line-height:16px;min-height:24px}#players .seat>p{margin:3px 0;font-size:13px;line-height:16px}
+      #players .seat>p:last-child{font-size:10px;line-height:14px;margin:4px 0 0}#players .seat>div:nth-of-type(2){min-height:36px}#players .card{width:26px;height:36px;font-size:12px;padding:3px;border-radius:5px}
+      #community>p:first-child{font-size:10px;line-height:14px}#community>p:nth-child(2){margin-top:0;font-size:26px;line-height:30px}#community>p:nth-child(2)>span:last-child{font-size:12px}
+      #board{margin-top:6px;gap:6px}.card{width:46px;height:64px;font-size:19px}
+      #empty{padding:8px;margin:0;font-size:13px}
+      .own-seat{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:0 12px;width:100%;max-width:580px;margin:0 auto;padding:8px 12px;text-align:left}
+      #myHeading{grid-column:1;grid-row:1;justify-content:flex-start}#myHeading>p{font-size:10px;line-height:14px}#myInfo{grid-column:1;grid-row:2;margin:0;font-size:12px;line-height:16px}#myNick{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      #myCards{grid-column:2;grid-row:1/4;margin:0;gap:8px}#myCards .card{width:58px;height:80px;font-size:23px;padding:7px}
+      #toggleCards{grid-column:3;grid-row:1/4;justify-self:end}#myStatus{grid-column:1;grid-row:3;margin:0;font-size:10px;line-height:14px}
+      #controls{padding:10px 14px}#controlsHeading{margin-bottom:6px;gap:6px}#turn{font-size:14px;line-height:20px}#hint{font-size:11px;line-height:16px;margin-top:0}#actions{gap:6px}#actions label{font-size:12px}#result{margin:6px 0 0;font-size:12px;line-height:16px}
+      #sidebar{min-height:0}#historyPanel{flex:1;display:flex;flex-direction:column;padding:14px}#historyPanel>div{margin-bottom:10px}#historyTitle{font-size:14px}#history{flex:1;min-height:0;max-height:none;font-size:12px;line-height:18px}#history li{gap:8px}#history time{font-size:10px}
+      #aidPanel{padding:12px}#aidPanel h2{font-size:14px}#aidPanel p{font-size:11px;line-height:16px}#claimAid{width:100%}
+      body.in-club #notice{flex-shrink:0;min-height:0;margin:4px 0 0;font-size:12px;line-height:16px}
+    }
+    @media(min-width:1024px) and (max-height:760px){
+      body.in-club main{padding:8px 14px}body.in-club header{margin-bottom:6px}#game{gap:8px}#accountBar{padding:8px 12px}#gameLayout{gap:10px;grid-template-columns:minmax(0,1fr) 245px}
+      .felt{padding:8px 12px;gap:6px}#players .card{width:24px;height:32px;font-size:11px}#players .seat>div:nth-of-type(2){min-height:32px}#players .seat{padding:5px}#players .seat>p{margin:2px 0}
+      #board .card{width:42px;height:58px;font-size:18px}#community>p:nth-child(2){font-size:22px;line-height:26px}#myCards .card{width:52px;height:72px;font-size:22px}.own-seat{padding:6px 10px}#tableNotes{font-size:10px}#controls{padding:8px 12px}
+    }
+    @media(min-width:1024px) and (max-height:640px){
+      body.in-club header>div:first-child{display:flex;align-items:baseline;gap:10px}#accountBar{padding:6px 12px}
+      #accountBar>div:first-child{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:12px}#identity{grid-column:1;grid-row:1/3;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      #accountBar>div:first-child>p:nth-child(2){grid-column:2;grid-row:1}#accountBar>div:first-child>p:last-child{grid-column:2;grid-row:2;margin:0;font-size:10px;line-height:14px}
+      .felt{padding:6px 12px;gap:4px}#community{display:grid;grid-template-columns:auto auto;align-items:baseline;justify-content:center;gap:4px 8px}#community>p:first-child{grid-column:1;grid-row:1}#community>p:nth-child(2){grid-column:2;grid-row:1}#board{grid-column:1/3;grid-row:2;margin:0}
+    }
     @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}}
   </style>
 </head>
@@ -41,36 +84,41 @@
       <p class="text-xs text-emerald-100/50 mt-5">Aucun achat, aucun retrait, aucun argent réel. Un compte est nécessaire pour jouer.</p>
     </section>
     <div id="game" hidden>
-      <section class="panel p-4 md:p-5 flex flex-wrap justify-between items-center gap-4 mb-6">
+      <section id="accountBar" class="panel p-4 md:p-5 flex flex-wrap justify-between items-center gap-4">
         <div><p id="identity" class="text-sm text-emerald-100/60"></p><p class="text-xl font-semibold"><span id="wallet">0</span> <span class="text-sm font-normal text-emerald-100/50">jetons disponibles</span></p><p class="text-xs text-emerald-100/60 mt-1">Capital total : <span id="bankroll">0</span> · Résultat aux tables : <span id="profit">0</span></p></div>
-        <div class="flex flex-wrap gap-2"><button id="join" class="btn gold">Rejoindre · 500 jetons</button><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
+        <div class="flex flex-wrap gap-2"><button id="join" class="btn gold">Rejoindre · 500 jetons max.</button><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
       </section>
-      <section id="aidPanel" class="panel p-5 mb-6" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
-      <div class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10</span></div>
+      <div id="gameLayout">
+      <div id="tableColumn">
       <section class="felt p-4 md:p-8">
+        <div id="tableStage" class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10</span></div>
         <div id="players" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" aria-label="Adversaires"></div>
-        <div class="text-center"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
+        <div id="community" class="text-center"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
         <p id="empty" class="text-center text-emerald-100/60 py-7">La table vous attend. Rejoignez-la avec un ami.</p>
         <section id="mySeat" class="seat own-seat" aria-label="Votre place" hidden>
-          <div class="flex justify-center items-center gap-2"><p class="text-xs uppercase tracking-[.2em] text-[#e8bc70]">Votre main</p><span id="myDealer" class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1" hidden>D</span></div>
-          <p class="text-sm text-emerald-100/70 mt-2"><span id="myNick"></span> · <span id="myStack"></span> jetons</p>
+          <div id="myHeading" class="flex justify-center items-center gap-2"><p class="text-xs uppercase tracking-[.2em] text-[#e8bc70]">Votre main</p><span id="myDealer" class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1" hidden>D</span></div>
+          <p id="myInfo" class="text-sm text-emerald-100/70 mt-2"><span id="myNick"></span> <span id="myStack"></span> jetons</p>
           <div id="myCards" class="flex justify-center gap-3 my-4" aria-label="Vos cartes privées"></div>
           <button id="toggleCards" type="button" class="btn text-sm" aria-controls="myCards">Cacher mes cartes</button>
           <p id="myStatus" class="text-xs text-emerald-100/65 mt-3"></p>
         </section>
       </section>
-      <p id="result" class="text-center text-sm text-[#f2d59d] my-5" role="status"></p>
-      <section class="panel p-5">
-        <div class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : 500 jetons · Vous récupérez vos jetons restants en quittant la table.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
+      <section id="controls" class="panel p-5">
+        <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : vos jetons disponibles, jusqu’à 500 · Jetons restants rendus à la sortie.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
         <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
+        <p id="result" class="text-center text-sm text-[#f2d59d] mt-3" role="status"></p>
       </section>
-      <section class="panel p-5 mt-5" aria-labelledby="historyTitle">
+      </div>
+      <aside id="sidebar" aria-label="Suivi de la table">
+      <section id="historyPanel" class="panel p-5" aria-labelledby="historyTitle">
         <div class="flex justify-between items-center gap-3 mb-3"><h2 id="historyTitle" class="font-semibold">Historique de la table</h2><span class="text-xs text-emerald-200/60">En direct</span></div>
         <p id="historyEmpty" class="text-sm text-emerald-100/50">Les actions des joueurs apparaîtront ici.</p>
         <ol id="history" class="max-h-56 overflow-y-auto space-y-2 text-sm" tabindex="0" aria-label="Actions de la table" aria-live="polite" aria-relevant="additions"></ol>
       </section>
-      <p class="text-xs text-center text-emerald-100/45 mt-5">30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p>
-      <p class="text-xs text-center text-emerald-100/45 mt-2">1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p>
+      <section id="aidPanel" class="panel p-5" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
+      <div id="tableNotes"><p>30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p><p>1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p></div>
+      </aside>
+      </div>
     </div>
     <p id="notice" class="text-sm text-center mt-5" role="alert"></p>
   </main>
@@ -94,6 +142,7 @@
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
       lastLogId = 0; $('history').replaceChildren(); $('historyEmpty').hidden = false;
       $('login').hidden = false; $('game').hidden = true;
+      document.body.classList.remove('in-club');
       $('password').value = ''; $('passwordConfirm').value = '';
       $('connection').textContent = '○ Non connecté'; $('notice').textContent = message;
     }
@@ -126,14 +175,53 @@
         : !me.cards.length ? 'Vos cartes apparaîtront à la distribution'
         : me.stack === 0 ? 'Vous êtes à tapis' : state.turn === me.id ? 'À vous de jouer' : 'Vous êtes à table';
     }
-    $('toggleCards').onclick = () => { cardsHidden = !cardsHidden; renderOwnHand(); };
+    function motion(element, frames, options = {}) {
+      if (!element?.animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+      return element.animate(frames, { duration:350, easing:'ease-out', ...options });
+    }
+    function dealAnimation(cards) {
+      cards.forEach((element, i) => motion(element,
+        [{opacity:0,transform:'translateY(-14px) rotate(-6deg)'},{opacity:1,transform:'translateY(0) rotate(0)'}],
+        {delay:i * 70,fill:'backwards'}));
+    }
+    function animateState(previous, next) {
+      if (!previous) return;
+      if (next.pot > previous.pot) motion($('pot'), [{transform:'scale(1)'},{transform:'scale(1.15)',color:'#fff2cf'},{transform:'scale(1)'}]);
+      if (next.hand !== previous.hand) {
+        dealAnimation([...$('myCards').children]);
+        dealAnimation([...$('players').querySelectorAll('.card')]);
+      }
+      if (next.board.length > previous.board.length) dealAnimation([...$('board').children].slice(previous.board.length, next.board.length));
+      if (next.turn && next.turn !== previous.turn) motion(next.turn === next.me ? $('mySeat') : $('players').querySelector('.acting'),
+        [{boxShadow:'0 0 0 0 #e8bc7070'},{boxShadow:'0 0 0 7px #e8bc7000'}], {duration:650});
+      if (next.phase === 'showdown' && previous.phase !== 'showdown') {
+        motion($('result'), [{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}]);
+        const before = previous.players.find(p => p.id === next.me), after = next.players.find(p => p.id === next.me);
+        if (before && after && after.stack > before.stack && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+          const felt = document.querySelector('.felt');
+          for (let i = 0; i < 14; i++) {
+            const spark = document.createElement('span'); spark.className = 'win-spark'; spark.textContent = i % 2 ? '✦' : '●';
+            spark.setAttribute('aria-hidden', 'true');
+            spark.style.setProperty('--x', `${(Math.random() - .5) * 350}px`);
+            spark.style.setProperty('--y', `${-40 - Math.random() * 160}px`);
+            spark.style.setProperty('--spin', `${(Math.random() - .5) * 240}deg`);
+            felt.append(spark); setTimeout(() => spark.remove(), 1300);
+          }
+        }
+      }
+    }
+    $('toggleCards').onclick = () => {
+      cardsHidden = !cardsHidden; renderOwnHand();
+      [...$('myCards').children].forEach(element => motion(element,
+        [{transform:'scaleX(.15)',opacity:.5},{transform:'scaleX(1)',opacity:1}], {duration:180}));
+    };
     function renderHistory(entries = []) {
       const history = $('history');
       const follow = !history.children.length || history.scrollHeight - history.scrollTop - history.clientHeight < 30;
       for (const entry of entries) {
         if (entry.id <= lastLogId) continue;
         const row = document.createElement('li'), time = document.createElement('time'), text = document.createElement('span');
-        row.className = 'flex gap-3 text-emerald-100/80';
+        row.className = 'log-entry flex gap-3 text-emerald-100/80';
         time.className = 'text-xs text-emerald-100/40 shrink-0 pt-0.5';
         time.dateTime = new Date(entry.time).toISOString();
         time.textContent = new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -209,7 +297,9 @@
         : 'Disponible maintenant. Votre résultat aux tables restera inchangé.';
     }
     socket.on('state', s => {
+      const previous = state;
       state = s; storageBlocked = false; $('login').hidden = true; $('game').hidden = false;
+      document.body.classList.add('in-club');
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
       $('identity').textContent = s.nick; $('wallet').textContent = money(s.wallet); $('pot').textContent = money(s.pot);
@@ -223,7 +313,8 @@
         <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
         <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
       $('empty').hidden = s.players.length > 0;
-      $('join').hidden = !!me; $('join').disabled = playing || s.players.length >= 6 || s.wallet < s.buyIn;
+      $('join').hidden = !!me; $('join').disabled = playing || s.players.length >= 6 || s.wallet <= 0;
+      $('join').textContent = `Rejoindre · ${money(Math.min(s.wallet, s.buyIn))} jetons`;
       $('leave').hidden = !me; $('leave').disabled = !!me?.leaving;
       $('start').hidden = !me || playing; $('start').disabled = s.players.length < 2 || !!me?.leaving;
       $('result').textContent = s.result;
@@ -239,10 +330,11 @@
         $('raise').disabled = !s.canRaise || max <= s.currentBet;
         $('allin').disabled = max > s.currentBet && !s.canRaise;
         $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
-      } else $('hint').textContent = `Entrée : ${money(s.buyIn)} jetons · Vous récupérez vos jetons restants en quittant la table.`;
+      } else $('hint').textContent = `Entrée : ${money(Math.min(s.wallet, s.buyIn))} jetons · Plafond ${money(s.buyIn)} · Jetons restants rendus à la sortie.`;
       renderOwnHand();
       renderHistory(s.logs);
       renderAid();
+      animateState(previous, s);
     });
     setInterval(() => {
       if (storageBlocked) $('connection').textContent = '○ Partie suspendue';

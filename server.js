@@ -576,10 +576,11 @@ io.on('connection', socket => {
     if (active()) throw Error('Attendez la fin de la main pour rejoindre.');
     if (seat(id)) throw Error('Vous êtes déjà à table.');
     if (table.players.length >= 6) throw Error('Table complète (6 joueurs).');
-    if (u.wallet < BUY_IN) throw Error(`Il faut ${BUY_IN} jetons pour rejoindre. Consultez votre seconde chance.`);
-    u.wallet -= BUY_IN;
-    table.players.push({ id, nick: u.nick, stack: BUY_IN, bet: 0, total: 0, hole: [], folded: false, leaving: false });
-    addLog(`rejoint la table avec ${BUY_IN} jetons.`, u);
+    if (u.wallet <= 0) throw Error('Il faut au moins un jeton pour rejoindre. Consultez votre seconde chance.');
+    const buyIn = Math.min(u.wallet, BUY_IN);
+    u.wallet -= buyIn;
+    table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false });
+    addLog(`rejoint la table avec ${buyIn} jetons.`, u);
   });
   on('leave', () => leave(socket.data.uid));
   on('start', () => { if (!seat(socket.data.uid) || seat(socket.data.uid).leaving) throw Error('Rejoignez la table.'); start(); });
