@@ -48,6 +48,7 @@ const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
 const postgres = !!process.env.DATABASE_URL;
+const storageOwner = randomBytes(32).toString('hex');
 const STORAGE_MESSAGE = 'Le stockage est temporairement indisponible. La partie est suspendue pour protéger vos jetons.';
 let pool, dbRevision, storageReady = false, storageUnavailable = false;
 let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false;
@@ -153,11 +154,16 @@ async function initializeStorage() {
   await pool.query('REVOKE ALL ON SCHEMA river_club_private FROM PUBLIC');
   await pool.query(`CREATE TABLE IF NOT EXISTS river_club_private.state (
     id INTEGER PRIMARY KEY CHECK (id = 1), revision BIGINT NOT NULL DEFAULT 0, payload JSONB NOT NULL)`);
+  await pool.query('ALTER TABLE river_club_private.state ADD COLUMN IF NOT EXISTS owner TEXT');
   await pool.query('ALTER TABLE river_club_private.state ENABLE ROW LEVEL SECURITY');
   await pool.query('REVOKE ALL ON TABLE river_club_private.state FROM PUBLIC');
   await pool.query(`INSERT INTO river_club_private.state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
     [JSON.stringify({ version: 1, capitalResetVersion: 1, users: [] })]);
-  const { rows } = await pool.query('SELECT revision, payload FROM river_club_private.state WHERE id = 1');
+  // Render fait coexister les deux serveurs pendant un déploiement. Le nouveau prend
+  // la main et charge le dernier état dans une seule écriture atomique, sans changer les comptes.
+  // La révision avancée bloque aussi les anciennes versions qui ne connaissent pas owner.
+  const { rows } = await pool.query(`UPDATE river_club_private.state
+    SET owner = $1, revision = revision + 1 WHERE id = 1 RETURNING revision, payload`, [storageOwner]);
   const saved = validateAccounts(rows[0].payload);
   dbRevision = rows[0].revision; capitalResetVersion = Math.max(1, saved.capitalResetVersion ?? 0);
   for (const u of saved.users) users.set(u.id, { ...u, socket: null });
@@ -190,7 +196,7 @@ async function persist() {
   const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows });
   if (postgres) {
     const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
-      WHERE id = 1 AND revision = $2 RETURNING revision`, [payload, dbRevision]);
+      WHERE id = 1 AND revision = $2 AND owner = $3 RETURNING revision`, [payload, dbRevision, storageOwner]);
     if (result.rowCount !== 1) throw Object.assign(Error('Une autre instance a modifié les comptes.'), { code: 'STORAGE_CONFLICT' });
     dbRevision = result.rows[0].revision; return;
   }
@@ -208,6 +214,7 @@ async function persist() {
 function storageFailed(error) {
   storageUnavailable = true; clearTimeout(timer);
   console.error('[stockage] Sauvegarde indisponible :', error.code || error.name);
+  if (error.code === 'STORAGE_CONFLICT') console.error('[stockage] Cette instance a été remplacée ou son état est périmé. Écritures arrêtées ; la nouvelle instance conserve les derniers comptes enregistrés.');
   if (error.code === 'DATABASE_URL_MISSING') console.error('[stockage] Définissez DATABASE_URL dans Render → Environment. Aucun compte ne sera enregistré sur le disque éphémère.');
   io.emit('storage-error', { message: STORAGE_MESSAGE });
 }
