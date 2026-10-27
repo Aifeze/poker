@@ -47,6 +47,8 @@ const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
+const chatMessages = [], chatLimits = new Map();
+let chatSequence = 0;
 const postgres = !!process.env.DATABASE_URL;
 const storageOwner = randomBytes(32).toString('hex');
 const STORAGE_MESSAGE = 'Le stockage est temporairement indisponible. La partie est suspendue pour protéger vos jetons.';
@@ -172,11 +174,11 @@ async function initializeStorage() {
 }
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
-  hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [] };
+  hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [] };
 let logSequence = 0;
-function addLog(message, player) {
+function addLog(message, player, effect = null) {
   table.logs.push({ id: ++logSequence, hand: table.hand, time: Date.now(),
-    message: player ? `[${player.nick}] ${message}` : message });
+    message: player ? `[${player.nick}] ${message}` : message, actorId: player?.id, effect });
   if (table.logs.length > 100) table.logs.splice(0, table.logs.length - 100);
 }
 let timer;
@@ -268,6 +270,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [key, v] of authAttempts) if (v.until <= now) authAttempts.delete(key);
   for (const [key, v] of sessions) if (v.expires <= now) sessions.delete(key);
+  for (const [key, v] of chatLimits) if (v.until <= now) chatLimits.delete(key);
 }, 60000).unref();
 app.use('/api', async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -358,7 +361,8 @@ function stateFor(id) {
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
     deadline: table.deadline, currentBet: table.currentBet, minRaise: table.minRaise,
-    pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result,
+    pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result, winners: table.winners,
+    celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
     players: table.players.map(q => ({ id: q.id, nick: q.nick, stack: q.stack,
       bet: q.bet, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
@@ -412,13 +416,22 @@ function best(cards) {
             score = Math.max(score, five([cards[a], cards[b], cards[c], cards[d], cards[e]]));
   return score;
 }
+function handReason(score) {
+  const category = Math.floor(score / 15 ** 5);
+  const first = Math.floor(score / 15 ** 4) % 15, second = Math.floor(score / 15 ** 3) % 15;
+  const rank = n => ({11:'Valet',12:'Dame',13:'Roi',14:'As'}[n] || String(n));
+  return [`Carte haute : ${rank(first)}`, `Paire : ${rank(first)}`, `Double paire : ${rank(first)} et ${rank(second)}`,
+    `Brelan : ${rank(first)}`, `Quinte au ${rank(first)}`, `Couleur, ${rank(first)} en tête`,
+    `Full : ${rank(first)} par ${rank(second)}`, `Carré : ${rank(first)}`, `Quinte flush au ${rank(first)}`][category];
+}
 function finish() {
   clearTimeout(timer); table.turn = null; table.deadline = 0;
   const ps = table.players, remaining = live(), gains = new Map(), refunds = new Map();
   table.reveal = remaining.length > 1;
   const scores = new Map(remaining.map(p => [p.id, table.reveal ? best([...p.hole, ...table.board]) : 0]));
   // Chaque niveau de contribution constitue un pot distinct ; les excédents sont rendus.
-  let previous = 0;
+  let previous = 0, potNumber = 0;
+  const awards = new Map();
   for (const level of [...new Set(ps.map(p => p.total).filter(Boolean))].sort((a, b) => a - b)) {
     const contributors = ps.filter(p => p.total >= level);
     const eligible = contributors.filter(p => !p.folded);
@@ -432,6 +445,7 @@ function finish() {
     }
     const high = Math.max(...eligible.map(p => scores.get(p.id)));
     const winners = eligible.filter(p => scores.get(p.id) === high);
+    const potName = ++potNumber === 1 ? 'Pot principal' : `Pot secondaire ${potNumber - 1}`;
     // En cas de partage, le jeton impair revient au premier gagnant à gauche du bouton.
     const dealerIndex = ps.findIndex(p => p.id === table.dealer);
     winners.sort((a, b) => ((ps.indexOf(a) - dealerIndex - 1 + ps.length) % ps.length)
@@ -439,8 +453,13 @@ function finish() {
     winners.forEach((p, i) => {
       const gain = Math.floor(amount / winners.length) + (i < amount % winners.length ? 1 : 0);
       p.stack += gain; gains.set(p.id, (gains.get(p.id) || 0) + gain);
+      if (!awards.has(p.id)) awards.set(p.id, { pots: [], shared: false });
+      awards.get(p.id).pots.push(potName);
+      awards.get(p.id).shared ||= winners.length > 1;
     });
   }
+  table.winners = [...gains].map(([id, amount]) => ({ id, nick: users.get(id).nick, amount,
+    reason: table.reveal ? handReason(scores.get(id)) : 'Tous les autres joueurs se sont couchés', ...awards.get(id) }));
   table.result = gains.size ? [...gains].map(([id, gain]) => `${users.get(id).nick} gagne ${gain} jetons${
     table.reveal ? ` (${labels[Math.floor(scores.get(id) / 15 ** 5)]})` : ''}`).join(' · ')
     : 'Main terminée : mises remboursées.';
@@ -495,7 +514,7 @@ function start() {
   if (ps.length < 2) throw Error('Deux joueurs minimum sont nécessaires.');
   clearTimeout(timer);
   const dealer = nextAfter(table.dealer, () => true);
-  table.dealer = dealer.id; table.hand++; table.phase = 'preflop'; table.board = [];
+  table.dealer = dealer.id; table.hand++; table.phase = 'preflop'; table.board = []; table.winners = [];
   table.result = `Main ${table.hand} — petites / grosses blindes : ${SMALL} / ${BIG} jetons.`;
   addLog(`Main ${table.hand} : distribution. ${dealer.nick} est au bouton.`);
   table.reveal = false; table.currentBet = BIG; table.minRaise = BIG; table.acted.clear();
@@ -508,8 +527,8 @@ function start() {
   const sb = ps.length === 2 ? dealer : nextAfter(dealer.id, () => true);
   const bb = nextAfter(sb.id, () => true);
   pay(sb, SMALL); pay(bb, BIG);
-  addLog(`pose la petite blinde : ${sb.bet} jetons${sb.stack === 0 ? ' (tapis)' : ''}.`, sb);
-  addLog(`pose la grosse blinde : ${bb.bet} jetons${bb.stack === 0 ? ' (tapis)' : ''}.`, bb);
+  addLog(`pose la petite blinde : ${sb.bet} jetons${sb.stack === 0 ? ' (tapis)' : ''}.`, sb, {type:sb.stack === 0 ? 'allin' : 'bet', amount:sb.bet});
+  addLog(`pose la grosse blinde : ${bb.bet} jetons${bb.stack === 0 ? ' (tapis)' : ''}.`, bb, {type:bb.stack === 0 ? 'allin' : 'bet', amount:bb.bet});
   table.pending = new Set(ps.filter(canAct).map(p => p.id));
   advance(bb.id);
 }
@@ -517,13 +536,13 @@ function act(p, { type, amount }, automatic = false) {
   if (!active() || table.turn !== p.id || !canAct(p)) throw Error("Ce n'est pas votre tour.");
   if (!['fold', 'call', 'raise'].includes(type)) throw Error('Action inconnue.');
   const timeout = automatic ? ' (délai écoulé)' : '';
-  if (type === 'fold') { p.folded = true; addLog(`se couche${timeout}.`, p); }
+  if (type === 'fold') { p.folded = true; addLog(`se couche${timeout}.`, p, {type:'fold'}); }
   if (type === 'call') {
     const paid = Math.min(p.stack, Math.max(0, table.currentBet - p.bet));
     pay(p, paid);
     addLog(paid === 0 ? `check${timeout}.` : p.stack === 0
       ? `fait tapis : ${p.bet} jetons au total (suit ${paid} jetons).`
-      : `suit de ${paid} jetons.`, p);
+      : `suit de ${paid} jetons.`, p, {type:paid === 0 ? 'check' : p.stack === 0 ? 'allin' : 'call', amount:paid});
   }
   if (type === 'raise') {
     const maximum = p.bet + p.stack;
@@ -537,7 +556,7 @@ function act(p, { type, amount }, automatic = false) {
       table.pending = new Set(table.players.filter(canAct).map(q => q.id));
     } else table.players.filter(q => canAct(q) && q.bet < amount).forEach(q => table.pending.add(q.id));
     addLog(p.stack === 0 ? `fait tapis : ${amount} jetons au total.`
-      : opening ? `mise ${amount} jetons.` : `relance à ${amount} jetons.`, p);
+      : opening ? `mise ${amount} jetons.` : `relance à ${amount} jetons.`, p, {type:p.stack === 0 ? 'allin' : 'raise', amount});
   }
   table.acted.set(p.id, table.currentBet); table.pending.delete(p.id); advance(p.id);
 }
@@ -572,7 +591,28 @@ io.on('connection', socket => {
       if (typeof ack === 'function') ack({ ok: true });
     } catch (e) { if (typeof ack === 'function') ack({ error: e.message }); }
   });
-  enqueue(() => {}, false).catch(() => socket.emit('storage-error', { message: STORAGE_MESSAGE }));
+  enqueue(() => {}, false).then(() => socket.emit('chat-history', chatMessages))
+    .catch(() => socket.emit('storage-error', { message: STORAGE_MESSAGE }));
+  // Le chat ne passe pas par la file des mises : aucun solde ni délai de jeu n'est modifié.
+  socket.on('chat', (data, ack) => {
+    try {
+      if (storageUnavailable) throw Error(STORAGE_MESSAGE);
+      const session = sessionFor(socket.request), id = socket.data.uid;
+      if (!session || session.id !== id || users.get(id)?.socket !== socket.id) throw Error('Reconnectez-vous pour écrire.');
+      if (typeof data?.text !== 'string' || data.text.length > 280) throw Error('Votre message doit contenir entre 1 et 280 caractères.');
+      const text = data.text.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/gu, ' ').trim();
+      if (!text) throw Error('Écrivez un message avant de l’envoyer.');
+      const now = Date.now();
+      let limit = chatLimits.get(id);
+      if (!limit || limit.until <= now) { limit = { count:0, until:now + 10000 }; chatLimits.set(id, limit); }
+      if (limit.count >= 5) throw Error('Un peu de patience : 5 messages maximum en 10 secondes.');
+      limit.count++;
+      const entry = { id:++chatSequence, userId:id, nick:users.get(id).nick, text, time:now };
+      chatMessages.push(entry); if (chatMessages.length > 80) chatMessages.shift();
+      io.emit('chat-message', entry);
+      if (typeof ack === 'function') ack({ ok:true });
+    } catch (error) { if (typeof ack === 'function') ack({ error:error.message }); }
+  });
   on('claim-aid', () => {
     const id = socket.data.uid, u = users.get(id);
     if (!aidStatus(id).eligible) throw Error(`Seconde chance : hors table, sous ${BUY_IN} jetons, une fois toutes les 24 h.`);

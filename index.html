@@ -20,9 +20,21 @@
     input{background:#082427;color:white;border:1px solid #ffffff25;border-radius:.7rem;padding:.7rem;min-width:0}input:focus{outline:2px solid #e8bc70}input[type=number]{width:130px}
     [hidden]{display:none!important}#notice{min-height:1.5rem;color:#f6d195}
     #gameLayout{display:grid;gap:1rem;margin-top:1rem}#tableColumn{display:grid;gap:.75rem;min-width:0}#sidebar{display:flex;flex-direction:column;gap:.75rem;min-width:0}
-    #historyPanel{min-height:0}#history{overflow-wrap:anywhere}#tableNotes{font-size:11px;line-height:1.5;color:#a7c9bb99;padding:0 .5rem}#tableNotes p+p{margin-top:.5rem}
+    #chatPanel{min-height:0;display:flex;flex-direction:column}#chatMessages{min-height:0;max-height:320px;overflow-y:auto;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#436b60 transparent}
+    .chat-message{margin:0 0 10px;padding:9px 10px;background:#153a3b;border-radius:10px 10px 10px 2px;font-size:13px;line-height:1.45}.chat-message.mine{background:#36523e;border-radius:10px 10px 2px 10px}.chat-meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:3px;font-size:11px;color:#e8bc70}.chat-meta strong{min-width:0;overflow:hidden;text-overflow:ellipsis}.chat-meta time{flex-shrink:0;color:#a7c9bb80;font-size:10px}.chat-message p{white-space:pre-wrap}
+    #chatForm{display:flex;gap:6px;margin-top:10px;flex-shrink:0}#chatInput{width:100%;font-size:13px;padding:9px}#chatSend{flex-shrink:0;padding:8px 12px}#chatError{color:#f6d195;font-size:11px;line-height:16px;margin-top:6px}#chatError:empty{display:none}
+    #tableNotes{font-size:11px;line-height:1.5;color:#a7c9bb99;padding:0 .5rem}#tableNotes p+p{margin-top:.5rem}
     #result{overflow-wrap:anywhere}#result:empty,#notice:empty{display:none}
-    .felt{position:relative}.card{transform-origin:center bottom}#pot{display:inline-block}.log-entry{animation:log-in .25s ease-out}.win-spark{position:absolute;left:50%;top:58%;pointer-events:none;color:#f2d59d;font-size:18px;text-shadow:0 0 12px #e8bc7088;animation:win-spark 1.2s ease-out both;z-index:2}
+    .felt,.seat{position:relative}.card{transform-origin:center bottom}#pot{display:inline-block}.chat-enter{animation:log-in .25s ease-out}.win-spark{position:absolute;left:50%;top:58%;pointer-events:none;color:#f2d59d;font-size:18px;text-shadow:0 0 12px #e8bc7088;animation:win-spark 1.2s ease-out both;z-index:2}
+    #tableFx{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:8}.flying-chip{position:absolute;width:18px;height:18px;border:3px dashed #fff4c2;border-radius:50%;background:#c48c31;box-shadow:0 2px 5px #0008;pointer-events:none}
+    .action-badge{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);padding:3px 9px;background:#e8bc70;color:#112d29;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap;z-index:4;box-shadow:0 2px 8px #0005}.action-badge.allin{background:#bf4050;color:#fff0d0}
+    .winner-seat{border-color:#f5ce7e;box-shadow:0 0 22px #e8bc7040}
+    #tableToast{position:absolute;top:33%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:12;padding:10px 22px;border:1px solid #e8bc7080;border-radius:14px;background:#082b2cf5;box-shadow:0 8px 32px #0005;max-width:85%}#toastTitle{font-size:24px;font-weight:850;color:#f2d59d;letter-spacing:.15em}#toastDetail{font-size:12px;color:#c4dcd0;overflow-wrap:anywhere}
+    #winnerAnnouncement{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(90%,520px);max-height:80%;overflow:auto;z-index:15;pointer-events:none;text-align:center;padding:22px;border-radius:22px;border:1px solid #edca84aa;background:radial-gradient(ellipse at top,#496242,#0a2728 75%);box-shadow:0 16px 70px #0008,0 0 55px #e8bc7025}
+    #winnerAnnouncement::before{content:'♠';display:block;font-size:32px;line-height:1;color:#e8bc70;margin-bottom:8px}#winnerKicker{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#e8bc70}#winnerTitle{font-size:clamp(24px,3vw,42px);font-weight:850;line-height:1.1;color:#fff0c5;overflow-wrap:anywhere;margin:8px 0}#winnerReason{font-size:15px;color:#dbebe0}#winnerAmount{font-size:20px;font-weight:750;color:#e8bc70;margin-top:8px}
+    #winnerAmount:empty{display:none}#winnerList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.winner-item{padding:8px;background:#ffffff08;border-radius:10px;overflow-wrap:anywhere}.winner-item strong{display:block;color:#fff0c5;font-size:14px}.winner-item p{font-size:11px;color:#c2d9cc}.winner-item span{display:block;color:#e8bc70;font-size:12px;font-weight:700}
+    #winnerAnnouncement.multiple{padding:14px}#winnerAnnouncement.multiple::before,#winnerAnnouncement.multiple #winnerReason{display:none}#winnerAnnouncement.multiple #winnerTitle{font-size:26px;margin:4px 0}.multiple #winnerList{gap:6px;margin-top:8px}.multiple .winner-item{padding:6px}.multiple .winner-item strong{font-size:13px;line-height:16px}.multiple .winner-item p{font-size:10px;line-height:13px}.multiple .winner-item span{font-size:11px;line-height:14px}
+    #winnerAnnouncement.long-name #winnerTitle{font-size:clamp(20px,2.2vw,32px)}
     @keyframes log-in{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}
     @keyframes win-spark{from{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}to{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--spin)) scale(.7)}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -47,7 +59,7 @@
       #myCards{grid-column:2;grid-row:1/4;margin:0;gap:8px}#myCards .card{width:58px;height:80px;font-size:23px;padding:7px}
       #toggleCards{grid-column:3;grid-row:1/4;justify-self:end}#myStatus{grid-column:1;grid-row:3;margin:0;font-size:10px;line-height:14px}
       #controls{padding:10px 14px}#controlsHeading{margin-bottom:6px;gap:6px}#turn{font-size:14px;line-height:20px}#hint{font-size:11px;line-height:16px;margin-top:0}#actions{gap:6px}#actions label{font-size:12px}#result{margin:6px 0 0;font-size:12px;line-height:16px}
-      #sidebar{min-height:0}#historyPanel{flex:1;display:flex;flex-direction:column;padding:14px}#historyPanel>div{margin-bottom:10px}#historyTitle{font-size:14px}#history{flex:1;min-height:0;max-height:none;font-size:12px;line-height:18px}#history li{gap:8px}#history time{font-size:10px}
+      #sidebar{min-height:0}#chatPanel{flex:1;padding:14px}#chatPanel>div:first-child{margin-bottom:10px}#chatTitle{font-size:14px}#chatMessages{flex:1;max-height:none}#chatInput{font-size:12px!important;padding:8px!important}.chat-message{font-size:12px}
       #aidPanel{padding:12px}#aidPanel h2{font-size:14px}#aidPanel p{font-size:11px;line-height:16px}#claimAid{width:100%}
       body.in-club #notice{flex-shrink:0;min-height:0;margin:4px 0 0;font-size:12px;line-height:16px}
     }
@@ -61,6 +73,8 @@
       #accountBar>div:first-child{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:12px}#identity{grid-column:1;grid-row:1/3;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       #accountBar>div:first-child>p:nth-child(2){grid-column:2;grid-row:1}#accountBar>div:first-child>p:last-child{grid-column:2;grid-row:2;margin:0;font-size:10px;line-height:14px}
       .felt{padding:6px 12px;gap:4px}#community{display:grid;grid-template-columns:auto auto;align-items:baseline;justify-content:center;gap:4px 8px}#community>p:first-child{grid-column:1;grid-row:1}#community>p:nth-child(2){grid-column:2;grid-row:1}#board{grid-column:1/3;grid-row:2;margin:0}
+      #winnerAnnouncement{padding:12px}#winnerAnnouncement::before{font-size:22px;margin-bottom:4px}#winnerTitle{font-size:28px;margin:5px 0}#winnerReason{font-size:12px}#winnerList{gap:4px;margin-top:6px}.winner-item{padding:4px}
+      #winnerAnnouncement.multiple{padding:10px}#winnerAnnouncement.multiple #winnerTitle{font-size:22px}.multiple #winnerList{gap:4px;margin-top:6px}.multiple .winner-item{padding:4px}.multiple .winner-item strong{font-size:12px;line-height:14px}.multiple .winner-item p{font-size:10px;line-height:12px}.multiple .winner-item span{font-size:11px;line-height:14px}
     }
     @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}}
   </style>
@@ -102,6 +116,11 @@
           <button id="toggleCards" type="button" class="btn text-sm" aria-controls="myCards">Cacher mes cartes</button>
           <p id="myStatus" class="text-xs text-emerald-100/65 mt-3"></p>
         </section>
+        <div id="tableFx" aria-hidden="true"></div>
+        <div id="tableToast" aria-hidden="true" hidden><p id="toastTitle"></p><p id="toastDetail"></p></div>
+        <section id="winnerAnnouncement" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <p id="winnerKicker">La main est remportée</p><h2 id="winnerTitle"></h2><p id="winnerReason"></p><p id="winnerAmount"></p><div id="winnerList"></div>
+        </section>
       </section>
       <section id="controls" class="panel p-5">
         <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : vos jetons disponibles, jusqu’à 500 · Jetons restants rendus à la sortie.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
@@ -110,10 +129,12 @@
       </section>
       </div>
       <aside id="sidebar" aria-label="Suivi de la table">
-      <section id="historyPanel" class="panel p-5" aria-labelledby="historyTitle">
-        <div class="flex justify-between items-center gap-3 mb-3"><h2 id="historyTitle" class="font-semibold">Historique de la table</h2><span class="text-xs text-emerald-200/60">En direct</span></div>
-        <p id="historyEmpty" class="text-sm text-emerald-100/50">Les actions des joueurs apparaîtront ici.</p>
-        <ol id="history" class="max-h-56 overflow-y-auto space-y-2 text-sm" tabindex="0" aria-label="Actions de la table" aria-live="polite" aria-relevant="additions"></ol>
+      <section id="chatPanel" class="panel p-5" aria-labelledby="chatTitle">
+        <div class="flex justify-between items-center gap-3 mb-3"><h2 id="chatTitle" class="font-semibold">Chat de la table</h2><span class="text-xs text-emerald-200/60">● En direct</span></div>
+        <p id="chatEmpty" class="text-sm text-emerald-100/50">Un bonjour avant la prochaine main ?</p>
+        <ol id="chatMessages" tabindex="0" role="log" aria-label="Messages des joueurs" aria-live="polite" aria-relevant="additions"></ol>
+        <form id="chatForm"><label class="sr-only" for="chatInput">Votre message</label><input id="chatInput" type="text" maxlength="280" autocomplete="off" placeholder="Écrire un message…" required disabled><button id="chatSend" type="submit" class="btn gold" aria-label="Envoyer le message" disabled>➤</button></form>
+        <p id="chatError" role="status"></p>
       </section>
       <section id="aidPanel" class="panel p-5" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
       <div id="tableNotes"><p>30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p><p>1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p></div>
@@ -129,6 +150,8 @@
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
     let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
+    let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
+    const chatNodes = new Map();
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
       $('loginTab').classList.toggle('gold', !register); $('registerTab').classList.toggle('gold', register);
@@ -140,11 +163,12 @@
     }
     function showLogin(message = '') {
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
-      lastLogId = 0; $('history').replaceChildren(); $('historyEmpty').hidden = false;
+      lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
+      $('chatInput').value = ''; $('chatError').textContent = ''; clearEffects();
       $('login').hidden = false; $('game').hidden = true;
       document.body.classList.remove('in-club');
       $('password').value = ''; $('passwordConfirm').value = '';
-      $('connection').textContent = '○ Non connecté'; $('notice').textContent = message;
+      $('connection').textContent = '○ Non connecté'; $('notice').textContent = message; updateChatAvailability();
     }
     async function api(route, data) {
       const response = await fetch('/api/' + route, { method: data ? 'POST' : 'GET',
@@ -174,7 +198,7 @@
       const me = state?.players.find(p => p.id === state.me);
       $('mySeat').hidden = !me;
       if (!me) { $('myCards').innerHTML = ''; return; }
-      $('mySeat').className = `seat own-seat ${state.turn === me.id ? 'acting' : ''} ${me.folded ? 'folded' : ''}`;
+      $('mySeat').className = `seat own-seat ${state.turn === me.id ? 'acting' : ''} ${me.folded ? 'folded' : ''} ${state.winners?.some(w => w.id === me.id) ? 'winner-seat' : ''}`;
       $('myNick').textContent = me.nick; $('myStack').textContent = money(me.stack); $('myDealer').hidden = !me.dealer;
       $('myCards').innerHTML = (me.cards.length ? me.cards : [null, null])
         .map(c => card(cardsHidden && c ? '??' : c)).join('');
@@ -190,56 +214,140 @@
     }
     function dealAnimation(cards) {
       cards.forEach((element, i) => motion(element,
-        [{opacity:0,transform:'translateY(-14px) rotate(-6deg)'},{opacity:1,transform:'translateY(0) rotate(0)'}],
+        [{opacity:0,transform:'translateY(-28px) rotateY(100deg) rotate(-12deg) scale(.75)'},{opacity:1,transform:'translateY(0) rotateY(0) rotate(0) scale(1)'}],
         {delay:i * 70,fill:'backwards'}));
     }
+    const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const seatElement = id => id === state?.me ? ($('mySeat').hidden ? null : $('mySeat')) : [...$('players').children].find(el => el.dataset.player === id);
+    function clearEffects() {
+      clearTimeout(winnerTimer); clearTimeout(toastTimer);
+      $('winnerAnnouncement').hidden = true; $('tableToast').hidden = true; $('tableFx').replaceChildren();
+    }
+    function flyChips(from, to, delay = 0) {
+      if (reducedMotion() || !from || !to || !$('tableFx').animate) return;
+      const bounds = $('tableFx').getBoundingClientRect(), a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+      for (let i = 0; i < 6; i++) {
+        const chip = document.createElement('span'); chip.className = 'flying-chip';
+        chip.style.left = `${a.left + a.width / 2 - bounds.left - 9}px`;
+        chip.style.top = `${a.top + a.height / 2 - bounds.top - 9}px`;
+        chip.style.backgroundColor = ['#c48c31','#a43d4d','#346a72'][i % 3]; $('tableFx').append(chip);
+        motion(chip, [{transform:'translate(0,0) scale(.7)',opacity:0},
+          {opacity:1,offset:.15}, {transform:`translate(${b.left + b.width / 2 - a.left - a.width / 2 + (i % 3 - 1) * 6}px,${b.top + b.height / 2 - a.top - a.height / 2}px) rotate(220deg) scale(.85)`,opacity:0}],
+          {duration:650,delay:delay + i * 45,fill:'both'});
+        setTimeout(() => chip.remove(), delay + 1100);
+      }
+    }
+    function showToast(title, detail) {
+      clearTimeout(toastTimer); $('toastTitle').textContent = title; $('toastDetail').textContent = detail;
+      $('tableToast').hidden = false;
+      motion($('tableToast'), [{opacity:0,transform:'translate(-50%,-40%) scale(.8)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:260});
+      toastTimer = setTimeout(() => { $('tableToast').hidden = true; }, 1400);
+    }
+    function showWinners(next) {
+      if (!next.winners?.length || winnerHand === next.hand) return;
+      winnerHand = next.hand;
+      if (next.celebrationMs <= 0) return;
+      clearTimeout(winnerTimer); clearTimeout(toastTimer); $('tableToast').hidden = true;
+      const winners = next.winners, single = winners.length === 1;
+      $('winnerAnnouncement').classList.toggle('multiple', !single);
+      $('winnerAnnouncement').classList.toggle('long-name', single && winners[0].nick.length > 14);
+      const shared = winners.every(w => w.shared && w.pots.length === 1);
+      $('winnerKicker').textContent = single ? 'La main est remportée' : shared ? 'Pot partagé' : 'Pots attribués';
+      $('winnerTitle').textContent = single ? winners[0].nick : 'Les vainqueurs';
+      $('winnerReason').textContent = single ? winners[0].reason : shared ? 'Égalité : le pot est partagé.' : 'Chaque pot revient à sa meilleure main.';
+      $('winnerAmount').textContent = single ? `+ ${money(winners[0].amount)} jetons` : '';
+      $('winnerList').replaceChildren(); $('winnerList').hidden = single;
+      if (!single) for (const winner of winners) {
+        const row = document.createElement('div'), nick = document.createElement('strong'), reason = document.createElement('p'), amount = document.createElement('span'), pots = document.createElement('p');
+        row.className = 'winner-item'; nick.textContent = winner.nick; reason.textContent = winner.reason;
+        amount.textContent = `+ ${money(winner.amount)} jetons`; pots.textContent = winner.pots.join(' · ');
+        row.append(nick, reason, amount, pots); $('winnerList').append(row);
+      }
+      $('winnerAnnouncement').hidden = false;
+      motion($('winnerAnnouncement'), [{opacity:0,transform:'translate(-50%,-42%) scale(.75)',filter:'blur(6px)'},
+        {opacity:1,transform:'translate(-50%,-50%) scale(1.03)',filter:'blur(0)',offset:.75},
+        {opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:650,easing:'cubic-bezier(.2,.8,.2,1)'});
+      for (const winner of winners) flyChips($('pot'), seatElement(winner.id), 450);
+      if (!reducedMotion()) for (let i = 0; i < 30; i++) {
+        const spark = document.createElement('span'); spark.className = 'win-spark'; spark.textContent = i % 3 ? '✦' : '♠';
+        spark.style.setProperty('--x', `${(Math.random() - .5) * 500}px`);
+        spark.style.setProperty('--y', `${-30 - Math.random() * 220}px`);
+        spark.style.setProperty('--spin', `${(Math.random() - .5) * 360}deg`);
+        spark.style.animationDelay = `${i * 18}ms`; $('tableFx').append(spark); setTimeout(() => spark.remove(), 2000);
+      }
+      winnerTimer = setTimeout(() => { $('winnerAnnouncement').hidden = true; }, Math.min(next.celebrationMs || 3600, 3600));
+    }
     function animateState(previous, next) {
-      if (!previous) return;
-      if (next.pot > previous.pot) motion($('pot'), [{transform:'scale(1)'},{transform:'scale(1.15)',color:'#fff2cf'},{transform:'scale(1)'}]);
-      if (next.hand !== previous.hand) {
-        dealAnimation([...$('myCards').children]);
-        dealAnimation([...$('players').querySelectorAll('.card')]);
-      }
-      if (next.board.length > previous.board.length) dealAnimation([...$('board').children].slice(previous.board.length, next.board.length));
-      if (next.turn && next.turn !== previous.turn) motion(next.turn === next.me ? $('mySeat') : $('players').querySelector('.acting'),
-        [{boxShadow:'0 0 0 0 #e8bc7070'},{boxShadow:'0 0 0 7px #e8bc7000'}], {duration:650});
-      if (next.phase === 'showdown' && previous.phase !== 'showdown') {
-        motion($('result'), [{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}]);
-        const before = previous.players.find(p => p.id === next.me), after = next.players.find(p => p.id === next.me);
-        if (before && after && after.stack > before.stack && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-          const felt = document.querySelector('.felt');
-          for (let i = 0; i < 14; i++) {
-            const spark = document.createElement('span'); spark.className = 'win-spark'; spark.textContent = i % 2 ? '✦' : '●';
-            spark.setAttribute('aria-hidden', 'true');
-            spark.style.setProperty('--x', `${(Math.random() - .5) * 350}px`);
-            spark.style.setProperty('--y', `${-40 - Math.random() * 160}px`);
-            spark.style.setProperty('--spin', `${(Math.random() - .5) * 240}deg`);
-            felt.append(spark); setTimeout(() => spark.remove(), 1300);
-          }
+      if (previous && next.hand !== previous.hand) clearEffects();
+      if (!previous) lastLogId = next.logs?.at(-1)?.id || 0;
+      if (previous) {
+        if (next.pot > previous.pot) motion($('pot'), [{transform:'scale(1)'},{transform:'scale(1.2)',color:'#fff2cf'},{transform:'scale(1)'}]);
+        if (next.hand !== previous.hand) {
+          dealAnimation([...$('myCards').children]); dealAnimation([...$('players').querySelectorAll('.card')]);
         }
+        if (next.board.length > previous.board.length) dealAnimation([...$('board').children].slice(previous.board.length, next.board.length));
+        if (next.turn && next.turn !== previous.turn) motion(seatElement(next.turn),
+          [{boxShadow:'0 0 0 0 #e8bc7090'},{boxShadow:'0 0 0 9px #e8bc7000'}], {duration:800});
+        if (next.phase !== previous.phase && ['flop','turn','river'].includes(next.phase))
+          showToast(next.phase.toUpperCase(), {flop:'Trois cartes. La main se dessine.',turn:'Une carte peut tout changer.',river:'Dernière carte. À vous de jouer.'}[next.phase]);
+        for (const entry of next.logs || []) {
+          if (entry.id <= lastLogId || entry.hand !== next.hand || !entry.effect) continue;
+          const element = seatElement(entry.actorId), effect = entry.effect;
+          if (element) {
+            element.querySelector('.action-badge')?.remove();
+            const badge = document.createElement('span'); badge.className = `action-badge ${effect.type === 'allin' ? 'allin' : ''}`;
+            badge.textContent = {fold:'COUCHÉ',check:'CHECK',call:`SUIT ${money(effect.amount || 0)}`,raise:`RELANCE ${money(effect.amount || 0)}`,bet:`MISE ${money(effect.amount || 0)}`,allin:'TAPIS !'}[effect.type] || '';
+            badge.setAttribute('aria-hidden','true'); element.append(badge); setTimeout(() => badge.remove(), 1600);
+            motion(badge, [{opacity:0,transform:'translate(-50%,5px) scale(.8)'},{opacity:1,transform:'translate(-50%,0) scale(1)'}]);
+            if (effect.amount > 0) flyChips(element, $('pot'));
+            if (effect.type === 'fold') element.querySelectorAll('.card').forEach(card => motion(card,
+              [{transform:'rotate(0)',opacity:1},{transform:'translateY(8px) rotate(-8deg)',opacity:.25}], {duration:450,fill:'forwards'}));
+          }
+          if (effect.type === 'allin' && next.phase !== 'showdown') showToast('TAPIS !', next.players.find(p => p.id === entry.actorId)?.nick || 'Tout se joue maintenant.');
+        }
+        lastLogId = next.logs?.at(-1)?.id || lastLogId;
       }
+      if (next.phase === 'showdown') showWinners(next);
     }
     $('toggleCards').onclick = () => {
       cardsHidden = !cardsHidden; renderOwnHand();
       [...$('myCards').children].forEach(element => motion(element,
         [{transform:'scaleX(.15)',opacity:.5},{transform:'scaleX(1)',opacity:1}], {duration:180}));
     };
-    function renderHistory(entries = []) {
-      const history = $('history');
-      const follow = !history.children.length || history.scrollHeight - history.scrollTop - history.clientHeight < 30;
-      for (const entry of entries) {
-        if (entry.id <= lastLogId) continue;
-        const row = document.createElement('li'), time = document.createElement('time'), text = document.createElement('span');
-        row.className = 'log-entry flex gap-3 text-emerald-100/80';
-        time.className = 'text-xs text-emerald-100/40 shrink-0 pt-0.5';
-        time.dateTime = new Date(entry.time).toISOString();
-        time.textContent = new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        text.textContent = entry.message; row.append(time, text); history.append(row); lastLogId = entry.id;
-      }
-      while (history.children.length > 100) history.firstElementChild.remove();
-      $('historyEmpty').hidden = history.children.length > 0;
-      if (follow) history.scrollTop = history.scrollHeight;
+    function updateChatAvailability() {
+      const blocked = !state || !socket.connected || storageBlocked;
+      $('chatInput').disabled = blocked;
+      $('chatSend').disabled = blocked || chatPending || !$('chatInput').value.trim();
     }
+    function renderChat(entries, animate = false) {
+      const list = $('chatMessages'), follow = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+      for (const entry of [...entries].sort((a,b) => a.id - b.id)) {
+        if (chatNodes.has(entry.id)) continue;
+        const row = document.createElement('li'), meta = document.createElement('div'), nick = document.createElement('strong'), time = document.createElement('time'), text = document.createElement('p');
+        row.className = `chat-message ${entry.userId === state?.me ? 'mine' : ''} ${animate ? 'chat-enter' : ''}`; row.dataset.chatId = entry.id;
+        meta.className = 'chat-meta'; nick.textContent = entry.nick; time.dateTime = new Date(entry.time).toISOString();
+        time.textContent = new Date(entry.time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        text.textContent = entry.text; meta.append(nick,time); row.append(meta,text);
+        const after = [...list.children].find(node => Number(node.dataset.chatId) > entry.id);
+        list.insertBefore(row,after || null); chatNodes.set(entry.id,row);
+      }
+      while (list.children.length > 80) { chatNodes.delete(Number(list.firstElementChild.dataset.chatId)); list.firstElementChild.remove(); }
+      $('chatEmpty').hidden = list.children.length > 0;
+      if (follow) list.scrollTop = list.scrollHeight;
+    }
+    socket.on('chat-history', entries => renderChat(entries));
+    socket.on('chat-message', entry => renderChat([entry], true));
+    $('chatInput').oninput = updateChatAvailability;
+    $('chatForm').onsubmit = e => {
+      e.preventDefault(); if ($('chatSend').disabled) return;
+      const text = $('chatInput').value; chatPending = true; $('chatError').textContent = ''; updateChatAvailability();
+      socket.timeout(8000).emit('chat', {text}, (error, reply) => {
+        chatPending = false;
+        $('chatError').textContent = error ? 'Envoi non confirmé. Vérifiez le chat avant de réessayer.' : reply?.error || '';
+        if (!error && reply?.ok && $('chatInput').value === text) $('chatInput').value = '';
+        updateChatAvailability();
+      });
+    };
     function send(event, data = {}) {
       if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; return; }
       socket.timeout(35000).emit(event, data, (err, reply) => {
@@ -276,15 +384,16 @@
       send('action', amount > state.currentBet ? {type:'raise',amount} : {type:'call'});
     };
     socket.on('connect', () => {
-      $('connection').textContent = '● Connecté';
+      $('connection').textContent = '● Connecté'; updateChatAvailability();
     });
     socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
     socket.on('storage-error', data => {
-      storageBlocked = true; $('notice').textContent = data.message;
+      storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability();
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
       $('logout').disabled = false;
     });
     socket.on('disconnect', reason => {
+      updateChatAvailability();
       if (!state) return;
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
       $('connection').textContent = '○ Reconnexion…';
@@ -317,7 +426,7 @@
       $('profit').className = s.profit < 0 ? 'text-rose-300' : 'text-emerald-300';
       $('stage').textContent = `Main ${s.hand} · ${{waiting:'En attente',preflop:'Préflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Résultat'}[s.phase]}`;
       $('board').innerHTML = Array.from({length:5}, (_, i) => card(s.board[i])).join('');
-      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article class="seat ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
+      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article data-player="${escapeHTML(p.id)}" class="seat ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
         <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
         <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
         <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
@@ -341,7 +450,7 @@
         $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
       } else $('hint').textContent = `Entrée : ${money(Math.min(s.wallet, s.buyIn))} jetons · Plafond ${money(s.buyIn)} · Jetons restants rendus à la sortie.`;
       renderOwnHand();
-      renderHistory(s.logs);
+      updateChatAvailability();
       renderAid();
       animateState(previous, s);
     });
