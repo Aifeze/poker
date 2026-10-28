@@ -32,9 +32,18 @@
     #tableToast{position:absolute;top:33%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:12;padding:10px 22px;border:1px solid #e8bc7080;border-radius:14px;background:#082b2cf5;box-shadow:0 8px 32px #0005;max-width:85%}#toastTitle{font-size:24px;font-weight:850;color:#f2d59d;letter-spacing:.15em}#toastDetail{font-size:12px;color:#c4dcd0;overflow-wrap:anywhere}
     #winnerAnnouncement{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(90%,520px);max-height:80%;overflow:auto;z-index:15;pointer-events:none;text-align:center;padding:22px;border-radius:22px;border:1px solid #edca84aa;background:radial-gradient(ellipse at top,#496242,#0a2728 75%);box-shadow:0 16px 70px #0008,0 0 55px #e8bc7025}
     #winnerAnnouncement::before{content:'♠';display:block;font-size:32px;line-height:1;color:#e8bc70;margin-bottom:8px}#winnerKicker{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#e8bc70}#winnerTitle{font-size:clamp(24px,3vw,42px);font-weight:850;line-height:1.1;color:#fff0c5;overflow-wrap:anywhere;margin:8px 0}#winnerReason{font-size:15px;color:#dbebe0}#winnerAmount{font-size:20px;font-weight:750;color:#e8bc70;margin-top:8px}
-    #winnerAmount:empty{display:none}#winnerList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.winner-item{padding:8px;background:#ffffff08;border-radius:10px;overflow-wrap:anywhere}.winner-item strong{display:block;color:#fff0c5;font-size:14px}.winner-item p{font-size:11px;color:#c2d9cc}.winner-item span{display:block;color:#e8bc70;font-size:12px;font-weight:700}
-    #winnerAnnouncement.multiple{padding:14px}#winnerAnnouncement.multiple::before,#winnerAnnouncement.multiple #winnerReason{display:none}#winnerAnnouncement.multiple #winnerTitle{font-size:26px;margin:4px 0}.multiple #winnerList{gap:6px;margin-top:8px}.multiple .winner-item{padding:6px}.multiple .winner-item strong{font-size:13px;line-height:16px}.multiple .winner-item p{font-size:10px;line-height:13px}.multiple .winner-item span{font-size:11px;line-height:14px}
+    #winnerAmount:empty{display:none}#winnerList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.winner-item{padding:8px;background:#ffffff08;border-radius:10px;overflow-wrap:anywhere}.winner-item strong{display:block;color:#fff0c5;font-size:14px}.winner-item p{font-size:11px;color:#c2d9cc}.winner-item .winner-payout{display:block;color:#e8bc70;font-size:12px;font-weight:700}
+    #winnerAnnouncement.multiple{padding:14px}#winnerAnnouncement.multiple::before,#winnerAnnouncement.multiple #winnerReason{display:none}#winnerAnnouncement.multiple #winnerTitle{font-size:26px;margin:4px 0}.multiple #winnerList{gap:6px;margin-top:8px}.multiple .winner-item{padding:6px}.multiple .winner-item strong{font-size:13px;line-height:16px}.multiple .winner-item p{font-size:10px;line-height:13px}.multiple .winner-item .winner-payout{font-size:11px;line-height:14px}
     #winnerAnnouncement.long-name #winnerTitle{font-size:clamp(20px,2.2vw,32px)}
+    #winnerAnnouncement.has-cards{max-height:96%;padding:16px}#winnerAnnouncement.has-cards::before{font-size:24px;margin-bottom:4px}
+    #winnerAnnouncement.multiple.has-cards{width:min(96%,660px);padding:12px}#winnerAnnouncement.multiple.many #winnerList{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .winning-cards{display:flex;justify-content:center;gap:7px;margin:12px 0 5px;perspective:600px}.winning-card-slot{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+    .winning-cards .card{width:50px;height:70px;padding:6px;font-size:23px;border:2px solid #e8bc70;box-shadow:0 0 12px #e8bc7040}
+    .winning-cards .card.kicker-card{border-color:#7fa9b9;background:#dfebed;box-shadow:none}.winning-card-slot small{font-size:9px;line-height:12px;color:#b9d3cb}.winning-card-slot.from-hand small{color:#f2d59d}
+    .winner-item .winning-cards{gap:4px;margin:6px 0}.winner-item .winning-cards .card{width:29px;height:40px;font-size:15px;padding:3px;border-radius:5px}.winner-item .winning-card-slot{gap:1px}.winner-item .winning-card-slot small{font-size:7px;line-height:9px}
+    #winnerCardLegend{font-size:10px;line-height:14px;color:#c2d9cc;margin-top:6px}#winnerCards:empty,#winnerCardLegend:empty{display:none}
+    .card.combination-source{outline:2px solid #f3c66e;outline-offset:2px;box-shadow:0 0 16px #e8bc7070}.card.kicker-source{outline:2px solid #7fa9b9;outline-offset:2px}
+    @media(min-width:1024px){#winnerAnnouncement.multiple.many{width:min(96%,720px)}#winnerAnnouncement.multiple.many #winnerList{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @keyframes log-in{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}
     @keyframes win-spark{from{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}to{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--spin)) scale(.7)}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -74,9 +83,10 @@
       #accountBar>div:first-child>p:nth-child(2){grid-column:2;grid-row:1}#accountBar>div:first-child>p:last-child{grid-column:2;grid-row:2;margin:0;font-size:10px;line-height:14px}
       .felt{padding:6px 12px;gap:4px}#community{display:grid;grid-template-columns:auto auto;align-items:baseline;justify-content:center;gap:4px 8px}#community>p:first-child{grid-column:1;grid-row:1}#community>p:nth-child(2){grid-column:2;grid-row:1}#board{grid-column:1/3;grid-row:2;margin:0}
       #winnerAnnouncement{padding:12px}#winnerAnnouncement::before{font-size:22px;margin-bottom:4px}#winnerTitle{font-size:28px;margin:5px 0}#winnerReason{font-size:12px}#winnerList{gap:4px;margin-top:6px}.winner-item{padding:4px}
-      #winnerAnnouncement.multiple{padding:10px}#winnerAnnouncement.multiple #winnerTitle{font-size:22px}.multiple #winnerList{gap:4px;margin-top:6px}.multiple .winner-item{padding:4px}.multiple .winner-item strong{font-size:12px;line-height:14px}.multiple .winner-item p{font-size:10px;line-height:12px}.multiple .winner-item span{font-size:11px;line-height:14px}
+      #winnerAnnouncement.multiple{padding:10px}#winnerAnnouncement.multiple #winnerTitle{font-size:22px}.multiple #winnerList{gap:4px;margin-top:6px}.multiple .winner-item{padding:4px}.multiple .winner-item strong{font-size:12px;line-height:14px}.multiple .winner-item p{font-size:10px;line-height:12px}.multiple .winner-item .winner-payout{font-size:11px;line-height:14px}
+      #winnerAnnouncement.has-cards{padding:10px}#winnerAnnouncement.has-cards::before{display:none}.winning-cards{margin-top:8px}.winning-cards .card{width:42px;height:58px;font-size:20px}.winner-item .winning-cards{gap:3px;margin:4px 0}.winner-item .winning-cards .card{width:25px;height:34px;font-size:13px;padding:2px}.winner-item .winning-card-slot small{font-size:6px;line-height:8px}#winnerCardLegend{font-size:9px;line-height:12px;margin-top:4px}
     }
-    @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}}
+    @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}.winning-cards{gap:4px}.winning-cards .card{width:34px;height:48px;font-size:17px;padding:4px}.winner-item .winning-cards{gap:2px}.winner-item .winning-cards .card{width:18px;height:27px;font-size:10px;padding:2px}.winner-item .winning-card-slot small{font-size:6px;line-height:8px}}
   </style>
 </head>
 <body>
@@ -119,7 +129,7 @@
         <div id="tableFx" aria-hidden="true"></div>
         <div id="tableToast" aria-hidden="true" hidden><p id="toastTitle"></p><p id="toastDetail"></p></div>
         <section id="winnerAnnouncement" role="status" aria-live="polite" aria-atomic="true" hidden>
-          <p id="winnerKicker">La main est remportée</p><h2 id="winnerTitle"></h2><p id="winnerReason"></p><p id="winnerAmount"></p><div id="winnerList"></div>
+          <p id="winnerKicker">La main est remportée</p><h2 id="winnerTitle"></h2><p id="winnerReason"></p><div id="winnerCards"></div><p id="winnerAmount"></p><div id="winnerList"></div><p id="winnerCardLegend"></p>
         </section>
       </section>
       <section id="controls" class="panel p-5">
@@ -192,7 +202,7 @@
     function card(c) {
       if (!c) return '<span class="card empty" aria-label="Carte à venir">·</span>';
       if (c === '??') return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
-      return `<span class="card ${'hd'.includes(c[1]) ? 'red' : ''}" aria-label="${c}"><span>${c[0] === 'T' ? '10' : c[0]}</span><span>${symbols[c[1]]}</span></span>`;
+      return `<span class="card ${'hd'.includes(c[1]) ? 'red' : ''}" data-card="${c}" aria-label="${c}"><span>${c[0] === 'T' ? '10' : c[0]}</span><span>${symbols[c[1]]}</span></span>`;
     }
     function renderOwnHand() {
       const me = state?.players.find(p => p.id === state.me);
@@ -243,6 +253,40 @@
       motion($('tableToast'), [{opacity:0,transform:'translate(-50%,-40%) scale(.8)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:260});
       toastTimer = setTimeout(() => { $('tableToast').hidden = true; }, 1400);
     }
+    function winningCards(winner) {
+      const strip = document.createElement('div'); strip.className = 'winning-cards'; strip.dataset.winner = winner.id;
+      strip.setAttribute('role','group'); strip.setAttribute('aria-label', `Les cinq cartes gagnantes de ${winner.nick}`);
+      for (const selected of winner.winningHand || []) {
+        const slot = document.createElement('div'), origin = document.createElement('small');
+        const masked = winner.id === state.me && selected.fromHand && cardsHidden;
+        slot.className = `winning-card-slot ${selected.fromHand ? 'from-hand' : ''}`;
+        slot.innerHTML = card(masked ? '??' : selected.code);
+        slot.firstElementChild.classList.add(selected.combination ? 'combination-card' : 'kicker-card');
+        if (!masked) slot.firstElementChild.setAttribute('aria-label', `${selected.code}, ${selected.fromHand ? 'main du joueur' : 'tableau'}, ${selected.combination ? 'combinaison' : 'départage'}`);
+        origin.textContent = selected.fromHand ? 'Main' : 'Table'; slot.append(origin); strip.append(slot);
+      }
+      return strip;
+    }
+    function highlightWinningSources() {
+      document.querySelectorAll('.combination-source,.kicker-source').forEach(el => el.classList.remove('combination-source','kicker-source'));
+      if (state?.phase !== 'showdown') return;
+      const board = new Map();
+      for (const winner of state.winners || []) for (const selected of winner.winningHand || []) {
+        if (!selected.fromHand) board.set(selected.code, board.get(selected.code) || selected.combination);
+        else seatElement(winner.id)?.querySelectorAll('[data-card]').forEach(el => {
+          if (el.dataset.card === selected.code) el.classList.add(selected.combination ? 'combination-source' : 'kicker-source');
+        });
+      }
+      $('board').querySelectorAll('[data-card]').forEach(el => {
+        if (board.has(el.dataset.card)) el.classList.add(board.get(el.dataset.card) ? 'combination-source' : 'kicker-source');
+      });
+    }
+    function refreshWinningCards() {
+      $('winnerAnnouncement').querySelectorAll('.winning-cards').forEach(strip => {
+        const winner = state?.winners?.find(w => w.id === strip.dataset.winner);
+        if (winner) strip.replaceWith(winningCards(winner));
+      });
+    }
     function showWinners(next) {
       if (!next.winners?.length || winnerHand === next.hand) return;
       winnerHand = next.hand;
@@ -250,23 +294,41 @@
       clearTimeout(winnerTimer); clearTimeout(toastTimer); $('tableToast').hidden = true;
       const winners = next.winners, single = winners.length === 1;
       $('winnerAnnouncement').classList.toggle('multiple', !single);
+      $('winnerAnnouncement').classList.toggle('many', winners.length > 2);
+      const hasCards = winners.some(w => w.winningHand?.length);
+      $('winnerAnnouncement').classList.toggle('has-cards', hasCards);
       $('winnerAnnouncement').classList.toggle('long-name', single && winners[0].nick.length > 14);
       const shared = winners.every(w => w.shared && w.pots.length === 1);
       $('winnerKicker').textContent = single ? 'La main est remportée' : shared ? 'Pot partagé' : 'Pots attribués';
       $('winnerTitle').textContent = single ? winners[0].nick : 'Les vainqueurs';
       $('winnerReason').textContent = single ? winners[0].reason : shared ? 'Égalité : le pot est partagé.' : 'Chaque pot revient à sa meilleure main.';
       $('winnerAmount').textContent = single ? `+ ${money(winners[0].amount)} jetons` : '';
+      $('winnerCards').replaceChildren();
+      if (single && hasCards) $('winnerCards').append(winningCards(winners[0]));
+      const boardOnly = hasCards && winners.every(w => w.winningHand?.every(c => !c.fromHand));
+      $('winnerCardLegend').textContent = !hasCards ? '' : boardOnly ? 'Le tableau joue : les cinq cartes communes forment la main gagnante.'
+        : 'Doré : combinaison · Bleu : départage · Main / Table : origine des cartes';
       $('winnerList').replaceChildren(); $('winnerList').hidden = single;
       if (!single) for (const winner of winners) {
         const row = document.createElement('div'), nick = document.createElement('strong'), reason = document.createElement('p'), amount = document.createElement('span'), pots = document.createElement('p');
-        row.className = 'winner-item'; nick.textContent = winner.nick; reason.textContent = winner.reason;
+        row.className = 'winner-item'; nick.textContent = winner.nick; reason.textContent = winner.reason; amount.className = 'winner-payout';
         amount.textContent = `+ ${money(winner.amount)} jetons`; pots.textContent = winner.pots.join(' · ');
-        row.append(nick, reason, amount, pots); $('winnerList').append(row);
+        row.append(nick, reason);
+        if (winner.winningHand?.length) row.append(winningCards(winner));
+        row.append(amount, pots); $('winnerList').append(row);
       }
       $('winnerAnnouncement').hidden = false;
       motion($('winnerAnnouncement'), [{opacity:0,transform:'translate(-50%,-42%) scale(.75)',filter:'blur(6px)'},
         {opacity:1,transform:'translate(-50%,-50%) scale(1.03)',filter:'blur(0)',offset:.75},
-        {opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:650,easing:'cubic-bezier(.2,.8,.2,1)'});
+        {opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:Math.min(650, next.celebrationMs / 3),easing:'cubic-bezier(.2,.8,.2,1)'});
+      if (next.celebrationMs >= 2000) $('winnerAnnouncement').querySelectorAll('.winning-cards').forEach((strip, row) => {
+        [...strip.children].forEach((slot, index) => motion(slot.firstElementChild,
+          [{opacity:0,transform:'translateY(22px) rotateY(100deg) scale(.75)'},
+            {opacity:1,transform:'translateY(-3px) rotateY(0) scale(1.04)',offset:.8},
+            {opacity:1,transform:'translateY(0) scale(1)'}], {duration:520,delay:200 + row * 100 + index * 80,fill:'backwards'}));
+      });
+      document.querySelectorAll('.combination-source').forEach(el => motion(el,
+        [{boxShadow:'0 0 0 #e8bc7000'},{boxShadow:'0 0 24px #e8bc70aa'},{boxShadow:'0 0 16px #e8bc7070'}], {duration:1000}));
       for (const winner of winners) flyChips($('pot'), seatElement(winner.id), 450);
       if (!reducedMotion()) for (let i = 0; i < 30; i++) {
         const spark = document.createElement('span'); spark.className = 'win-spark'; spark.textContent = i % 3 ? '✦' : '♠';
@@ -310,7 +372,7 @@
       if (next.phase === 'showdown') showWinners(next);
     }
     $('toggleCards').onclick = () => {
-      cardsHidden = !cardsHidden; renderOwnHand();
+      cardsHidden = !cardsHidden; renderOwnHand(); refreshWinningCards(); highlightWinningSources();
       [...$('myCards').children].forEach(element => motion(element,
         [{transform:'scaleX(.15)',opacity:.5},{transform:'scaleX(1)',opacity:1}], {duration:180}));
     };
@@ -450,6 +512,7 @@
         $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
       } else $('hint').textContent = `Entrée : ${money(Math.min(s.wallet, s.buyIn))} jetons · Plafond ${money(s.buyIn)} · Jetons restants rendus à la sortie.`;
       renderOwnHand();
+      highlightWinningSources();
       updateChatAvailability();
       renderAid();
       animateState(previous, s);

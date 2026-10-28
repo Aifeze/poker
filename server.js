@@ -406,16 +406,27 @@ function five(cards) {
   return [category, ...Array.from({ length: 5 }, (_, i) => kick[i] || 0)]
     .reduce((n, x) => n * 15 + x, 0);
 }
-function best(cards) {
-  let score = -1;
+function bestHand(cards) {
+  let score = -1, selected = [];
   for (let a = 0; a < cards.length - 4; a++)
     for (let b = a + 1; b < cards.length - 3; b++)
       for (let c = b + 1; c < cards.length - 2; c++)
         for (let d = c + 1; d < cards.length - 1; d++)
-          for (let e = d + 1; e < cards.length; e++)
-            score = Math.max(score, five([cards[a], cards[b], cards[c], cards[d], cards[e]]));
-  return score;
+          for (let e = d + 1; e < cards.length; e++) {
+            const hand = [cards[a], cards[b], cards[c], cards[d], cards[e]], value = five(hand);
+            if (value > score) { score = value; selected = hand; }
+          }
+  const category = Math.floor(score / 15 ** 5), rank = c => '23456789TJQKA'.indexOf(c[0]) + 2;
+  const count = c => selected.filter(other => rank(other) === rank(c)).length;
+  const straight = category === 4 || category === 8;
+  const wheel = straight && Math.floor(score / 15 ** 4) % 15 === 5;
+  const high = c => wheel && rank(c) === 14 ? 1 : rank(c);
+  selected.sort((a, b) => (straight ? 0 : count(b) - count(a)) || high(b) - high(a));
+  const combination = selected.filter((c, i) => category === 0 ? i === 0
+    : [1,2,3,7].includes(category) ? count(c) > 1 : true);
+  return { score, cards: selected, combination };
 }
+function best(cards) { return bestHand(cards).score; }
 function handReason(score) {
   const category = Math.floor(score / 15 ** 5);
   const first = Math.floor(score / 15 ** 4) % 15, second = Math.floor(score / 15 ** 3) % 15;
@@ -428,7 +439,9 @@ function finish() {
   clearTimeout(timer); table.turn = null; table.deadline = 0;
   const ps = table.players, remaining = live(), gains = new Map(), refunds = new Map();
   table.reveal = remaining.length > 1;
-  const scores = new Map(remaining.map(p => [p.id, table.reveal ? best([...p.hole, ...table.board]) : 0]));
+  // Le tableau est parcouru en premier pour retenir ses cartes lorsqu'elles suffisent à égalité.
+  const hands = new Map(remaining.map(p => [p.id, table.reveal ? bestHand([...table.board, ...p.hole]) : null]));
+  const scores = new Map(remaining.map(p => [p.id, hands.get(p.id)?.score ?? 0]));
   // Chaque niveau de contribution constitue un pot distinct ; les excédents sont rendus.
   let previous = 0, potNumber = 0;
   const awards = new Map();
@@ -458,8 +471,13 @@ function finish() {
       awards.get(p.id).shared ||= winners.length > 1;
     });
   }
-  table.winners = [...gains].map(([id, amount]) => ({ id, nick: users.get(id).nick, amount,
-    reason: table.reveal ? handReason(scores.get(id)) : 'Tous les autres joueurs se sont couchés', ...awards.get(id) }));
+  table.winners = [...gains].map(([id, amount]) => {
+    const hand = hands.get(id), player = ps.find(p => p.id === id);
+    return { id, nick: users.get(id).nick, amount,
+      reason: table.reveal ? handReason(scores.get(id)) : 'Tous les autres joueurs se sont couchés',
+      winningHand: hand ? hand.cards.map(code => ({ code, fromHand: player.hole.includes(code),
+        combination: hand.combination.includes(code) })) : [], ...awards.get(id) };
+  });
   table.result = gains.size ? [...gains].map(([id, gain]) => `${users.get(id).nick} gagne ${gain} jetons${
     table.reveal ? ` (${labels[Math.floor(scores.get(id) / 15 ** 5)]})` : ''}`).join(' · ')
     : 'Main terminée : mises remboursées.';
@@ -646,5 +664,5 @@ ready.catch(() => {});
 if (require.main === module) server.listen(Number(process.env.PORT) || 3000, '0.0.0.0', () => {
   console.log(`Poker fictif sur le port ${server.address().port}. Vérifiez /health avant de jouer.`);
 });
-module.exports = { server, io, table, users, five, best, ready,
+module.exports = { server, io, table, users, five, best, bestHand, ready,
   closeStorage: () => pool ? pool.end() : Promise.resolve() };
