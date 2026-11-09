@@ -18,6 +18,7 @@
     .own-seat{max-width:420px;margin:1.5rem auto 0;text-align:center;border-color:#e8bc7055;background:#062c2ddd}
     #myCards .card{width:74px;height:104px;font-size:28px;padding:9px}#players .card{width:42px;height:60px;font-size:17px}
     input{background:#082427;color:white;border:1px solid #ffffff25;border-radius:.7rem;padding:.7rem;min-width:0}input:focus{outline:2px solid #e8bc70}input[type=number]{width:130px}
+    #accountActions,#joinForm,#entryChoice{display:flex;flex-wrap:wrap;align-items:center;gap:8px}#entryChoice{font-size:12px;gap:6px}#entryAmount{width:110px}
     [hidden]{display:none!important}#notice{min-height:1.5rem;color:#f6d195}
     #gameLayout{display:grid;gap:1rem;margin-top:1rem}#tableColumn{display:grid;gap:.75rem;min-width:0}#sidebar{display:flex;flex-direction:column;gap:.75rem;min-width:0}
     #chatPanel{min-height:0;display:flex;flex-direction:column}#chatMessages{min-height:0;max-height:320px;overflow-y:auto;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#436b60 transparent}
@@ -27,9 +28,13 @@
     #result{overflow-wrap:anywhere}#result:empty,#notice:empty{display:none}
     .felt,.seat{position:relative}.card{transform-origin:center bottom}#pot{display:inline-block}.chat-enter{animation:log-in .25s ease-out}.win-spark{position:absolute;left:50%;top:58%;pointer-events:none;color:#f2d59d;font-size:18px;text-shadow:0 0 12px #e8bc7088;animation:win-spark 1.2s ease-out both;z-index:2}
     #tableFx{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:8}.flying-chip{position:absolute;width:18px;height:18px;border:3px dashed #fff4c2;border-radius:50%;background:#c48c31;box-shadow:0 2px 5px #0008;pointer-events:none}
+    .chip-impact{position:absolute;width:40px;height:40px;border:2px solid #e8bc70;border-radius:50%;pointer-events:none}.bet-arrival{position:absolute;color:#fff0c5;background:#123b30e8;padding:3px 9px;border-radius:20px;font-size:14px;font-weight:800;white-space:nowrap;pointer-events:none}
     .action-badge{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);padding:3px 9px;background:#e8bc70;color:#112d29;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap;z-index:4;box-shadow:0 2px 8px #0005}.action-badge.allin{background:#bf4050;color:#fff0d0}
     .winner-seat{border-color:#f5ce7e;box-shadow:0 0 22px #e8bc7040}
     #tableToast{position:absolute;top:33%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:12;padding:10px 22px;border:1px solid #e8bc7080;border-radius:14px;background:#082b2cf5;box-shadow:0 8px 32px #0005;max-width:85%}#toastTitle{font-size:24px;font-weight:850;color:#f2d59d;letter-spacing:.15em}#toastDetail{font-size:12px;color:#c4dcd0;overflow-wrap:anywhere}
+    #tableToast.all-in{top:40%;width:min(88%,440px);max-width:88%;padding:20px 16px;border-color:#f2b66e;background:radial-gradient(ellipse at top,#793c38,#281d2bf5 80%);box-shadow:0 0 55px #d85b4355,inset 0 0 30px #e8bc7015}#tableToast.all-in #toastTitle{font-size:clamp(28px,4vw,52px);letter-spacing:.08em;font-style:italic;color:#ffe4a6;text-shadow:0 3px #542a32,0 0 24px #e8bc7060}#tableToast.all-in #toastDetail{font-size:14px;color:#f5dcc4;margin-top:4px}
+    #tableToast.all-in::before{content:'';position:absolute;inset:-12px;border:1px solid #edb56b99;border-radius:22px;animation:allin-ring 1s ease-out 2}.felt.allin-moment{animation:allin-glow 1.8s ease-out}.runout-table #board .card.empty{border-color:#e8bc7080;animation:card-await 1.5s ease-in-out infinite alternate}
+    @keyframes allin-ring{from{opacity:.7;transform:scale(.95)}to{opacity:0;transform:scale(1.15)}}@keyframes allin-glow{0%,100%{box-shadow:0 0 0 2px #c6a26844,inset 0 0 70px #001d21aa}40%{box-shadow:0 0 35px #d85b4366,inset 0 0 80px #ab543333}}@keyframes card-await{from{box-shadow:0 0 0 #e8bc7000}to{box-shadow:0 0 12px #e8bc7030}}
     #winnerAnnouncement{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(90%,520px);max-height:80%;overflow:auto;z-index:15;pointer-events:none;text-align:center;padding:22px;border-radius:22px;border:1px solid #edca84aa;background:radial-gradient(ellipse at top,#496242,#0a2728 75%);box-shadow:0 16px 70px #0008,0 0 55px #e8bc7025}
     #winnerAnnouncement::before{content:'♠';display:block;font-size:32px;line-height:1;color:#e8bc70;margin-bottom:8px}#winnerKicker{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#e8bc70}#winnerTitle{font-size:clamp(24px,3vw,42px);font-weight:850;line-height:1.1;color:#fff0c5;overflow-wrap:anywhere;margin:8px 0}#winnerReason{font-size:15px;color:#dbebe0}#winnerAmount{font-size:20px;font-weight:750;color:#e8bc70;margin-top:8px}
     #winnerAmount:empty{display:none}#winnerList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.winner-item{padding:8px;background:#ffffff08;border-radius:10px;overflow-wrap:anywhere}.winner-item strong{display:block;color:#fff0c5;font-size:14px}.winner-item p{font-size:11px;color:#c2d9cc}.winner-item .winner-payout{display:block;color:#e8bc70;font-size:12px;font-weight:700}
@@ -110,7 +115,7 @@
     <div id="game" hidden>
       <section id="accountBar" class="panel p-4 md:p-5 flex flex-wrap justify-between items-center gap-4">
         <div><p id="identity" class="text-sm text-emerald-100/60"></p><p class="text-xl font-semibold"><span id="wallet">0</span> <span class="text-sm font-normal text-emerald-100/50">jetons disponibles</span></p><p class="text-xs text-emerald-100/60 mt-1">Capital total : <span id="bankroll">0</span> · Résultat aux tables : <span id="profit">0</span></p></div>
-        <div class="flex flex-wrap gap-2"><button id="join" class="btn gold">Rejoindre · 500 jetons max.</button><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
+        <div id="accountActions"><form id="joinForm"><div id="entryChoice" hidden><label for="entryAmount">Entrée</label><input id="entryAmount" type="number" inputmode="numeric" min="1" step="1" aria-label="Nombre de jetons à apporter à la table" aria-describedby="hint" disabled></div><button id="join" type="submit" class="btn gold">Rejoindre la table</button></form><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
       </section>
       <div id="gameLayout">
       <div id="tableColumn">
@@ -133,7 +138,7 @@
         </section>
       </section>
       <section id="controls" class="panel p-5">
-        <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée : vos jetons disponibles, jusqu’à 500 · Jetons restants rendus à la sortie.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
+        <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Au-dessus de 500 jetons, choisissez votre entrée. Sinon, vous entrez avec tout votre solde.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
         <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
         <p id="result" class="text-center text-sm text-[#f2d59d] mt-3" role="status"></p>
       </section>
@@ -161,6 +166,7 @@
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
     let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
+    let entryChoice = false, joinPending = false;
     const chatNodes = new Map();
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
@@ -175,6 +181,7 @@
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
       lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
       $('chatInput').value = ''; $('chatError').textContent = ''; clearEffects();
+      entryChoice = false; joinPending = false; $('entryAmount').value = ''; renderEntry();
       $('login').hidden = false; $('game').hidden = true;
       document.body.classList.remove('in-club');
       $('password').value = ''; $('passwordConfirm').value = '';
@@ -219,19 +226,29 @@
         : me.stack === 0 ? 'Vous êtes à tapis' : state.turn === me.id ? 'À vous de jouer' : 'Vous êtes à table';
     }
     function motion(element, frames, options = {}) {
-      if (!element?.animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+      if (!element?.animate) return;
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        element.getAnimations().forEach(animation => animation.cancel()); return;
+      }
       return element.animate(frames, { duration:350, easing:'ease-out', ...options });
     }
-    function dealAnimation(cards) {
+    function dealAnimation(cards, suspense = false) {
       cards.forEach((element, i) => motion(element,
         [{opacity:0,transform:'translateY(-28px) rotateY(100deg) rotate(-12deg) scale(.75)'},{opacity:1,transform:'translateY(0) rotateY(0) rotate(0) scale(1)'}],
-        {delay:i * 70,fill:'backwards'}));
+        {duration:suspense ? 750 : 350,delay:i * (suspense ? 140 : 70),fill:'backwards'}));
     }
     const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.matchMedia?.('(prefers-reduced-motion: reduce)')?.addEventListener?.('change', event => {
+      if (event.matches) {
+        for (const animation of document.getAnimations?.() || []) animation.cancel();
+        $('tableFx').replaceChildren();
+      }
+    });
     const seatElement = id => id === state?.me ? ($('mySeat').hidden ? null : $('mySeat')) : [...$('players').children].find(el => el.dataset.player === id);
     function clearEffects() {
       clearTimeout(winnerTimer); clearTimeout(toastTimer);
       $('winnerAnnouncement').hidden = true; $('tableToast').hidden = true; $('tableFx').replaceChildren();
+      document.querySelector('.felt').classList.remove('allin-moment'); $('tableToast').classList.remove('all-in');
     }
     function flyChips(from, to, delay = 0) {
       if (reducedMotion() || !from || !to || !$('tableFx').animate) return;
@@ -241,17 +258,34 @@
         chip.style.left = `${a.left + a.width / 2 - bounds.left - 9}px`;
         chip.style.top = `${a.top + a.height / 2 - bounds.top - 9}px`;
         chip.style.backgroundColor = ['#c48c31','#a43d4d','#346a72'][i % 3]; $('tableFx').append(chip);
+        const x = b.left + b.width / 2 - a.left - a.width / 2 + (i % 3 - 1) * 6, y = b.top + b.height / 2 - a.top - a.height / 2;
         motion(chip, [{transform:'translate(0,0) scale(.7)',opacity:0},
-          {opacity:1,offset:.15}, {transform:`translate(${b.left + b.width / 2 - a.left - a.width / 2 + (i % 3 - 1) * 6}px,${b.top + b.height / 2 - a.top - a.height / 2}px) rotate(220deg) scale(.85)`,opacity:0}],
-          {duration:650,delay:delay + i * 45,fill:'both'});
-        setTimeout(() => chip.remove(), delay + 1100);
+          {transform:`translate(${x * .45}px,${y * .45 - 35}px) rotate(90deg)`,opacity:1,offset:.4},
+          {transform:`translate(${x}px,${y - 7}px) rotate(210deg) scale(1)`,opacity:1,offset:.8},
+          {transform:`translate(${x}px,${y}px) rotate(220deg) scale(.85)`,opacity:1}],
+          {duration:700,delay:delay + i * 45,fill:'both'});
+        setTimeout(() => chip.remove(), delay + 1350);
       }
+    }
+    function chipDeposit(amount) {
+      if (reducedMotion() || !$('tableFx').animate) return;
+      const bounds = $('tableFx').getBoundingClientRect(), pot = $('pot').getBoundingClientRect();
+      const x = pot.left + pot.width / 2 - bounds.left, y = pot.top + pot.height / 2 - bounds.top;
+      const ring = document.createElement('span'), label = document.createElement('span');
+      ring.className = 'chip-impact'; ring.style.left = `${x - 20}px`; ring.style.top = `${y - 20}px`;
+      label.className = 'bet-arrival'; label.textContent = `+ ${money(amount)}`; label.style.left = `${x}px`; label.style.top = `${y - 30}px`;
+      $('tableFx').append(ring,label);
+      motion(ring,[{opacity:0,transform:'scale(.25)'},{opacity:.7,transform:'scale(.6)',offset:.2},{opacity:0,transform:'scale(2.4)'}],{duration:650,delay:650,fill:'both'});
+      motion(label,[{opacity:0,transform:'translate(-50%,8px)'},{opacity:1,transform:'translate(-50%,0)',offset:.25},{opacity:0,transform:'translate(-50%,-24px)'}],{duration:1000,delay:450,fill:'both'});
+      setTimeout(() => { ring.remove(); label.remove(); },1600);
     }
     function showToast(title, detail) {
       clearTimeout(toastTimer); $('toastTitle').textContent = title; $('toastDetail').textContent = detail;
+      const allin = title.includes('TAPIS');
+      $('tableToast').classList.toggle('all-in',allin); document.querySelector('.felt').classList.toggle('allin-moment',allin);
       $('tableToast').hidden = false;
-      motion($('tableToast'), [{opacity:0,transform:'translate(-50%,-40%) scale(.8)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:260});
-      toastTimer = setTimeout(() => { $('tableToast').hidden = true; }, 1400);
+      motion($('tableToast'), [{opacity:0,transform:`translate(-50%,-40%) scale(${allin ? .55 : .8})`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}], {duration:allin ? 500 : 260,easing:'cubic-bezier(.16,1,.3,1)'});
+      toastTimer = setTimeout(() => { $('tableToast').hidden = true; document.querySelector('.felt').classList.remove('allin-moment'); }, allin ? 1800 : 1400);
     }
     function winningCards(winner) {
       const strip = document.createElement('div'); strip.className = 'winning-cards'; strip.dataset.winner = winner.id;
@@ -292,6 +326,7 @@
       winnerHand = next.hand;
       if (next.celebrationMs <= 0) return;
       clearTimeout(winnerTimer); clearTimeout(toastTimer); $('tableToast').hidden = true;
+      document.querySelector('.felt').classList.remove('allin-moment');
       const winners = next.winners, single = winners.length === 1;
       $('winnerAnnouncement').classList.toggle('multiple', !single);
       $('winnerAnnouncement').classList.toggle('many', winners.length > 2);
@@ -347,11 +382,14 @@
         if (next.hand !== previous.hand) {
           dealAnimation([...$('myCards').children]); dealAnimation([...$('players').querySelectorAll('.card')]);
         }
-        if (next.board.length > previous.board.length) dealAnimation([...$('board').children].slice(previous.board.length, next.board.length));
+        if (next.board.length > previous.board.length) dealAnimation([...$('board').children].slice(previous.board.length, next.board.length), next.runout);
         if (next.turn && next.turn !== previous.turn) motion(seatElement(next.turn),
           [{boxShadow:'0 0 0 0 #e8bc7090'},{boxShadow:'0 0 0 9px #e8bc7000'}], {duration:800});
         if (next.phase !== previous.phase && ['flop','turn','river'].includes(next.phase))
-          showToast(next.phase.toUpperCase(), {flop:'Trois cartes. La main se dessine.',turn:'Une carte peut tout changer.',river:'Dernière carte. À vous de jouer.'}[next.phase]);
+          showToast(next.phase.toUpperCase(), (next.runout
+            ? {flop:'Trois cartes. Tout reste à jouer.',turn:'Encore une carte avant le verdict…',river:'Les cinq cartes sont là. Le verdict arrive…'}
+            : {flop:'Trois cartes. La main se dessine.',turn:'Une carte peut tout changer.',river:'Dernière carte. À vous de jouer.'})[next.phase]);
+        if (next.runout && !previous.runout) showToast('TAPIS SUIVI', 'Les mains sont dévoilées. Place au suspense…');
         for (const entry of next.logs || []) {
           if (entry.id <= lastLogId || entry.hand !== next.hand || !entry.effect) continue;
           const element = seatElement(entry.actorId), effect = entry.effect;
@@ -361,11 +399,11 @@
             badge.textContent = {fold:'COUCHÉ',check:'CHECK',call:`SUIT ${money(effect.amount || 0)}`,raise:`RELANCE ${money(effect.amount || 0)}`,bet:`MISE ${money(effect.amount || 0)}`,allin:'TAPIS !'}[effect.type] || '';
             badge.setAttribute('aria-hidden','true'); element.append(badge); setTimeout(() => badge.remove(), 1600);
             motion(badge, [{opacity:0,transform:'translate(-50%,5px) scale(.8)'},{opacity:1,transform:'translate(-50%,0) scale(1)'}]);
-            if (effect.amount > 0) flyChips(element, $('pot'));
+            if (effect.amount > 0) { flyChips(element, $('pot')); chipDeposit(effect.paid ?? effect.amount); }
             if (effect.type === 'fold') element.querySelectorAll('.card').forEach(card => motion(card,
               [{transform:'rotate(0)',opacity:1},{transform:'translateY(8px) rotate(-8deg)',opacity:.25}], {duration:450,fill:'forwards'}));
           }
-          if (effect.type === 'allin' && next.phase !== 'showdown') showToast('TAPIS !', next.players.find(p => p.id === entry.actorId)?.nick || 'Tout se joue maintenant.');
+          if (effect.type === 'allin' && next.phase !== 'showdown') showToast('TAPIS !', `${next.players.find(p => p.id === entry.actorId)?.nick || 'Un joueur'} · ${money(effect.total ?? effect.amount)} jetons`);
         }
         lastLogId = next.logs?.at(-1)?.id || lastLogId;
       }
@@ -410,12 +448,37 @@
         updateChatAvailability();
       });
     };
-    function send(event, data = {}) {
-      if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; return; }
+    function send(event, data = {}, complete) {
+      if (!socket.connected) { $('notice').textContent = 'Connexion interrompue.'; complete?.(); return; }
       socket.timeout(35000).emit(event, data, (err, reply) => {
         $('notice').textContent = err ? 'Le serveur ne répond pas.' : reply?.error || '';
+        complete?.();
       });
     }
+    function renderEntry() {
+      const seated = state?.players.some(p => p.id === state.me);
+      const choice = !!state && !seated && state.wallet > state.entryThreshold;
+      if (choice && !entryChoice) $('entryAmount').value = state.entryThreshold;
+      entryChoice = choice;
+      const blocked = !state || !socket.connected || storageBlocked;
+      $('joinForm').hidden = !state || seated;
+      $('entryChoice').hidden = !choice; $('entryAmount').disabled = blocked || joinPending || !choice;
+      $('entryAmount').required = choice;
+      if (!state) { $('join').disabled = true; return; }
+      $('entryAmount').max = state.wallet;
+      const amount = choice ? $('entryAmount').valueAsNumber : state.wallet;
+      const valid = Number.isSafeInteger(amount) && amount > 0 && amount <= state.wallet;
+      $('join').textContent = valid ? `Rejoindre · ${money(amount)} jetons` : 'Rejoindre la table';
+      $('join').disabled = blocked || joinPending || !valid || state.players.length >= 6 || !['waiting','showdown'].includes(state.phase);
+    }
+    $('entryAmount').oninput = renderEntry;
+    $('joinForm').onsubmit = e => {
+      e.preventDefault(); if ($('join').disabled) return;
+      if (entryChoice && !$('entryAmount').reportValidity()) return;
+      const data = entryChoice ? {amount:$('entryAmount').valueAsNumber} : {};
+      joinPending = true; renderEntry();
+      send('join', data, () => { joinPending = false; renderEntry(); });
+    };
     $('loginTab').onclick = () => chooseMode('login'); $('registerTab').onclick = () => chooseMode('register');
     $('loginForm').onsubmit = async e => {
       e.preventDefault();
@@ -436,7 +499,7 @@
       catch (e) { $('notice').textContent = e.message; }
       finally { $('logout').disabled = false; }
     };
-    for (const event of ['join','leave','start']) $(event).onclick = () => send(event);
+    for (const event of ['leave','start']) $(event).onclick = () => send(event);
     $('claimAid').onclick = () => send('claim-aid');
     $('fold').onclick = () => send('action', {type:'fold'});
     $('call').onclick = () => send('action', {type:'call'});
@@ -446,16 +509,16 @@
       send('action', amount > state.currentBet ? {type:'raise',amount} : {type:'call'});
     };
     socket.on('connect', () => {
-      $('connection').textContent = '● Connecté'; updateChatAvailability();
+      $('connection').textContent = '● Connecté'; updateChatAvailability(); renderEntry();
     });
     socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
     socket.on('storage-error', data => {
-      storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability();
+      storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability(); renderEntry();
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
       $('logout').disabled = false;
     });
     socket.on('disconnect', reason => {
-      updateChatAvailability();
+      updateChatAvailability(); renderEntry();
       if (!state) return;
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
       $('connection').textContent = '○ Reconnexion…';
@@ -470,8 +533,8 @@
       if (!state) return;
       const seated = state.players.some(p => p.id === state.me);
       const remaining = Math.max(0, state.aid.nextAt - Date.now());
-      $('aidPanel').hidden = state.bankroll >= state.buyIn;
-      $('claimAid').disabled = storageBlocked || !socket.connected || seated || remaining > 0 || state.bankroll >= state.buyIn;
+      $('aidPanel').hidden = state.bankroll >= state.aidThreshold;
+      $('claimAid').disabled = storageBlocked || !socket.connected || seated || remaining > 0 || state.bankroll >= state.aidThreshold;
       $('aidStatus').textContent = seated ? 'Quittez d’abord la table pour récupérer vos jetons restants.' : remaining
         ? `Disponible dans ${Math.floor(remaining / 3600000)} h ${Math.ceil((remaining % 3600000) / 60000)} min.`
         : 'Disponible maintenant. Votre résultat aux tables restera inchangé.';
@@ -479,6 +542,7 @@
     socket.on('state', s => {
       const previous = state;
       state = s; storageBlocked = false; $('login').hidden = true; $('game').hidden = false;
+      document.querySelector('.felt').classList.toggle('runout-table', !!s.runout);
       document.body.classList.add('in-club');
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
@@ -493,14 +557,14 @@
         <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
         <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
       $('empty').hidden = s.players.length > 0;
-      $('join').hidden = !!me; $('join').disabled = playing || s.players.length >= 6 || s.wallet <= 0;
-      $('join').textContent = `Rejoindre · ${money(Math.min(s.wallet, s.buyIn))} jetons`;
+      renderEntry();
       $('leave').hidden = !me; $('leave').disabled = !!me?.leaving;
+      $('leave').textContent = me?.leaving ? 'Sortie en attente' : s.runout ? 'Quitter après la main' : 'Quitter la table';
       $('start').hidden = !me || playing; $('start').disabled = s.players.length < 2 || !!me?.leaving;
       $('result').textContent = s.result;
       const mine = playing && s.turn === s.me, due = me ? Math.max(0,s.currentBet-me.bet) : 0;
       $('actions').hidden = !mine;
-      $('turn').textContent = mine ? 'À vous de jouer' : playing ? `Au tour de ${s.players.find(p => p.id === s.turn)?.nick || '…'}` : me ? (s.players.length < 2 ? 'En attente d’un autre joueur…' : 'Prêts pour la prochaine main ?') : 'Rejoignez la table pour jouer.';
+      $('turn').textContent = s.runout ? 'Tapis suivi · Les cartes arrivent…' : mine ? 'À vous de jouer' : playing ? `Au tour de ${s.players.find(p => p.id === s.turn)?.nick || '…'}` : me ? (s.players.length < 2 ? 'En attente d’un autre joueur…' : 'Prêts pour la prochaine main ?') : 'Rejoignez la table pour jouer.';
       if (me) {
         const max = me.stack + me.bet, min = Math.min(max,s.currentBet+s.minRaise);
         $('call').textContent = due ? `Suivre ${money(Math.min(due,me.stack))}` : 'Check';
@@ -509,8 +573,12 @@
         if (lastDecision !== decision) { $('raiseTo').value = min; lastDecision = decision; }
         $('raise').disabled = !s.canRaise || max <= s.currentBet;
         $('allin').disabled = max > s.currentBet && !s.canRaise;
-        $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
-      } else $('hint').textContent = `Entrée : ${money(Math.min(s.wallet, s.buyIn))} jetons · Plafond ${money(s.buyIn)} · Jetons restants rendus à la sortie.`;
+        $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : s.runout
+          ? 'Mises terminées · Vos jetons restent en jeu jusqu’au résultat.'
+          : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
+      } else $('hint').textContent = s.wallet > s.entryThreshold
+        ? `Choisissez de 1 à ${money(s.wallet)} jetons · Les jetons non engagés restent en réserve.`
+        : `Entrée avec vos ${money(s.wallet)} jetons · Tout votre solde est apporté à table.`;
       renderOwnHand();
       highlightWinningSources();
       updateChatAvailability();

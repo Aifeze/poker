@@ -43,7 +43,8 @@ app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/health', (_, res) => res.status(storageReady && !storageUnavailable ? 200 : 503)
   .json({ ok: storageReady && !storageUnavailable }));
 
-const BUY_IN = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
+const ENTRY_THRESHOLD = 500, AID_THRESHOLD = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
+const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
@@ -53,7 +54,7 @@ const postgres = !!process.env.DATABASE_URL;
 const storageOwner = randomBytes(32).toString('hex');
 const STORAGE_MESSAGE = 'Le stockage est temporairement indisponible. La partie est suspendue pour protéger vos jetons.';
 let pool, dbRevision, storageReady = false, storageUnavailable = false;
-let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false;
+let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false, runoutDelay = 0;
 const defaultDataDir = path.join(__dirname, '.poker-data');
 const renderDataDir = '/var/data/poker';
 const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
@@ -174,7 +175,7 @@ async function initializeStorage() {
 }
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
-  hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [] };
+  hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [], runout: false, runoutAt: 0 };
 let logSequence = 0;
 function addLog(message, player, effect = null) {
   table.logs.push({ id: ++logSequence, hand: table.hand, time: Date.now(),
@@ -225,12 +226,13 @@ function enqueue(action, save = true) {
     await ready;
     if (storageUnavailable) throw Error(STORAGE_MESSAGE);
     const before = structuredClone({ users, table, logSequence });
-    clearTimeout(timer); inMutation = true; turnChanged = false;
+    clearTimeout(timer); inMutation = true; turnChanged = false; runoutDelay = 0;
     let writing = false;
     try {
       const value = action();
       if (save) { writing = true; await persist(); }
       if (turnChanged && table.turn) table.deadline = Date.now() + TURN_MS;
+      if (runoutDelay && table.runout) table.runoutAt = Date.now() + runoutDelay;
       inMutation = false; scheduleTurn(); broadcast(); return value;
     } catch (error) {
       users.clear(); for (const [id, u] of before.users) users.set(id, u);
@@ -244,7 +246,7 @@ function enqueue(action, save = true) {
 }
 function aidStatus(id) {
   const u = users.get(id), nextAt = u.lastAidAt ? u.lastAidAt + DAY : 0;
-  return { eligible: !seat(id) && bankroll(id) < BUY_IN && Date.now() >= nextAt, nextAt };
+  return { eligible: !seat(id) && bankroll(id) < AID_THRESHOLD && Date.now() >= nextAt, nextAt };
 }
 function sessionFor(req) {
   const token = /(?:^|;\s*)river_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
@@ -357,10 +359,11 @@ function mayRaise(p) {
 }
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
-  return { me: id, nick: u.nick, wallet: u.wallet, buyIn: BUY_IN,
+  return { me: id, nick: u.nick, wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
     deadline: table.deadline, currentBet: table.currentBet, minRaise: table.minRaise,
+    runout: table.runout, runoutAt: table.runoutAt,
     pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result, winners: table.winners,
     celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
@@ -437,6 +440,7 @@ function handReason(score) {
 }
 function finish() {
   clearTimeout(timer); table.turn = null; table.deadline = 0;
+  table.runout = false; table.runoutAt = 0;
   const ps = table.players, remaining = live(), gains = new Map(), refunds = new Map();
   table.reveal = remaining.length > 1;
   // Le tableau est parcouru en premier pour retenir ses cartes lorsqu'elles suffisent à égalité.
@@ -495,7 +499,21 @@ function setTurn(p) {
 }
 function scheduleTurn() {
   clearTimeout(timer);
-  if (!table.turn || !active() || storageUnavailable) return;
+  if (!active() || storageUnavailable) return;
+  if (table.runout) {
+    const hand = table.hand, phase = table.phase, deadline = table.runoutAt;
+    timer = setTimeout(() => {
+      enqueue(() => {
+        if (!table.runout || table.hand !== hand || table.phase !== phase || table.runoutAt !== deadline) return;
+        if (phase === 'river') return finish();
+        dealStreet(); table.pending.clear();
+        table.result = table.phase === 'river' ? 'La river est posée… Qui remporte le pot ?' : 'Les mises sont closes. Le suspense continue…';
+        runoutDelay = table.phase === 'river' ? RUNOUT_RESULT_MS : RUNOUT_STREET_MS;
+      }).catch(() => {});
+    }, Math.max(0, deadline - Date.now()));
+    return;
+  }
+  if (!table.turn) return;
   const id = table.turn, deadline = table.deadline;
   timer = setTimeout(() => {
     enqueue(() => {
@@ -505,14 +523,7 @@ function scheduleTurn() {
     }).catch(() => {});
   }, Math.max(0, deadline - Date.now()));
 }
-function advance(after) {
-  if (live().length <= 1) return finish();
-  const able = table.players.filter(canAct);
-  for (const id of table.pending) if (!able.some(p => p.id === id)) table.pending.delete(id);
-  if (able.length <= 1 && able.every(p => p.bet >= table.currentBet)) table.pending.clear();
-  const next = nextAfter(after, p => table.pending.has(p.id));
-  if (next) return setTurn(next);
-  if (table.phase === 'river') return finish();
+function dealStreet() {
   table.phase = { preflop: 'flop', flop: 'turn', turn: 'river' }[table.phase];
   table.deck.pop(); // Carte brûlée.
   const dealt = Array.from({ length: table.phase === 'flop' ? 3 : 1 }, () => table.deck.pop());
@@ -521,7 +532,26 @@ function advance(after) {
     (c[0] === 'T' ? '10' : c[0]) + ({ s: '♠', h: '♥', d: '♦', c: '♣' }[c[1]])).join(' ')}.`);
   table.players.forEach(p => { p.bet = 0; });
   table.currentBet = 0; table.minRaise = BIG; table.acted.clear();
-  table.pending = new Set(able.map(p => p.id));
+  table.pending = new Set(table.players.filter(canAct).map(p => p.id));
+}
+function advance(after) {
+  if (table.runout) return;
+  if (live().length <= 1) return finish();
+  const able = table.players.filter(canAct);
+  for (const id of table.pending) if (!able.some(p => p.id === id)) table.pending.delete(id);
+  const closed = able.length <= 1 && able.every(p => p.bet >= table.currentBet);
+  if (closed) table.pending.clear();
+  const next = nextAfter(after, p => table.pending.has(p.id));
+  if (next) return setTurn(next);
+  if (table.phase === 'river') return finish();
+  if (closed) {
+    // Le serveur révèle chaque rue séparément ; le résultat n'existe qu'après la dernière pause.
+    table.runout = true; table.reveal = true; table.turn = null; table.deadline = 0;
+    table.result = 'Tapis suivi ! Les mains sont dévoilées, place aux dernières cartes…';
+    runoutDelay = RUNOUT_FIRST_MS;
+    return;
+  }
+  dealStreet();
   advance(table.dealer);
 }
 function start() {
@@ -535,7 +565,7 @@ function start() {
   table.dealer = dealer.id; table.hand++; table.phase = 'preflop'; table.board = []; table.winners = [];
   table.result = `Main ${table.hand} — petites / grosses blindes : ${SMALL} / ${BIG} jetons.`;
   addLog(`Main ${table.hand} : distribution. ${dealer.nick} est au bouton.`);
-  table.reveal = false; table.currentBet = BIG; table.minRaise = BIG; table.acted.clear();
+  table.reveal = false; table.runout = false; table.runoutAt = 0; table.currentBet = BIG; table.minRaise = BIG; table.acted.clear();
   table.deck = [...'23456789TJQKA'].flatMap(r => [...'shdc'].map(s => r + s));
   for (let i = table.deck.length - 1; i > 0; i--) {
     const j = randomInt(i + 1); [table.deck[i], table.deck[j]] = [table.deck[j], table.deck[i]];
@@ -560,21 +590,21 @@ function act(p, { type, amount }, automatic = false) {
     pay(p, paid);
     addLog(paid === 0 ? `check${timeout}.` : p.stack === 0
       ? `fait tapis : ${p.bet} jetons au total (suit ${paid} jetons).`
-      : `suit de ${paid} jetons.`, p, {type:paid === 0 ? 'check' : p.stack === 0 ? 'allin' : 'call', amount:paid});
+      : `suit de ${paid} jetons.`, p, {type:paid === 0 ? 'check' : p.stack === 0 ? 'allin' : 'call', amount:paid, total:p.bet});
   }
   if (type === 'raise') {
     const maximum = p.bet + p.stack;
     if (!Number.isSafeInteger(amount) || amount <= table.currentBet || amount > maximum
       || (amount < table.currentBet + table.minRaise && amount !== maximum) || !mayRaise(p))
       throw Error('Relance invalide : minimum indiqué, ou votre tapis si inférieur.');
-    const increase = amount - table.currentBet, opening = table.currentBet === 0;
+    const increase = amount - table.currentBet, opening = table.currentBet === 0, paid = amount - p.bet;
     pay(p, amount - p.bet); table.currentBet = amount;
     if (increase >= table.minRaise) {
       table.minRaise = increase;
       table.pending = new Set(table.players.filter(canAct).map(q => q.id));
     } else table.players.filter(q => canAct(q) && q.bet < amount).forEach(q => table.pending.add(q.id));
     addLog(p.stack === 0 ? `fait tapis : ${amount} jetons au total.`
-      : opening ? `mise ${amount} jetons.` : `relance à ${amount} jetons.`, p, {type:p.stack === 0 ? 'allin' : 'raise', amount});
+      : opening ? `mise ${amount} jetons.` : `relance à ${amount} jetons.`, p, {type:p.stack === 0 ? 'allin' : 'raise', amount, paid});
   }
   table.acted.set(p.id, table.currentBet); table.pending.delete(p.id); advance(p.id);
 }
@@ -584,6 +614,7 @@ function leave(id, disconnected = false) {
   p.leaving = true;
   addLog(disconnected ? 'se déconnecte.' : 'quitte la table.', p);
   if (active()) {
+    if (table.runout) { addLog('reste en jeu jusqu’au dévoilement final.', p); return; }
     // Un tapis reste éligible aux pots, même après une déconnexion.
     if (p.stack > 0 && !p.folded) { p.folded = true; addLog('se couche en quittant la main.', p); }
     else if (!p.folded) addLog('reste en jeu à tapis jusqu’au résultat.', p);
@@ -633,16 +664,18 @@ io.on('connection', socket => {
   });
   on('claim-aid', () => {
     const id = socket.data.uid, u = users.get(id);
-    if (!aidStatus(id).eligible) throw Error(`Seconde chance : hors table, sous ${BUY_IN} jetons, une fois toutes les 24 h.`);
+    if (!aidStatus(id).eligible) throw Error(`Seconde chance : hors table, sous ${AID_THRESHOLD} jetons, une fois toutes les 24 h.`);
     u.wallet += 500; u.granted += 500; u.lastAidAt = Date.now();
   });
-  on('join', () => {
+  on('join', ({ amount }) => {
     const id = socket.data.uid, u = users.get(id);
     if (active()) throw Error('Attendez la fin de la main pour rejoindre.');
     if (seat(id)) throw Error('Vous êtes déjà à table.');
     if (table.players.length >= 6) throw Error('Table complète (6 joueurs).');
     if (u.wallet <= 0) throw Error('Il faut au moins un jeton pour rejoindre. Consultez votre seconde chance.');
-    const buyIn = Math.min(u.wallet, BUY_IN);
+    const buyIn = u.wallet <= ENTRY_THRESHOLD ? u.wallet : amount;
+    if (!Number.isSafeInteger(buyIn) || buyIn <= 0 || buyIn > u.wallet)
+      throw Error(`Choisissez un nombre entier de jetons entre 1 et ${u.wallet}.`);
     u.wallet -= buyIn;
     table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false });
     addLog(`rejoint la table avec ${buyIn} jetons.`, u);
