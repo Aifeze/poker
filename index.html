@@ -115,7 +115,7 @@
     <div id="game" hidden>
       <section id="accountBar" class="panel p-4 md:p-5 flex flex-wrap justify-between items-center gap-4">
         <div><p id="identity" class="text-sm text-emerald-100/60"></p><p class="text-xl font-semibold"><span id="wallet">0</span> <span class="text-sm font-normal text-emerald-100/50">jetons disponibles</span></p><p class="text-xs text-emerald-100/60 mt-1">Capital total : <span id="bankroll">0</span> · Résultat aux tables : <span id="profit">0</span></p></div>
-        <div id="accountActions"><form id="joinForm"><div id="entryChoice" hidden><label for="entryAmount">Entrée</label><input id="entryAmount" type="number" inputmode="numeric" min="1" step="1" aria-label="Nombre de jetons à apporter à la table" aria-describedby="hint" disabled></div><button id="join" type="submit" class="btn gold">Rejoindre la table</button></form><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
+        <div id="accountActions"><form id="joinForm"><div id="entryChoice" hidden><label for="entryAmount">Entrée</label><input id="entryAmount" type="number" inputmode="numeric" min="500" step="1" aria-label="Nombre de jetons à apporter à la table" aria-describedby="hint" disabled></div><button id="join" type="submit" class="btn gold">Rejoindre la table</button></form><button id="leave" class="btn" hidden>Quitter la table</button><button id="logout" class="btn">Déconnexion</button></div>
       </section>
       <div id="gameLayout">
       <div id="tableColumn">
@@ -138,7 +138,7 @@
         </section>
       </section>
       <section id="controls" class="panel p-5">
-        <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Au-dessus de 500 jetons, choisissez votre entrée. Sinon, vous entrez avec tout votre solde.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
+        <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Au-dessus de 500 jetons, choisissez une entrée d’au moins 500. Sinon, vous entrez avec tout votre solde.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
         <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
         <p id="result" class="text-center text-sm text-[#f2d59d] mt-3" role="status"></p>
       </section>
@@ -465,9 +465,10 @@
       $('entryChoice').hidden = !choice; $('entryAmount').disabled = blocked || joinPending || !choice;
       $('entryAmount').required = choice;
       if (!state) { $('join').disabled = true; return; }
+      $('entryAmount').min = state.entryThreshold;
       $('entryAmount').max = state.wallet;
       const amount = choice ? $('entryAmount').valueAsNumber : state.wallet;
-      const valid = Number.isSafeInteger(amount) && amount > 0 && amount <= state.wallet;
+      const valid = Number.isSafeInteger(amount) && amount > 0 && amount >= Math.min(state.wallet,state.entryThreshold) && amount <= state.wallet;
       $('join').textContent = valid ? `Rejoindre · ${money(amount)} jetons` : 'Rejoindre la table';
       $('join').disabled = blocked || joinPending || !valid || state.players.length >= 6 || !['waiting','showdown'].includes(state.phase);
     }
@@ -577,7 +578,7 @@
           ? 'Mises terminées · Vos jetons restent en jeu jusqu’au résultat.'
           : `Vos jetons : ${money(me.stack)} · À suivre : ${money(due)} · Relance totale minimale : ${money(min)}.`;
       } else $('hint').textContent = s.wallet > s.entryThreshold
-        ? `Choisissez de 1 à ${money(s.wallet)} jetons · Les jetons non engagés restent en réserve.`
+        ? `Choisissez de ${money(s.entryThreshold)} à ${money(s.wallet)} jetons · Les jetons non engagés restent en réserve.`
         : `Entrée avec vos ${money(s.wallet)} jetons · Tout votre solde est apporté à table.`;
       renderOwnHand();
       highlightWinningSources();

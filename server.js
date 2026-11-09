@@ -674,8 +674,9 @@ io.on('connection', socket => {
     if (table.players.length >= 6) throw Error('Table complète (6 joueurs).');
     if (u.wallet <= 0) throw Error('Il faut au moins un jeton pour rejoindre. Consultez votre seconde chance.');
     const buyIn = u.wallet <= ENTRY_THRESHOLD ? u.wallet : amount;
-    if (!Number.isSafeInteger(buyIn) || buyIn <= 0 || buyIn > u.wallet)
-      throw Error(`Choisissez un nombre entier de jetons entre 1 et ${u.wallet}.`);
+    const minimum = Math.min(u.wallet, ENTRY_THRESHOLD);
+    if (!Number.isSafeInteger(buyIn) || buyIn < minimum || buyIn > u.wallet)
+      throw Error(`Choisissez un nombre entier de jetons entre ${minimum} et ${u.wallet}.`);
     u.wallet -= buyIn;
     table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false });
     addLog(`rejoint la table avec ${buyIn} jetons.`, u);
