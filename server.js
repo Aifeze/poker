@@ -39,22 +39,25 @@ const io = new (load('socket.io').Server)(server, {
   maxHttpBufferSize: 8192,
   allowRequest: (req, done) => done(null, sameOrigin(req))
 });
-app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get(['/', '/historique'], (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/health', (_, res) => res.status(storageReady && !storageUnavailable ? 200 : 503)
   .json({ ok: storageReady && !storageUnavailable }));
 
 const ENTRY_THRESHOLD = 500, AID_THRESHOLD = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
 const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
+const RECONNECT_MS = 30000, HISTORY_LIMIT = 20;
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
 const chatMessages = [], chatLimits = new Map();
+const reconnectTimers = new Map();
+let handHistory = [];
 let chatSequence = 0;
 const postgres = !!process.env.DATABASE_URL;
 const storageOwner = randomBytes(32).toString('hex');
 const STORAGE_MESSAGE = 'Le stockage est temporairement indisponible. La partie est suspendue pour protéger vos jetons.';
 let pool, dbRevision, storageReady = false, storageUnavailable = false;
-let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false, runoutDelay = 0;
+let mutationQueue = Promise.resolve(), inMutation = false, turnChanged = false, turnBudget = TURN_MS, runoutDelay = 0;
 const defaultDataDir = path.join(__dirname, '.poker-data');
 const renderDataDir = '/var/data/poker';
 const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
@@ -76,7 +79,15 @@ function validateAccounts(saved) {
       throw Error('Sauvegarde de comptes invalide.');
     ids.add(u.id);
   }
+  if (saved.history !== undefined && (!Array.isArray(saved.history) || saved.history.length > HISTORY_LIMIT
+    || saved.history.some(h => !h || typeof h.id !== 'string' || !Number.isSafeInteger(h.number)
+      || !Array.isArray(h.board) || !Array.isArray(h.players) || !Array.isArray(h.winners) || !Array.isArray(h.logs))))
+    throw Error('Historique sauvegardé invalide.');
   return saved;
+}
+function restoreHistory(saved) {
+  handHistory = saved.history || [];
+  table.hand = handHistory[0]?.number || 0;
 }
 function readAccounts(file) { return validateAccounts(JSON.parse(fs.readFileSync(file, 'utf8'))); }
 function findAccounts(file) {
@@ -126,6 +137,7 @@ function loadLocalAccounts() {
   if (source?.saved) {
     capitalResetVersion = Math.max(1, source.saved.capitalResetVersion ?? 0);
     for (const u of source.saved.users) users.set(u.id, { ...u, socket: null });
+    restoreHistory(source.saved);
   }
   console.log(`[stockage] ${users.size} compte(s) chargé(s) depuis ${dataFile}.`);
 }
@@ -170,17 +182,19 @@ async function initializeStorage() {
   const saved = validateAccounts(rows[0].payload);
   dbRevision = rows[0].revision; capitalResetVersion = Math.max(1, saved.capitalResetVersion ?? 0);
   for (const u of saved.users) users.set(u.id, { ...u, socket: null });
+  restoreHistory(saved);
   storageReady = true;
   console.log(`[stockage] PostgreSQL connecté : ${users.size} compte(s) chargé(s).`);
 }
 const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null,
   turn: null, currentBet: 0, minRaise: BIG, pending: new Set(), acted: new Map(),
-  hand: 0, result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [], runout: false, runoutAt: 0 };
+  hand: 0, handId: '', startedAt: 0, handLogs: [], result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [], runout: false, runoutAt: 0 };
 let logSequence = 0;
 function addLog(message, player, effect = null) {
   table.logs.push({ id: ++logSequence, hand: table.hand, time: Date.now(),
     message: player ? `[${player.nick}] ${message}` : message, actorId: player?.id, effect });
   if (table.logs.length > 100) table.logs.splice(0, table.logs.length - 100);
+  if (active()) { table.handLogs.push(table.logs.at(-1)); if (table.handLogs.length > 200) table.handLogs.shift(); }
 }
 let timer;
 const active = () => !['waiting', 'showdown'].includes(table.phase);
@@ -196,7 +210,7 @@ async function persist() {
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, salt: u.salt, hash: u.hash,
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
-  const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows });
+  const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows, history: handHistory });
   if (postgres) {
     const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
       WHERE id = 1 AND revision = $2 AND owner = $3 RETURNING revision`, [payload, dbRevision, storageOwner]);
@@ -216,6 +230,8 @@ async function persist() {
 }
 function storageFailed(error) {
   storageUnavailable = true; clearTimeout(timer);
+  for (const handle of reconnectTimers.values()) clearTimeout(handle);
+  reconnectTimers.clear();
   console.error('[stockage] Sauvegarde indisponible :', error.code || error.name);
   if (error.code === 'STORAGE_CONFLICT') console.error('[stockage] Cette instance a été remplacée ou son état est périmé. Écritures arrêtées ; la nouvelle instance conserve les derniers comptes enregistrés.');
   if (error.code === 'DATABASE_URL_MISSING') console.error('[stockage] Définissez DATABASE_URL dans Render → Environment. Aucun compte ne sera enregistré sur le disque éphémère.');
@@ -225,20 +241,21 @@ function enqueue(action, save = true) {
   const result = mutationQueue.then(async () => {
     await ready;
     if (storageUnavailable) throw Error(STORAGE_MESSAGE);
-    const before = structuredClone({ users, table, logSequence });
-    clearTimeout(timer); inMutation = true; turnChanged = false; runoutDelay = 0;
+    const before = structuredClone({ users, table, logSequence, handHistory });
+    clearTimeout(timer); inMutation = true; turnChanged = false; turnBudget = TURN_MS; runoutDelay = 0;
     let writing = false;
     try {
       const value = action();
       if (save) { writing = true; await persist(); }
-      if (turnChanged && table.turn) table.deadline = Date.now() + TURN_MS;
+      if (turnChanged && table.turn) table.deadline = seat(table.turn)?.disconnectedUntil || Date.now() + turnBudget;
       if (runoutDelay && table.runout) table.runoutAt = Date.now() + runoutDelay;
-      inMutation = false; scheduleTurn(); broadcast(); return value;
+      inMutation = false; scheduleTurn(); scheduleReconnects(); broadcast(); return value;
     } catch (error) {
       users.clear(); for (const [id, u] of before.users) users.set(id, u);
       Object.assign(table, before.table); logSequence = before.logSequence; inMutation = false;
+      handHistory = before.handHistory;
       if (writing) { storageFailed(error); throw Error(STORAGE_MESSAGE); }
-      scheduleTurn(); throw error;
+      scheduleTurn(); scheduleReconnects(); throw error;
     }
   });
   mutationQueue = result.catch(() => {});
@@ -322,12 +339,23 @@ app.get('/api/session', (req, res) => {
   if (!s) return res.status(401).json({ error: 'Connectez-vous.' });
   res.json({ ok: true, nick: users.get(s.id).nick });
 });
+app.get('/api/history', async (req, res) => {
+  if (!sessionFor(req)) return res.status(401).json({ error: 'Connectez-vous pour consulter l’historique.' });
+  try {
+    const hands = await enqueue(() => structuredClone(handHistory), false);
+    res.json({ hands });
+  } catch { res.status(503).json({ error: STORAGE_MESSAGE }); }
+});
 app.post('/api/logout', async (req, res) => {
   const s = sessionFor(req);
   if (s) {
     sessions.delete(s.token);
     const socket = io.sockets.sockets.get(users.get(s.id).socket);
-    if (socket?.data.session === s.token) socket.disconnect(true);
+    if (socket?.data.session === s.token) { socket.data.leaveImmediately = true; socket.disconnect(true); }
+    else if (seat(s.id)) await enqueue(() => {
+      const p = seat(s.id); if (p) p.disconnectedUntil = 0;
+      leave(s.id);
+    }).catch(() => {});
   }
   await mutationQueue;
   res.clearCookie('river_session', { httpOnly: true, sameSite: 'strict', secure: req.secure, path: '/' });
@@ -340,8 +368,19 @@ io.use((socket, next) => {
     if (!session) throw Error('Connexion requise.');
     const u = users.get(session.id);
     if (u.socket && io.sockets.sockets.has(u.socket)) throw Error('Ce compte est déjà connecté dans une autre fenêtre.');
+    const p = seat(session.id);
+    if (p?.disconnectedUntil) {
+      if (p.disconnectedUntil <= Date.now()) { p.disconnectedUntil = 0; p.turnRemaining = 0; leave(session.id, true); }
+      else {
+        p.disconnectedUntil = 0;
+        if (table.turn === session.id && active() && !table.runout) {
+          turnBudget = p.turnRemaining || TURN_MS; turnChanged = true;
+        }
+        p.turnRemaining = 0; addLog('retrouve sa place après reconnexion.', p);
+      }
+    }
     socket.data.uid = session.id; socket.data.session = session.token; u.socket = socket.id;
-  }, false).then(() => next(), () => next(Error(storageUnavailable ? STORAGE_MESSAGE : 'Connexion refusée : session invalide ou déjà utilisée.')));
+  }).then(() => next(), () => next(Error(storageUnavailable ? STORAGE_MESSAGE : 'Connexion refusée : session invalide ou déjà utilisée.')));
 });
 function pay(p, amount) {
   amount = Math.min(p.stack, amount);
@@ -360,6 +399,7 @@ function mayRaise(p) {
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
   return { me: id, nick: u.nick, wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
+    historyVersion: handHistory[0]?.id || '',
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
     deadline: table.deadline, currentBet: table.currentBet, minRaise: table.minRaise,
@@ -368,6 +408,7 @@ function stateFor(id) {
     celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
     players: table.players.map(q => ({ id: q.id, nick: q.nick, stack: q.stack,
+      disconnectedUntil: q.disconnectedUntil || 0,
       bet: q.bet, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
 }
@@ -377,7 +418,7 @@ function broadcast() {
 }
 function cleanup() {
   table.players = table.players.filter(p => {
-    if (!p.leaving && p.stack > 0 && users.get(p.id).socket) return true;
+    if (!p.leaving && p.stack > 0 && (users.get(p.id).socket || p.disconnectedUntil > Date.now())) return true;
     users.get(p.id).wallet += p.stack;
     if (p.stack > 0) addLog(`récupère ses ${p.stack} jetons en quittant la table.`, p);
     else addLog('n’a plus de jetons à table.', p);
@@ -489,6 +530,13 @@ function finish() {
   for (const [id, amount] of gains) addLog(`remporte ${amount} jetons${
     table.reveal ? ` avec ${labels[Math.floor(scores.get(id) / 15 ** 5)]}` : ''}.`, users.get(id));
   if (!gains.size) addLog('Main terminée : les mises ont été remboursées.');
+  handHistory.unshift({ id: table.handId, number: table.hand, startedAt: table.startedAt, endedAt: Date.now(),
+    board: [...table.board], pot: [...gains.values()].reduce((sum, value) => sum + value, 0),
+    winners: structuredClone(table.winners), result: table.result,
+    players: ps.map(p => ({ id:p.id, nick:p.nick, dealer:p.id === table.dealer, folded:p.folded,
+      cards: table.reveal && !p.folded ? [...p.hole] : [], contribution:p.total,
+      won:gains.get(p.id) || 0, refund:refunds.get(p.id) || 0 })), logs: structuredClone(table.handLogs) });
+  if (handHistory.length > HISTORY_LIMIT) handHistory.length = HISTORY_LIMIT;
   ps.forEach(p => { p.bet = 0; p.total = 0; });
   table.phase = 'showdown'; table.endedAt = Date.now(); broadcast();
   // Préserver les cartes du résultat jusqu'au prochain départ, rendre immédiatement les jetons sortants.
@@ -496,6 +544,21 @@ function finish() {
 }
 function setTurn(p) {
   clearTimeout(timer); table.turn = p.id; table.deadline = Date.now() + TURN_MS; turnChanged = true;
+  if (p.disconnectedUntil) p.turnRemaining = TURN_MS;
+}
+function scheduleReconnects() {
+  for (const handle of reconnectTimers.values()) clearTimeout(handle);
+  reconnectTimers.clear();
+  if (storageUnavailable) return;
+  for (const p of table.players) if (p.disconnectedUntil) {
+    const id = p.id, until = p.disconnectedUntil;
+    const handle = setTimeout(() => enqueue(() => {
+      const current = seat(id);
+      if (!current || current.disconnectedUntil !== until || users.get(id).socket) return;
+      current.disconnectedUntil = 0; current.turnRemaining = 0; leave(id, true);
+    }).catch(() => {}), Math.max(0, until - Date.now()));
+    handle.unref(); reconnectTimers.set(id, handle);
+  }
 }
 function scheduleTurn() {
   clearTimeout(timer);
@@ -513,7 +576,7 @@ function scheduleTurn() {
     }, Math.max(0, deadline - Date.now()));
     return;
   }
-  if (!table.turn) return;
+  if (!table.turn || seat(table.turn)?.disconnectedUntil) return;
   const id = table.turn, deadline = table.deadline;
   timer = setTimeout(() => {
     enqueue(() => {
@@ -560,9 +623,11 @@ function start() {
   cleanup();
   const ps = table.players;
   if (ps.length < 2) throw Error('Deux joueurs minimum sont nécessaires.');
+  if (ps.some(p => p.disconnectedUntil)) throw Error('Un joueur se reconnecte. Sa place est réservée pendant 30 secondes.');
   clearTimeout(timer);
   const dealer = nextAfter(table.dealer, () => true);
   table.dealer = dealer.id; table.hand++; table.phase = 'preflop'; table.board = []; table.winners = [];
+  table.handId = randomBytes(12).toString('hex'); table.startedAt = Date.now(); table.handLogs = [];
   table.result = `Main ${table.hand} — petites / grosses blindes : ${SMALL} / ${BIG} jetons.`;
   addLog(`Main ${table.hand} : distribution. ${dealer.nick} est au bouton.`);
   table.reveal = false; table.runout = false; table.runoutAt = 0; table.currentBet = BIG; table.minRaise = BIG; table.acted.clear();
@@ -633,7 +698,7 @@ io.on('connection', socket => {
         if (!socket.data.uid || !socket.connected) throw Error('Connectez-vous.');
         const session = sessions.get(socket.data.session);
         if (!session || session.expires <= Date.now()) {
-          socket.emit('session-expired'); socket.disconnect(true); throw Error('Session expirée.');
+          socket.data.leaveImmediately = true; socket.emit('session-expired'); socket.disconnect(true); throw Error('Session expirée.');
         }
         handler(data && typeof data === 'object' ? data : {});
       });
@@ -678,7 +743,7 @@ io.on('connection', socket => {
     if (!Number.isSafeInteger(buyIn) || buyIn < minimum || buyIn > u.wallet)
       throw Error(`Choisissez un nombre entier de jetons entre ${minimum} et ${u.wallet}.`);
     u.wallet -= buyIn;
-    table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false });
+    table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false, disconnectedUntil: 0, turnRemaining: 0 });
     addLog(`rejoint la table avec ${buyIn} jetons.`, u);
   });
   on('leave', () => leave(socket.data.uid));
@@ -688,8 +753,16 @@ io.on('connection', socket => {
     const id = socket.data.uid;
     if (!id) return;
     enqueue(() => {
-      if (users.get(id).socket === socket.id) users.get(id).socket = null;
-      leave(id, true);
+      if (users.get(id).socket !== socket.id) return;
+      users.get(id).socket = null;
+      const p = seat(id);
+      if (!p || p.leaving) return;
+      if (socket.data.leaveImmediately) { leave(id, true); return; }
+      p.disconnectedUntil = Date.now() + RECONNECT_MS;
+      if (active() && !table.runout && table.turn === id) {
+        p.turnRemaining = Math.max(1, table.deadline - Date.now()); table.deadline = p.disconnectedUntil;
+      }
+      addLog('perd la connexion : place réservée pendant 30 secondes.', p);
     }).catch(() => {});
   });
 });

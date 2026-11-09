@@ -19,6 +19,13 @@
     #myCards .card{width:74px;height:104px;font-size:28px;padding:9px}#players .card{width:42px;height:60px;font-size:17px}
     input{background:#082427;color:white;border:1px solid #ffffff25;border-radius:.7rem;padding:.7rem;min-width:0}input:focus{outline:2px solid #e8bc70}input[type=number]{width:130px}
     #accountActions,#joinForm,#entryChoice{display:flex;flex-wrap:wrap;align-items:center;gap:8px}#entryChoice{font-size:12px;gap:6px}#entryAmount{width:110px}
+    .bet-sizes{display:flex;gap:4px}#game .bet-sizes .btn{padding:6px 8px;font-size:11px;line-height:20px}.seat.reconnecting{border-style:dashed;border-color:#90b8c0}.reconnect-status{color:#c4e1e5!important}
+    #openHistory{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left}#openHistory small{font-size:10px;font-weight:400;color:#c2d9cc}
+    #historyPage{max-width:1100px;margin:0 auto}#historyHeading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;margin:24px 0}#historyHeading h2{font-size:28px;font-weight:750;color:#f2d59d}#historyHeading p{font-size:13px;color:#a4c4b6;margin-top:4px}#historyHeading>div:last-child{display:flex;gap:8px}
+    #historyStatus{font-size:13px;min-height:20px;color:#c1d9cc;margin-bottom:12px}#historyAlert{width:100%;text-align:left;margin-bottom:16px;border-color:#e8bc70;color:#f2d59d}#historyList{display:grid;gap:12px;padding-bottom:24px}
+    .hand-record{background:#0b292ce8;border:1px solid #ffffff18;border-radius:18px;overflow:hidden}.hand-record summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:16px;padding:18px}.hand-record summary::-webkit-details-marker{display:none}.hand-record summary::after{content:'';width:9px;height:9px;flex-shrink:0;border-right:2px solid #e8bc70;border-bottom:2px solid #e8bc70;margin-left:auto;transform:rotate(45deg);transition:transform .2s}.hand-record[open] summary::after{transform:rotate(225deg)}.hand-summary{flex:1;min-width:0}.hand-meta{font-size:11px;color:#9cbaae;margin-bottom:6px}.hand-summary-winner{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px}.hand-summary-winner strong{font-size:17px;color:#f8dfaf;overflow-wrap:anywhere}.hand-summary-winner span{font-size:13px;color:#b7d1c3}.hand-summary-winner b{font-size:14px;color:#e8bc70;margin-left:auto}
+    .hand-detail{padding:0 18px 18px;border-top:1px solid #ffffff10}.history-board{padding:16px;text-align:center;background:#154537;border-radius:14px;margin:16px 0}.history-board>p{font-size:12px;color:#bad5c7;margin-bottom:10px}.history-board .cards,.history-player .cards{display:flex;gap:6px;justify-content:center}.history-board .card{width:45px;height:63px;font-size:20px}.history-players{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.history-players[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}.history-player{min-width:0;padding:12px;background:#123334;border:1px solid #ffffff12;border-radius:12px;text-align:center}.history-player.won{border-color:#e8bc7080}.history-player h3{font-size:14px;font-weight:700;color:#e4eee8;overflow-wrap:anywhere}.history-player>p{font-size:11px;color:#a2bfb1;margin:4px 0 8px}.history-player .card{width:35px;height:49px;font-size:16px;padding:5px}.history-player .amounts{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font-size:11px;color:#b5d0c1;margin-top:10px}.history-player .amounts strong{color:#e8bc70}.history-actions{margin-top:16px;border-top:1px solid #ffffff15;padding-top:14px}.history-actions h3{font-size:13px;color:#e8bc70;margin-bottom:8px}.history-actions ol{max-height:200px;overflow:auto;display:grid;gap:6px;font-size:12px;color:#b6d1c1}.history-actions li{overflow-wrap:anywhere}.history-empty{padding:32px;text-align:center;color:#b6d1c1}.hand-privacy{font-size:11px;color:#90afa1;margin-top:12px}
+    @media(max-width:600px){.history-players{grid-template-columns:repeat(2,minmax(0,1fr))}.hand-record summary{padding:14px;gap:8px}.hand-summary-winner strong{font-size:15px}.hand-summary-winner b{margin-left:0}.history-board{padding:12px 6px}.history-board .card{width:36px;height:51px;font-size:17px}.hand-detail{padding:0 12px 12px}}
     [hidden]{display:none!important}#notice{min-height:1.5rem;color:#f6d195}
     #gameLayout{display:grid;gap:1rem;margin-top:1rem}#tableColumn{display:grid;gap:.75rem;min-width:0}#sidebar{display:flex;flex-direction:column;gap:.75rem;min-width:0}
     #chatPanel{min-height:0;display:flex;flex-direction:column}#chatMessages{min-height:0;max-height:320px;overflow-y:auto;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#436b60 transparent}
@@ -139,7 +146,7 @@
       </section>
       <section id="controls" class="panel p-5">
         <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Au-dessus de 500 jetons, choisissez une entrée d’au moins 500. Sinon, vous entrez avec tout votre solde.</p></div><button id="start" class="btn gold" hidden>Distribuer une main</button></div>
-        <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
+        <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><div class="bet-sizes" role="group" aria-label="Préparer une mise rapide"><button id="betMin" type="button" class="btn">Min.</button><button id="betHalf" type="button" class="btn">½ pot</button><button id="betPot" type="button" class="btn">Pot</button></div><button id="raise" class="btn">Relancer</button><button id="allin" class="btn">Tapis</button></div>
         <p id="result" class="text-center text-sm text-[#f2d59d] mt-3" role="status"></p>
       </section>
       </div>
@@ -152,10 +159,15 @@
         <p id="chatError" role="status"></p>
       </section>
       <section id="aidPanel" class="panel p-5" hidden><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-semibold text-[#f2d59d]">Seconde chance</h2><p class="text-sm text-emerald-100/65 mt-1">500 jetons pour revenir à table, une fois toutes les 24 h si votre capital est inférieur à 500.</p><p id="aidStatus" class="text-xs text-emerald-100/60 mt-2" aria-live="polite"></p></div><button id="claimAid" class="btn">Recevoir ma seconde chance</button></div></section>
-      <div id="tableNotes"><p>30 s par décision · Check automatique si possible, sinon fold · Tapis et pots secondaires pris en charge.</p><p>1 000 jetons offerts une seule fois à l’inscription. Le résultat aux tables exclut toutes les dotations.</p></div>
+      <button id="openHistory" type="button" class="btn"><span>Historique des mains<br><small>Les 20 dernières · Résultats et cartes</small></span><span aria-hidden="true">→</span></button>
       </aside>
       </div>
     </div>
+    <section id="historyPage" aria-labelledby="historyTitle" hidden>
+      <div id="historyHeading"><div><h2 id="historyTitle" tabindex="-1">Historique des mains</h2><p>Les 20 derniers coups, du plus récent au plus ancien.</p></div><div><button id="refreshHistory" type="button" class="btn">Actualiser</button><button id="backToTable" type="button" class="btn gold">← Retour à la table</button></div></div>
+      <button id="historyAlert" type="button" class="btn" hidden>À vous de jouer ! Revenir à la table →</button>
+      <p id="historyStatus" role="status"></p><div id="historyList"></div>
+    </section>
     <p id="notice" class="text-sm text-center mt-5" role="alert"></p>
   </main>
   <script src="/socket.io/socket.io.js"></script>
@@ -167,6 +179,7 @@
     let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
     let entryChoice = false, joinPending = false;
+    let historyVersion = null, historyLoading = false, historyEntries = [], reconnectRetry;
     const chatNodes = new Map();
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
@@ -179,6 +192,8 @@
     }
     function showLogin(message = '') {
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
+      clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
+      $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
       lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
       $('chatInput').value = ''; $('chatError').textContent = ''; clearEffects();
       entryChoice = false; joinPending = false; $('entryAmount').value = ''; renderEntry();
@@ -208,7 +223,7 @@
     }
     function card(c) {
       if (!c) return '<span class="card empty" aria-label="Carte à venir">·</span>';
-      if (c === '??') return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
+      if (c === '??' || typeof c !== 'string' || !/^[2-9TJQKA][shdc]$/.test(c)) return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
       return `<span class="card ${'hd'.includes(c[1]) ? 'red' : ''}" data-card="${c}" aria-label="${c}"><span>${c[0] === 'T' ? '10' : c[0]}</span><span>${symbols[c[1]]}</span></span>`;
     }
     function renderOwnHand() {
@@ -455,6 +470,73 @@
         complete?.();
       });
     }
+    function historyRoute() { return location.pathname.replace(/\/$/,'') === '/historique'; }
+    function renderRoute() {
+      const viewing = !!state && historyRoute();
+      $('game').hidden = !state || viewing; $('historyPage').hidden = !viewing;
+      document.body.classList.toggle('in-club', !!state && !viewing);
+      const mine = state?.turn === state?.me && !!state?.turn && !state?.runout;
+      $('historyAlert').hidden = !viewing || !mine;
+      if (viewing && !historyLoading && historyVersion !== (state.historyVersion || '')) loadHistory();
+    }
+    function navigate(path) {
+      if (location.pathname !== path) history.pushState({},'',path);
+      renderRoute(); window.scrollTo(0,0);
+      if (historyRoute() && state) $('historyTitle').focus();
+    }
+    window.addEventListener('popstate', renderRoute);
+    $('openHistory').onclick = () => navigate('/historique');
+    $('backToTable').onclick = $('historyAlert').onclick = () => navigate('/');
+    $('refreshHistory').onclick = () => loadHistory();
+    function renderHistory() {
+      const opened = new Set([...$('historyList').querySelectorAll('details[open]')].map(el => el.dataset.hand));
+      const amount = n => money(Number.isSafeInteger(n) ? n : 0);
+      if (!historyEntries.length) {
+        $('historyList').innerHTML = '<div class="panel history-empty">Les prochaines mains terminées apparaîtront ici.</div>'; return;
+      }
+      $('historyList').innerHTML = historyEntries.map(h => `<details class="hand-record" data-hand="${escapeHTML(h.id)}" ${opened.has(h.id) ? 'open' : ''}>
+        <summary><div class="hand-summary"><p class="hand-meta">Main ${amount(h.number)} · ${escapeHTML(new Date(h.endedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</p>
+        ${h.winners.length ? h.winners.map(w => `<div class="hand-summary-winner"><strong>${escapeHTML(w.nick)}</strong><span>${escapeHTML(w.reason)}</span><b>+ ${amount(w.amount)} jetons</b></div>`).join('') : `<div class="hand-summary-winner"><strong>Mises remboursées</strong><span>${escapeHTML(h.result)}</span></div>`}</div></summary>
+        <div class="hand-detail"><div class="history-board"><p>Tableau · ${amount(h.pot)} jetons attribués</p><div class="cards">${Array.from({length:5},(_,i)=>card(h.board[i])).join('')}</div></div>
+        <div class="history-players" data-count="${h.players.length}">${h.players.map(p => `<article class="history-player ${p.won ? 'won' : ''}"><h3>${p.won ? '♠ ' : ''}${escapeHTML(p.nick)}</h3><p>${p.dealer ? 'Bouton · ' : ''}${p.folded ? 'Couché' : p.cards.length ? 'Abattage' : 'Cartes non dévoilées'}</p><div class="cards">${(p.cards.length ? p.cards : ['??','??']).map(card).join('')}</div><div class="amounts"><span>Engagés : ${amount(p.contribution)}</span><strong>Remportés : ${amount(p.won)}</strong>${p.refund ? `<span>Remboursés : ${amount(p.refund)}</span>` : ''}</div></article>`).join('')}</div>
+        <p class="hand-privacy">Seules les cartes dévoilées à l’abattage sont visibles.</p><div class="history-actions"><h3>Déroulement de la main</h3><ol>${h.logs.map(log => `<li>${escapeHTML(new Date(log.time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))} · ${escapeHTML(log.message)}</li>`).join('')}</ol></div></div>
+      </details>`).join('');
+    }
+    async function loadHistory() {
+      if (!state || historyLoading) return;
+      const owner = state.me; let received = false;
+      historyLoading = true; $('refreshHistory').disabled = true; $('historyStatus').textContent = 'Chargement des mains…';
+      try {
+        const reply = await api('history');
+        if (state?.me !== owner) return;
+        historyEntries = reply.hands; historyVersion = historyEntries[0]?.id || ''; received = true;
+        renderHistory(); $('historyStatus').textContent = `${historyEntries.length} / 20 mains disponibles · Dépliez une fiche pour voir les cartes et les actions.`;
+      } catch (error) { if (state?.me === owner) $('historyStatus').textContent = error.message; }
+      finally {
+        if (state?.me === owner) {
+          historyLoading = false; $('refreshHistory').disabled = false;
+          if (received && historyRoute() && historyVersion !== (state.historyVersion || '')) loadHistory();
+        }
+      }
+    }
+    function quickBetAmount(kind) {
+      const p = state?.players.find(p => p.id === state.me);
+      if (!p) return 0;
+      const max = p.bet + p.stack, due = Math.min(p.stack, Math.max(0,state.currentBet - p.bet));
+      const extra = kind === 'min' ? state.minRaise : Math.max(state.minRaise, Math.floor((state.pot + due) * (kind === 'half' ? .5 : 1)));
+      return Math.min(max, state.currentBet + extra);
+    }
+    function renderQuickBets() {
+      const p = state?.players.find(p => p.id === state.me);
+      const allowed = p && state.turn === state.me && state.canRaise && p.stack + p.bet > state.currentBet && socket.connected && !storageBlocked;
+      for (const [id,kind] of [['betMin','min'],['betHalf','half'],['betPot','pot']]) {
+        $(id).disabled = !allowed;
+        $(id).title = allowed ? `Préparer une relance à ${money(quickBetAmount(kind))} jetons, puis cliquer sur Relancer.` : 'Relance indisponible';
+      }
+    }
+    for (const [id,kind] of [['betMin','min'],['betHalf','half'],['betPot','pot']]) $(id).onclick = () => {
+      $('raiseTo').value = quickBetAmount(kind); $('raiseTo').focus();
+    };
     function renderEntry() {
       const seated = state?.players.some(p => p.id === state.me);
       const choice = !!state && !seated && state.wallet > state.entryThreshold;
@@ -510,7 +592,8 @@
       send('action', amount > state.currentBet ? {type:'raise',amount} : {type:'call'});
     };
     socket.on('connect', () => {
-      $('connection').textContent = '● Connecté'; updateChatAvailability(); renderEntry();
+      clearTimeout(reconnectRetry); $('notice').textContent = '';
+      $('connection').textContent = '● Connecté'; updateChatAvailability(); renderEntry(); renderQuickBets();
     });
     socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
     socket.on('storage-error', data => {
@@ -524,11 +607,15 @@
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
       $('connection').textContent = '○ Reconnexion…';
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
-      $('notice').textContent = 'Connexion perdue : sortie de table automatique (un tapis reste en jeu).';
+      $('notice').textContent = 'Connexion perdue : reconnexion en cours. Votre place est réservée pendant 30 secondes.';
+      $('openHistory').disabled = false;
     });
     socket.on('connect_error', async error => {
       $('connection').textContent = '○ Connexion interrompue'; $('notice').textContent = error.message;
-      try { await api('session'); } catch { showLogin('Connectez-vous pour rejoindre le club.'); }
+      try {
+        await api('session'); clearTimeout(reconnectRetry);
+        reconnectRetry = setTimeout(() => { if (!socket.connected) socket.connect(); }, 1000);
+      } catch { showLogin('Connectez-vous pour rejoindre le club.'); }
     });
     function renderAid() {
       if (!state) return;
@@ -553,19 +640,19 @@
       $('profit').className = s.profit < 0 ? 'text-rose-300' : 'text-emerald-300';
       $('stage').textContent = `Main ${s.hand} · ${{waiting:'En attente',preflop:'Préflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Résultat'}[s.phase]}`;
       $('board').innerHTML = Array.from({length:5}, (_, i) => card(s.board[i])).join('');
-      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article data-player="${escapeHTML(p.id)}" class="seat ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
+      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article data-player="${escapeHTML(p.id)}" class="seat ${p.disconnectedUntil ? 'reconnecting' : ''} ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
         <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
         <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
-        <p class="text-xs text-emerald-100/60 mt-3">${p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
+        <p ${p.disconnectedUntil ? `data-reconnect-until="${p.disconnectedUntil}" class="reconnect-status text-xs mt-3"` : 'class="text-xs text-emerald-100/60 mt-3"'}>${p.disconnectedUntil ? `Reconnexion · ${Math.max(0,Math.ceil((p.disconnectedUntil-Date.now())/1000))} s` : p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
       $('empty').hidden = s.players.length > 0;
       renderEntry();
       $('leave').hidden = !me; $('leave').disabled = !!me?.leaving;
       $('leave').textContent = me?.leaving ? 'Sortie en attente' : s.runout ? 'Quitter après la main' : 'Quitter la table';
-      $('start').hidden = !me || playing; $('start').disabled = s.players.length < 2 || !!me?.leaving;
+      $('start').hidden = !me || playing; $('start').disabled = s.players.length < 2 || !!me?.leaving || s.players.some(p => p.disconnectedUntil);
       $('result').textContent = s.result;
       const mine = playing && s.turn === s.me, due = me ? Math.max(0,s.currentBet-me.bet) : 0;
       $('actions').hidden = !mine;
-      $('turn').textContent = s.runout ? 'Tapis suivi · Les cartes arrivent…' : mine ? 'À vous de jouer' : playing ? `Au tour de ${s.players.find(p => p.id === s.turn)?.nick || '…'}` : me ? (s.players.length < 2 ? 'En attente d’un autre joueur…' : 'Prêts pour la prochaine main ?') : 'Rejoignez la table pour jouer.';
+      $('turn').textContent = s.runout ? 'Tapis suivi · Les cartes arrivent…' : s.players.find(p => p.id === s.turn)?.disconnectedUntil ? 'Pause · Un joueur se reconnecte…' : mine ? 'À vous de jouer' : playing ? `Au tour de ${s.players.find(p => p.id === s.turn)?.nick || '…'}` : me ? (s.players.length < 2 ? 'En attente d’un autre joueur…' : 'Prêts pour la prochaine main ?') : 'Rejoignez la table pour jouer.';
       if (me) {
         const max = me.stack + me.bet, min = Math.min(max,s.currentBet+s.minRaise);
         $('call').textContent = due ? `Suivre ${money(Math.min(due,me.stack))}` : 'Check';
@@ -583,13 +670,15 @@
       renderOwnHand();
       highlightWinningSources();
       updateChatAvailability();
-      renderAid();
+      renderAid(); renderQuickBets(); renderRoute();
       animateState(previous, s);
     });
     setInterval(() => {
       if (storageBlocked) $('connection').textContent = '○ Partie suspendue';
       else if (state?.deadline && socket.connected) $('connection').textContent = `● Connecté · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s`;
       else if (socket.connected) $('connection').textContent = '● Connecté';
+      document.querySelectorAll('[data-reconnect-until]').forEach(el => el.textContent = `Reconnexion · ${Math.max(0,Math.ceil((Number(el.dataset.reconnectUntil)-Date.now())/1000))} s`);
+      if (state && !$('historyAlert').hidden) $('historyAlert').textContent = `À vous de jouer · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s · Revenir à la table →`;
       renderAid();
     }, 250);
     (async () => {
