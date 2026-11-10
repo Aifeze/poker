@@ -39,13 +39,17 @@ const io = new (load('socket.io').Server)(server, {
   maxHttpBufferSize: 8192,
   allowRequest: (req, done) => done(null, sameOrigin(req))
 });
-app.get(['/', '/historique'], (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get(['/', '/historique', '/parametres'], (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/health', (_, res) => res.status(storageReady && !storageUnavailable ? 200 : 503)
   .json({ ok: storageReady && !storageUnavailable }));
 
 const ENTRY_THRESHOLD = 500, AID_THRESHOLD = 500, SMALL = 5, BIG = 10, TURN_MS = 30000, DAY = 86400000;
 const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
 const RECONNECT_MS = 30000, HISTORY_LIMIT = 20;
+const AVATARS = ['nova', 'atlas', 'luna', 'rio', 'jade', 'oscar'];
+const nickKey = nick => nick.trim().normalize('NFKC').toLocaleLowerCase('fr');
+const validNick = nick => typeof nick === 'string' && /^[\p{L}\p{N}_ -]{2,20}$/u.test(nick.trim());
+const accountByNick = key => [...users].find(([, u]) => nickKey(u.nick) === key);
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
@@ -69,21 +73,31 @@ function validateAccounts(saved) {
   const previousReset = saved.capitalResetVersion ?? 0;
   if (!Number.isSafeInteger(previousReset) || previousReset < 0)
     throw Error('Version de remise à zéro non prise en charge.');
-  const ids = new Set();
+  const ids = new Set(), names = new Set();
   for (const u of saved.users) {
     if (typeof u.id !== 'string' || typeof u.nick !== 'string' ||
       !/^[a-f0-9]{32}$/.test(u.salt) || !/^[a-f0-9]{128}$/.test(u.hash) ||
       !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
-      !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id))
+      !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id) || names.has(nickKey(u.nick))
+      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)))
       throw Error('Sauvegarde de comptes invalide.');
-    ids.add(u.id);
+    ids.add(u.id); names.add(nickKey(u.nick));
   }
   if (saved.history !== undefined && (!Array.isArray(saved.history) || saved.history.length > HISTORY_LIMIT
     || saved.history.some(h => !h || typeof h.id !== 'string' || !Number.isSafeInteger(h.number)
       || !Array.isArray(h.board) || !Array.isArray(h.players) || !Array.isArray(h.winners) || !Array.isArray(h.logs))))
     throw Error('Historique sauvegardé invalide.');
   return saved;
+}
+function restoreUsers(saved) {
+  let migrated = false;
+  for (const u of saved.users) {
+    const avatar = u.avatar || AVATARS[randomInt(AVATARS.length)];
+    if (!u.avatar) migrated = true;
+    users.set(u.id, { ...u, avatar, socket: null });
+  }
+  return migrated;
 }
 function restoreHistory(saved) {
   handHistory = saved.history || [];
@@ -109,6 +123,7 @@ function findAccounts(file) {
   return empty || (invalid ? { invalid } : null);
 }
 function loadLocalAccounts() {
+  let migrated = false;
   fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   let source = findAccounts(dataFile);
   if (!source?.saved?.users.length) {
@@ -136,15 +151,18 @@ function loadLocalAccounts() {
   }
   if (source?.saved) {
     capitalResetVersion = Math.max(1, source.saved.capitalResetVersion ?? 0);
-    for (const u of source.saved.users) users.set(u.id, { ...u, socket: null });
+    migrated = restoreUsers(source.saved);
     restoreHistory(source.saved);
   }
   console.log(`[stockage] ${users.size} compte(s) chargé(s) depuis ${dataFile}.`);
+  return migrated;
 }
 async function initializeStorage() {
   if (!postgres) {
     if (process.env.RENDER) throw Object.assign(Error('DATABASE_URL doit être configurée sur Render.'), { code: 'DATABASE_URL_MISSING' });
-    loadLocalAccounts(); storageReady = true; return;
+    const migrated = loadLocalAccounts();
+    if (migrated) await persist();
+    storageReady = true; return;
   }
   const url = new URL(process.env.DATABASE_URL);
   if (!['postgres:', 'postgresql:'].includes(url.protocol)) throw Error('URL PostgreSQL invalide.');
@@ -181,8 +199,9 @@ async function initializeStorage() {
     SET owner = $1, revision = revision + 1 WHERE id = 1 RETURNING revision, payload`, [storageOwner]);
   const saved = validateAccounts(rows[0].payload);
   dbRevision = rows[0].revision; capitalResetVersion = Math.max(1, saved.capitalResetVersion ?? 0);
-  for (const u of saved.users) users.set(u.id, { ...u, socket: null });
+  const migrated = restoreUsers(saved);
   restoreHistory(saved);
+  if (migrated) await persist();
   storageReady = true;
   console.log(`[stockage] PostgreSQL connecté : ${users.size} compte(s) chargé(s).`);
 }
@@ -208,7 +227,7 @@ function bankroll(id) {
 async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
-  const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, salt: u.salt, hash: u.hash,
+  const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, salt: u.salt, hash: u.hash,
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
   const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows, history: handHistory });
   if (postgres) {
@@ -271,13 +290,17 @@ function sessionFor(req) {
   if (!session || session.expires <= Date.now()) { if (token) sessions.delete(token); return null; }
   return { ...session, token };
 }
-function createSession(req, res, id) {
+function issueSession(req, res, id) {
   for (const [token, s] of sessions) if (s.id === id) sessions.delete(token);
   const token = randomBytes(32).toString('hex');
   sessions.set(token, { id, expires: Date.now() + 7 * DAY });
   res.cookie('river_session', token, { httpOnly: true, sameSite: 'strict', secure: req.secure,
     maxAge: 7 * DAY, path: '/' });
-  res.json({ ok: true, nick: users.get(id).nick });
+  return token;
+}
+function createSession(req, res, id) {
+  issueSession(req, res, id);
+  res.json({ ok: true, nick: users.get(id).nick, avatar: users.get(id).avatar });
 }
 function consumeAttempt(key, limit) {
   const now = Date.now();
@@ -301,20 +324,24 @@ app.use('/api', async (req, res, next) => {
 });
 for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, res) => {
   try {
-    const { nick, password } = req.body || {};
+    const { nick, password, avatar } = req.body || {};
     if (!consumeAttempt('ip:' + req.ip, 40)) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
-    if (typeof nick !== 'string' || !/^[\p{L}\p{N}_ -]{2,20}$/u.test(nick.trim()) ||
+    if (!validNick(nick) ||
       typeof password !== 'string' || password.length < 8 || password.length > 128)
       return res.status(400).json({ error: 'Pseudo : 2 à 20 caractères. Mot de passe : 8 à 128 caractères.' });
-    const id = nick.trim().normalize('NFKC').toLocaleLowerCase('fr');
-    if (!consumeAttempt('user:' + id, 15)) return res.status(429).json({ error: 'Trop de tentatives sur ce compte. Réessayez dans 15 minutes.' });
-    const u = users.get(id);
+    const key = nickKey(nick);
+    if (!consumeAttempt('user:' + key, 15)) return res.status(429).json({ error: 'Trop de tentatives sur ce compte. Réessayez dans 15 minutes.' });
+    const found = accountByNick(key), u = found?.[1];
+    let id = found?.[0];
     if (mode === 'register') {
+      if (avatar !== undefined && !AVATARS.includes(avatar)) return res.status(400).json({ error:'Choisissez un personnage de la collection.' });
       const salt = randomBytes(16).toString('hex');
       const hash = (await scrypt(password, salt, 64)).toString('hex');
       await enqueue(() => {
-        if (users.has(id)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
-        users.set(id, { nick: nick.trim(), salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
+        if (accountByNick(key)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
+        // L'identifiant du compte reste immuable, même après un changement de pseudo.
+        id = key; while (users.has(id)) id = randomBytes(16).toString('hex');
+        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
       });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
@@ -337,7 +364,60 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
 app.get('/api/session', (req, res) => {
   const s = sessionFor(req);
   if (!s) return res.status(401).json({ error: 'Connectez-vous.' });
-  res.json({ ok: true, nick: users.get(s.id).nick });
+  res.json({ ok: true, nick: users.get(s.id).nick, avatar: users.get(s.id).avatar });
+});
+app.get('/api/profile', async (req, res) => {
+  const session = sessionFor(req);
+  if (!session) return res.status(401).json({ error:'Connectez-vous pour accéder au compte.' });
+  try {
+    const profile = await enqueue(() => { const u = users.get(session.id); return { nick:u.nick, avatar:u.avatar }; }, false);
+    res.json(profile);
+  } catch { res.status(503).json({ error:STORAGE_MESSAGE }); }
+});
+app.post('/api/profile', async (req, res) => {
+  try {
+    const session = sessionFor(req);
+    if (!session) return res.status(401).json({ error:'Reconnectez-vous pour modifier le compte.' });
+    if (!consumeAttempt('profile:' + session.id, 30)) return res.status(429).json({ error:'Trop de modifications. Réessayez un peu plus tard.' });
+    const body = req.body || {}, u = users.get(session.id);
+    const sensitive = body.nick !== undefined || body.newPassword !== undefined;
+    if (body.nick !== undefined && !validNick(body.nick)) return res.status(400).json({ error:'Le pseudo doit contenir de 2 à 20 caractères : lettres, chiffres, espaces, tirets ou _.' });
+    if (body.avatar !== undefined && !AVATARS.includes(body.avatar)) return res.status(400).json({ error:'Personnage inconnu.' });
+    if (body.newPassword !== undefined && (typeof body.newPassword !== 'string' || body.newPassword.length < 8 || body.newPassword.length > 128))
+      return res.status(400).json({ error:'Le nouveau mot de passe doit contenir de 8 à 128 caractères.' });
+    if (!sensitive && body.avatar === undefined) return res.status(400).json({ error:'Aucune modification demandée.' });
+    const oldHash = u.hash, oldSalt = u.salt;
+    let salt, hash;
+    if (sensitive) {
+      if (typeof body.currentPassword !== 'string' || body.currentPassword.length > 128) return res.status(400).json({ error:'Saisissez votre mot de passe actuel.' });
+      const verifier = await scrypt(body.currentPassword, oldSalt, 64);
+      if (!timingSafeEqual(verifier, Buffer.from(oldHash,'hex'))) return res.status(401).json({ error:'Mot de passe actuel incorrect.' });
+      if (body.newPassword !== undefined) { salt = randomBytes(16).toString('hex'); hash = (await scrypt(body.newPassword,salt,64)).toString('hex'); }
+    }
+    const profile = await enqueue(() => {
+      if (sessionFor(req)?.token !== session.token) throw Object.assign(Error('Session expirée. Reconnectez-vous.'), {status:401});
+      const current = users.get(session.id);
+      if (current.hash !== oldHash || current.salt !== oldSalt) throw Object.assign(Error('Le compte a changé. Réessayez avec le mot de passe actuel.'), {status:409});
+      if (body.nick !== undefined) {
+        const taken = accountByNick(nickKey(body.nick));
+        if (taken && taken[0] !== session.id) throw Object.assign(Error('Ce pseudo est déjà utilisé.'), {status:409});
+        const previous = current.nick; current.nick = body.nick.trim();
+        const player = seat(session.id);
+        if (player) { player.nick = current.nick; if (previous !== current.nick) addLog(`change de pseudo : ${previous} devient ${current.nick}.`, player); }
+      }
+      if (body.avatar !== undefined) current.avatar = body.avatar;
+      if (hash) { current.salt = salt; current.hash = hash; }
+      return { nick:current.nick, avatar:current.avatar };
+    });
+    if (hash) {
+      const token = issueSession(req,res,session.id);
+      for (const socket of io.sockets.sockets.values()) if (socket.data.uid === session.id) {
+        if (socket.data.session === session.token) socket.data.session = token;
+        else { socket.data.leaveImmediately = true; socket.emit('session-expired'); socket.disconnect(true); }
+      }
+    }
+    res.json({ ok:true, ...profile });
+  } catch (error) { res.status(error.status || 503).json({ error:error.status ? error.message : STORAGE_MESSAGE }); }
 });
 app.get('/api/history', async (req, res) => {
   if (!sessionFor(req)) return res.status(401).json({ error: 'Connectez-vous pour consulter l’historique.' });
@@ -398,7 +478,7 @@ function mayRaise(p) {
 }
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
-  return { me: id, nick: u.nick, wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
+  return { me: id, nick: u.nick, avatar: u.avatar, wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
     historyVersion: handHistory[0]?.id || '',
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
@@ -407,7 +487,7 @@ function stateFor(id) {
     pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result, winners: table.winners,
     celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
-    players: table.players.map(q => ({ id: q.id, nick: q.nick, stack: q.stack,
+    players: table.players.map(q => ({ id: q.id, nick: q.nick, avatar: users.get(q.id).avatar, stack: q.stack,
       disconnectedUntil: q.disconnectedUntil || 0,
       bet: q.bet, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
@@ -518,7 +598,7 @@ function finish() {
   }
   table.winners = [...gains].map(([id, amount]) => {
     const hand = hands.get(id), player = ps.find(p => p.id === id);
-    return { id, nick: users.get(id).nick, amount,
+    return { id, nick: users.get(id).nick, avatar: users.get(id).avatar, amount,
       reason: table.reveal ? handReason(scores.get(id)) : 'Tous les autres joueurs se sont couchés',
       winningHand: hand ? hand.cards.map(code => ({ code, fromHand: player.hole.includes(code),
         combination: hand.combination.includes(code) })) : [], ...awards.get(id) };
@@ -533,7 +613,7 @@ function finish() {
   handHistory.unshift({ id: table.handId, number: table.hand, startedAt: table.startedAt, endedAt: Date.now(),
     board: [...table.board], pot: [...gains.values()].reduce((sum, value) => sum + value, 0),
     winners: structuredClone(table.winners), result: table.result,
-    players: ps.map(p => ({ id:p.id, nick:p.nick, dealer:p.id === table.dealer, folded:p.folded,
+    players: ps.map(p => ({ id:p.id, nick:p.nick, avatar:users.get(p.id).avatar, dealer:p.id === table.dealer, folded:p.folded,
       cards: table.reveal && !p.folded ? [...p.hole] : [], contribution:p.total,
       won:gains.get(p.id) || 0, refund:refunds.get(p.id) || 0 })), logs: structuredClone(table.handLogs) });
   if (handHistory.length > HISTORY_LIMIT) handHistory.length = HISTORY_LIMIT;
@@ -711,8 +791,8 @@ io.on('connection', socket => {
   socket.on('chat', (data, ack) => {
     try {
       if (storageUnavailable) throw Error(STORAGE_MESSAGE);
-      const session = sessionFor(socket.request), id = socket.data.uid;
-      if (!session || session.id !== id || users.get(id)?.socket !== socket.id) throw Error('Reconnectez-vous pour écrire.');
+      const session = sessions.get(socket.data.session), id = socket.data.uid;
+      if (!session || session.expires <= Date.now() || session.id !== id || users.get(id)?.socket !== socket.id) throw Error('Reconnectez-vous pour écrire.');
       if (typeof data?.text !== 'string' || data.text.length > 280) throw Error('Votre message doit contenir entre 1 et 280 caractères.');
       const text = data.text.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/gu, ' ').trim();
       if (!text) throw Error('Écrivez un message avant de l’envoyer.');
@@ -721,7 +801,7 @@ io.on('connection', socket => {
       if (!limit || limit.until <= now) { limit = { count:0, until:now + 10000 }; chatLimits.set(id, limit); }
       if (limit.count >= 5) throw Error('Un peu de patience : 5 messages maximum en 10 secondes.');
       limit.count++;
-      const entry = { id:++chatSequence, userId:id, nick:users.get(id).nick, text, time:now };
+      const entry = { id:++chatSequence, userId:id, nick:users.get(id).nick, avatar:users.get(id).avatar, text, time:now };
       chatMessages.push(entry); if (chatMessages.length > 80) chatMessages.shift();
       io.emit('chat-message', entry);
       if (typeof ack === 'function') ack({ ok:true });

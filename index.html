@@ -99,13 +99,33 @@
       #winnerAnnouncement.has-cards{padding:10px}#winnerAnnouncement.has-cards::before{display:none}.winning-cards{margin-top:8px}.winning-cards .card{width:42px;height:58px;font-size:20px}.winner-item .winning-cards{gap:3px;margin:4px 0}.winner-item .winning-cards .card{width:25px;height:34px;font-size:13px;padding:2px}.winner-item .winning-card-slot small{font-size:6px;line-height:8px}#winnerCardLegend{font-size:9px;line-height:12px;margin-top:4px}
     }
     @media(max-width:480px){.card{width:42px;height:61px;font-size:17px;padding:5px}.felt{border-width:5px;border-radius:2rem}.seat{padding:.65rem}.btn{padding:.65rem .85rem}#myCards .card{width:62px;height:88px;font-size:24px}.winning-cards{gap:4px}.winning-cards .card{width:34px;height:48px;font-size:17px;padding:4px}.winner-item .winning-cards{gap:2px}.winner-item .winning-cards .card{width:18px;height:27px;font-size:10px;padding:2px}.winner-item .winning-card-slot small{font-size:6px;line-height:8px}}
+    .header-account{display:flex;align-items:center;gap:14px}.account-settings{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 10px}.avatar{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;overflow:hidden;background:#15383a;flex-shrink:0;border:2px solid #ffffff22}.avatar svg{display:block;width:100%;height:100%}#headerAvatar{display:flex;width:30px;height:30px}#headerAvatar .avatar{width:100%;height:100%}
+    fieldset{min-width:0}fieldset legend{font-size:13px;font-weight:650;margin-bottom:8px;color:#e7d4ad}.picker-hint{font-size:11px;line-height:16px;color:#aac5b7;margin:0 0 10px}.character-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.character-option{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;padding:10px 5px;border:1px solid #ffffff15;border-radius:14px;cursor:pointer;background:#123436;transition:background .2s,border-color .2s,transform .2s}.character-option:hover{background:#214846;transform:translateY(-2px)}.character-option:has(input:checked){border-color:#e8bc70;background:#304b3c;box-shadow:0 0 0 1px #e8bc7033}.character-option input{position:absolute;right:6px;top:6px;appearance:none;width:12px;height:12px;border-radius:50%;border:1px solid #cfdfcc77;padding:0;min-width:0}.character-option input:checked{background:#e8bc70;box-shadow:inset 0 0 0 3px #304b3c}.character-option .avatar{width:60px;height:60px}.character-option strong,.character-option small{display:block}.character-option strong{font-size:12px;color:#f6dfb4}.character-option small{font-size:9px;color:#aac5b7;margin-top:2px}#registerCharacters{margin-top:8px}
+    #settingsPage{max-width:1100px;margin:0 auto;padding-bottom:24px}.settings-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin:24px 0}.eyebrow{font-size:10px;letter-spacing:.18em;color:#d5b97b}.settings-heading h2{font-size:28px;font-weight:750;color:#f2d59d}.settings-heading>div>p:last-child,.settings-help{font-size:13px;color:#acc8ba;line-height:1.6;margin-top:6px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.settings-card{padding:24px;min-width:0}.settings-card h3{font-size:21px;font-weight:700;color:#e8efe6}.settings-profile{display:flex;gap:14px;align-items:center;margin-bottom:24px}.settings-profile .avatar{width:82px;height:82px}.settings-profile h3{overflow-wrap:anywhere}.settings-profile p:last-child{font-size:12px;color:#a9c9b8;margin-top:4px}.settings-card .character-grid{gap:10px;margin:12px 0 18px}.settings-card .character-option .avatar{width:72px;height:72px}.account-form{display:flex;flex-direction:column;gap:10px;margin-top:20px}.account-form label{font-size:13px;color:#d5e4db}.account-form label small{color:#89a89a}.account-form button{margin-top:8px}.form-message{font-size:12px;line-height:18px;color:#f2d59d;margin-top:10px}.form-message:empty{display:none}.form-message.success{color:#a9d5b2}.turn-alert{width:100%;margin-bottom:16px;border-color:#e8bc70;text-align:left;color:#f4d7a2}
+    @media(max-width:760px){.settings-grid{grid-template-columns:1fr}.settings-card{padding:18px}.settings-heading h2{font-size:24px}.header-account{gap:8px}.account-settings>span:last-child{font-size:11px}.account-settings{padding:5px 8px}}
+    /* The felt is the full arena; its rail, seats and cards each have their own layer. */
+    .felt{position:relative;display:block;padding:0!important;border:0!important;border-radius:0;background:none;box-shadow:none;min-height:480px;isolation:isolate;overflow:visible}
+    #pokerTable{position:absolute;inset:18% 8% 20%;border:12px solid #28332f;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,#26705a,#15503e 75%);box-shadow:0 0 0 2px #ad935d66,0 0 0 6px #0b2023,0 18px 35px #0006,inset 0 0 0 2px #c4ac6b44,inset 0 0 70px #042b2a;z-index:0}#pokerTable::after{content:'';position:absolute;inset:15px;border:1px solid #d8c68b24;border-radius:50%}.table-brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:19px;letter-spacing:.2em;font-weight:750;white-space:nowrap;color:#bdd2bb12;text-align:center;pointer-events:none}.table-brand span{color:#c9b77a22}.table-brand small{display:block;font-size:8px;letter-spacing:.35em;margin-top:4px}
+    #tableStage{position:absolute;top:0;left:4px;right:4px;margin:0;font-size:10px;line-height:14px;z-index:2}#players{display:contents;margin:0}#community{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);display:block;width:auto;min-width:260px;z-index:2}#community>p:first-child{font-size:9px;line-height:12px}#community>p:nth-child(2){margin-top:1px;font-size:26px;line-height:30px}#community>p:nth-child(2)>span:last-child{font-size:11px}#board{grid-column:auto;grid-row:auto;margin-top:7px;gap:6px}#board .card{width:46px;height:64px;font-size:20px;padding:6px}#empty{position:absolute;left:20%;right:20%;top:68%;padding:0;margin:0;font-size:11px;line-height:16px;z-index:1}
+    .felt .seat{position:absolute;width:min(192px,27%);min-width:0;max-width:none;padding:8px;background:linear-gradient(150deg,#143c3c,#0c272b);border:1px solid #446357;border-radius:16px;box-shadow:0 8px 18px #0004;z-index:4;transition:border-color .2s,box-shadow .2s}.felt .seat.acting{border-color:#f3cf85;box-shadow:0 0 0 2px #e8bc7030,0 7px 18px #0004}.felt .seat.winner-seat{border-color:#f2d08b;box-shadow:0 0 20px #e8bc7040}.felt .seat.folded{opacity:.55}.felt .seat.reconnecting{border-style:dashed;border-color:#85b1ba}.seat-profile{display:flex;align-items:center;gap:8px;min-height:48px}.profile-avatar{display:flex;flex-shrink:0;width:46px;height:46px}.profile-avatar .avatar{width:100%;height:100%;border-color:#ffffff20}.seat-identity{flex:1;min-width:0}.seat-name{display:flex;align-items:center;gap:4px;min-width:0}.seat-name>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;color:#e6eee3}.dealer-button{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e8bc70;color:#15352e;font-size:10px;font-weight:750}.seat-stack{font-size:15px;line-height:20px;font-weight:750;color:#f2d59d;margin:0}.seat-stack small{font-size:9px;font-weight:400;color:#adc8b2}.seat-status{font-size:9px;line-height:13px;color:#a6c4b6;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #players .seat>div:first-child{font-size:inherit;line-height:inherit;min-height:48px}#players .seat>div:nth-of-type(2){min-height:0}#players .seat-hand{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);display:flex;justify-content:center;gap:4px;margin:0;padding:0;z-index:-1}#players .seat-hand .card{width:28px;height:40px;padding:3px;font-size:13px;border-radius:5px}
+    .felt .own-seat{display:block;width:230px;margin:0;padding:9px 12px;text-align:left;left:50%;bottom:1%;transform:translateX(-50%)}#myNick{display:block;font-size:13px}#myStack{font-size:17px}#myStatus{margin:0;font-size:10px;line-height:14px;grid-column:auto;grid-row:auto}#myCards{position:absolute;bottom:calc(100% + 7px);left:50%;top:auto;transform:translateX(-50%);display:flex;gap:8px;margin:0;grid-column:auto;grid-row:auto;z-index:-1}#myCards .card{width:56px;height:78px;font-size:25px;padding:7px}#toggleCards{position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);padding:1px 6px!important;border:0;background:none;font-size:9px!important;line-height:12px!important;color:#b9cdbb;white-space:nowrap}#toggleCards:hover:enabled{background:#1b3a35}
+    #players [data-slot=bottom]{left:50%;bottom:1%;transform:translateX(-50%)}#players [data-slot=bottom] .seat-hand{top:auto;bottom:calc(100% + 6px)}#players [data-slot=top]{left:50%;top:1%;transform:translateX(-50%)}#players [data-slot=left],#players [data-slot=right]{width:min(180px,22%);top:49%;transform:translate(-50%,-50%)}#players [data-slot=left]{left:12.5%}#players [data-slot=right]{left:87.5%}#players [data-slot=left] .seat-hand{left:calc(100% + 6px);top:50%;transform:translateY(-50%)}#players [data-slot=right] .seat-hand{left:auto;right:calc(100% + 6px);top:50%;transform:translateY(-50%)}#players [data-slot=upper-left],#players [data-slot=upper-right]{top:22%;transform:translate(-50%,-50%)}#players [data-slot=upper-left]{left:22%}#players [data-slot=upper-right]{left:78%}.felt[data-players="5"] #players [data-slot=upper-left]{left:31%;top:3%;transform:translate(-50%,0)}.felt[data-players="5"] #players [data-slot=upper-right]{left:69%;top:3%;transform:translate(-50%,0)}.felt[data-players="6"] #players [data-slot=left],.felt[data-players="6"] #players [data-slot=right]{top:64%}
+    #toggleCards{top:50%;left:calc(100% + 12px);right:auto;bottom:auto;transform:translateY(-50%);width:154px;min-height:46px;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid #e8bc7080;background:#29473a;color:#f4d9a6;padding:10px 12px!important;border-radius:12px;font-size:12px!important;line-height:16px!important;white-space:normal;box-shadow:0 4px 14px #0004}#toggleCards:hover:enabled{background:#3a5841;border-color:#f4d9a6}#toggleCards:focus-visible{outline:2px solid #f4d9a6;outline-offset:3px}#toggleCards svg{width:20px;height:20px;flex-shrink:0}
+    #tableFx{border-radius:24px}#winnerAnnouncement{z-index:20}#tableToast{z-index:16}.felt.allin-moment{animation:none}.felt.allin-moment #pokerTable{animation:allin-glow 1.8s ease-out}.action-badge{bottom:-8px;z-index:8}
+    .winning-cards .card.combination-card{transform:translateY(-10px);box-shadow:0 9px 14px #0005,0 0 14px #e8bc7050}.winning-cards .card.kicker-card{transform:translateY(3px);filter:grayscale(1);opacity:.4;border-color:#778781;background:#cbd5d0;box-shadow:none}.card.combination-source{transform:translateY(-10px);outline:1px solid #f0c36e;box-shadow:0 10px 16px #0005,0 0 12px #e8bc7050}.card.kicker-source,.card.nonwinning-card{filter:grayscale(1);opacity:.38;outline:none;box-shadow:none}.winning-cards{padding-top:10px}.winner-item .winning-cards{padding-top:7px}
+    @media(min-width:1024px){body.in-club main{max-width:1520px}.felt{min-height:0}#game input#raiseTo{width:80px}#actions{gap:5px}#actions>.btn{padding:8px 9px;font-size:12px}#actions label{font-size:11px}#myCards .card{width:54px;height:74px}}
+    @media(min-width:1024px) and (max-width:1199px){#gameLayout{grid-template-columns:minmax(0,1fr) 220px}}
+    @media(min-width:1024px) and (max-height:640px){.header-account{gap:8px}.account-settings{padding:3px 7px}#headerAvatar{width:22px;height:22px}#pokerTable{inset:19% 8% 20%;border-width:9px}#community{top:40%;min-width:230px}#community>p:nth-child(2){font-size:23px;line-height:26px}#board{margin-top:4px;gap:5px}#board .card{width:38px;height:52px;font-size:18px;padding:4px}.felt .seat{padding:5px 7px;border-radius:12px}.seat-profile,#players .seat>div:first-child{min-height:44px}.profile-avatar{width:38px;height:38px}.seat-name>span:first-child{font-size:11px}.seat-stack{font-size:13px;line-height:18px}.seat-status{font-size:8px;line-height:12px}.felt .own-seat{width:210px;padding:6px 9px}#myNick{font-size:12px}#myStack{font-size:15px}#myStatus{font-size:9px;line-height:12px}#myCards{bottom:calc(100% + 5px);gap:6px}#myCards .card{width:44px;height:60px;font-size:21px;padding:5px}#players .seat-hand .card{width:24px;height:34px;font-size:12px;padding:2px}#players [data-slot=top] .seat-hand{left:calc(100% + 6px);top:50%;bottom:auto;transform:translateY(-50%)}#players [data-slot=upper-left],#players [data-slot=upper-right]{top:30%}#empty{top:67%;font-size:10px}}
+    @media(max-width:1023px){.felt{height:580px;min-height:580px;margin:12px 0 18px}#pokerTable{inset:17% 5% 19%;border-width:9px}#tableStage{font-size:9px}#community{top:44%;min-width:0;width:180px}#community>p:first-child{font-size:8px;letter-spacing:.13em}#community>p:nth-child(2){font-size:23px;line-height:27px}#board{gap:3px;margin-top:5px}#board .card{width:28px;height:41px;font-size:15px;padding:3px}.felt .seat{width:140px;padding:6px;border-radius:12px}.seat-profile,#players .seat>div:first-child{min-height:44px}.profile-avatar{width:36px;height:36px}.seat-name>span:first-child{font-size:10px}.seat-stack{font-size:12px;line-height:17px}.seat-stack small{font-size:8px}.seat-status{font-size:8px;line-height:12px}#players [data-slot=left],#players [data-slot=right]{width:86px;top:49%;padding:5px;text-align:center}#players [data-slot=left]{left:13%}#players [data-slot=right]{left:87%}#players [data-slot=left] .seat-profile,#players [data-slot=right] .seat-profile{display:block;padding-top:15px}#players [data-slot=left] .profile-avatar,#players [data-slot=right] .profile-avatar{position:absolute;left:50%;top:-21px;transform:translateX(-50%);width:34px;height:34px}#players [data-slot=left] .seat-name,#players [data-slot=right] .seat-name{justify-content:center}#players [data-slot=left] .seat-stack small,#players [data-slot=right] .seat-stack small{display:none}#players [data-slot=left] .seat-hand,#players [data-slot=right] .seat-hand{left:50%;right:auto;top:auto;bottom:calc(100% + 27px);transform:translateX(-50%)}#players .seat-hand .card{width:22px;height:32px;font-size:11px;padding:2px}#players [data-slot=upper-left],#players [data-slot=upper-right]{width:105px;top:27%;padding:5px}#players [data-slot=upper-left]{left:19%}#players [data-slot=upper-right]{left:81%}#players [data-slot=upper-left] .profile-avatar,#players [data-slot=upper-right] .profile-avatar{width:28px;height:28px}#players [data-slot=upper-left] .seat-profile,#players [data-slot=upper-right] .seat-profile{gap:4px}.felt[data-players="5"] #players [data-slot=upper-left]{left:27%;top:7%}.felt[data-players="5"] #players [data-slot=upper-right]{left:73%;top:7%}.felt[data-players="6"] #players [data-slot=left],.felt[data-players="6"] #players [data-slot=right]{top:64%}.felt .own-seat{width:190px;padding:8px;bottom:1%}#myAvatar{width:44px;height:44px}#myNick{font-size:12px}#myStack{font-size:15px}#myStatus{font-size:9px}#myCards{bottom:calc(100% + 7px);gap:7px}#myCards .card{width:48px;height:67px;font-size:23px;padding:5px}#empty{left:20%;right:20%;top:70%;font-size:10px}#winnerAnnouncement{width:94%;max-height:90%}.settings-heading .btn{font-size:12px}.header-account>div{display:none}}
+    @media(max-width:600px){.felt .own-seat{left:0;transform:none;width:calc(100% - 144px)}#toggleCards{left:calc(100% + 10px);width:134px;gap:7px;font-size:11px!important;padding:9px 8px!important}#myCards{left:calc(50% + 72px)}}
   </style>
 </head>
 <body>
   <main class="max-w-6xl mx-auto px-4 py-7 md:py-10">
     <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
       <div><p class="text-xs tracking-[.35em] text-emerald-200/60 mb-1">TEXAS HOLD'EM</p><h1 class="text-3xl font-semibold tracking-tight">River <span class="text-[#e8bc70]">Club ♠</span></h1></div>
-      <div class="text-right text-xs text-emerald-100/60"><p class="uppercase tracking-widest">Argent 100 % fictif</p><p id="connection" class="mt-1">Connexion au serveur…</p></div>
+      <div class="header-account"><div class="text-right text-xs text-emerald-100/60"><p class="uppercase tracking-widest">Argent 100 % fictif</p><p id="connection" class="mt-1">Connexion au serveur…</p></div><button id="openSettings" type="button" class="btn account-settings" hidden><span id="headerAvatar"></span><span>Paramètres</span></button></div>
     </header>
     <section id="login" class="panel max-w-md mx-auto p-7 mt-14">
       <p class="text-[#e8bc70] text-sm mb-3">PRENEZ PLACE</p><h2 class="text-2xl font-semibold mb-3">Une table. Votre prochain coup.</h2>
@@ -115,6 +135,7 @@
         <label for="nick" class="text-sm">Votre pseudo</label><input id="nick" autocomplete="username" maxlength="20" minlength="2" placeholder="Ex. RiverRunner" required>
         <label for="password" class="text-sm">Mot de passe</label><input id="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="8 caractères minimum" required>
         <div id="confirmation" class="flex flex-col gap-3" hidden><label for="passwordConfirm" class="text-sm">Confirmer le mot de passe</label><input id="passwordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="128"></div>
+        <fieldset id="registerCharacters" hidden><legend>Votre personnage</legend><p class="picker-hint">Choisissez votre visage à la table. Vous pourrez le changer ensuite.</p><div id="registerCharacterGrid" class="character-grid"></div></fieldset>
         <button id="authSubmit" class="btn gold mt-2">Se connecter →</button>
       </form>
       <p class="text-xs text-emerald-100/50 mt-5">Aucun achat, aucun retrait, aucun argent réel. Un compte est nécessaire pour jouer.</p>
@@ -127,16 +148,16 @@
       <div id="gameLayout">
       <div id="tableColumn">
       <section class="felt p-4 md:p-8">
+        <div id="pokerTable" aria-hidden="true"><div class="table-brand">RIVER CLUB <span>♠</span><small>TEXAS HOLD’EM</small></div></div>
         <div id="tableStage" class="flex justify-between items-center mb-4 text-sm text-emerald-100/60"><span id="stage">En attente</span><span>6 places · Blindes 5 / 10</span></div>
         <div id="players" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" aria-label="Adversaires"></div>
         <div id="community" class="text-center"><p class="text-xs uppercase tracking-[.25em] text-emerald-100/60">Pot de la main</p><p class="text-4xl font-bold text-[#f2d59d] mt-2"><span id="pot">0</span> <span class="text-base font-normal">jetons</span></p><div id="board" class="flex justify-center gap-2 mt-5" aria-label="Cartes communes"></div></div>
         <p id="empty" class="text-center text-emerald-100/60 py-7">La table vous attend. Rejoignez-la avec un ami.</p>
         <section id="mySeat" class="seat own-seat" aria-label="Votre place" hidden>
-          <div id="myHeading" class="flex justify-center items-center gap-2"><p class="text-xs uppercase tracking-[.2em] text-[#e8bc70]">Votre main</p><span id="myDealer" class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1" hidden>D</span></div>
-          <p id="myInfo" class="text-sm text-emerald-100/70 mt-2"><span id="myNick"></span> <span id="myStack"></span> jetons</p>
+          <div class="seat-profile"><span id="myAvatar" class="profile-avatar"></span><div class="seat-identity"><div class="seat-name"><span id="myNick"></span><span id="myDealer" class="dealer-button" hidden>D</span></div><p class="seat-stack"><span id="myStack"></span> <small>jetons</small></p><p id="myStatus" class="seat-status"></p></div></div>
+          <p id="myHeading" class="sr-only">Votre main</p>
           <div id="myCards" class="flex justify-center gap-3 my-4" aria-label="Vos cartes privées"></div>
           <button id="toggleCards" type="button" class="btn text-sm" aria-controls="myCards">Cacher mes cartes</button>
-          <p id="myStatus" class="text-xs text-emerald-100/65 mt-3"></p>
         </section>
         <div id="tableFx" aria-hidden="true"></div>
         <div id="tableToast" aria-hidden="true" hidden><p id="toastTitle"></p><p id="toastDetail"></p></div>
@@ -168,6 +189,20 @@
       <button id="historyAlert" type="button" class="btn" hidden>À vous de jouer ! Revenir à la table →</button>
       <p id="historyStatus" role="status"></p><div id="historyList"></div>
     </section>
+    <section id="settingsPage" aria-labelledby="settingsTitle" hidden>
+      <div class="settings-heading"><div><p class="eyebrow">VOTRE ESPACE</p><h2 id="settingsTitle" tabindex="-1">Paramètres du compte</h2><p>Votre profil, votre personnage, votre façon de jouer.</p></div><button id="settingsBack" type="button" class="btn">← Retour à la table</button></div>
+      <button id="settingsTurnAlert" type="button" class="btn turn-alert" hidden>À vous de jouer ! Revenir à la table →</button>
+      <div class="settings-grid">
+        <section class="panel settings-card"><div class="settings-profile"><div id="settingsAvatarPreview"></div><div><p class="eyebrow">VOTRE PERSONNAGE</p><h3 id="settingsProfileName"></h3><p id="settingsCharacterName"></p></div></div><form id="characterForm"><fieldset><legend>Choisir un personnage</legend><div id="settingsCharacterGrid" class="character-grid"></div></fieldset><button id="saveCharacter" type="submit" class="btn gold">Enregistrer mon personnage</button><p id="characterMessage" class="form-message" role="status"></p></form></section>
+        <section class="panel settings-card"><p class="eyebrow">IDENTITÉ & CONNEXION</p><h3>Votre compte</h3><p class="settings-help">Votre pseudo sert à vous connecter. Votre mot de passe actuel est nécessaire pour le modifier ou changer de mot de passe.</p><form id="accountForm" class="account-form">
+          <label for="accountNick">Pseudo</label><input id="accountNick" autocomplete="username" minlength="2" maxlength="20" required>
+          <label for="currentPassword">Mot de passe actuel</label><input id="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+          <label for="newPassword">Nouveau mot de passe <small>(facultatif)</small></label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="8 caractères minimum">
+          <label for="confirmNewPassword">Confirmer le nouveau mot de passe</label><input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128">
+          <button id="saveAccount" type="submit" class="btn gold">Enregistrer les modifications</button><p id="accountMessage" class="form-message" role="status"></p>
+        </form></section>
+      </div>
+    </section>
     <p id="notice" class="text-sm text-center mt-5" role="alert"></p>
   </main>
   <script src="/socket.io/socket.io.js"></script>
@@ -176,16 +211,35 @@
     const money = n => n.toLocaleString('fr-FR');
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const symbols = {s:'♠',h:'♥',d:'♦',c:'♣'};
+    const CHARACTERS = [
+      {id:'nova',name:'Nova',tag:'La stratège',bg:'#293d69',accent:'#f0c874',skin:'#d89575',coat:'#e9d7b9',hair:'#252139',back:'<path d="M35 108V48C35 12 94 14 94 49L99 111Z"/>',front:'<path d="M39 53C33 29 50 20 66 23C87 17 97 39 88 56L84 40C66 49 58 35 51 39L42 57Z"/>',detail:'<circle cx="42" cy="77" r="4" fill="#f0c874"/><circle cx="86" cy="77" r="4" fill="#f0c874"/>'},
+      {id:'atlas',name:'Atlas',tag:'Le sang-froid',bg:'#254d47',accent:'#a7d4b3',skin:'#aa7150',coat:'#1a2936',hair:'#201e20',back:'',front:'<path d="M39 55L35 40L41 21L53 27L63 17L75 23L87 25L93 43L87 57L82 39L53 38L43 46Z"/>',detail:'<path d="M43 74Q47 99 64 99Q82 98 86 74L79 84L65 89L49 83Z" fill="#302827"/><path d="M55 78Q64 73 73 78" fill="none" stroke="#302827" stroke-width="4"/>'},
+      {id:'luna',name:'Luna',tag:'L’audacieuse',bg:'#5b375d',accent:'#e8adba',skin:'#eed0ae',coat:'#6b3c67',hair:'#58344e',back:'<circle cx="65" cy="20" r="16"/>',front:'<path d="M38 55C30 20 92 17 92 54L83 44L80 34L48 39L43 55Z"/>',detail:'<g fill="none" stroke="#e4be72" stroke-width="3"><circle cx="53" cy="62" r="10"/><circle cx="76" cy="62" r="10"/><path d="M63 61H66M40 59L44 60M86 60L90 58"/></g><circle cx="42" cy="79" r="3" fill="#e4be72"/><circle cx="86" cy="79" r="3" fill="#e4be72"/>'},
+      {id:'rio',name:'Rio',tag:'L’instinctif',bg:'#6d4630',accent:'#f4b179',skin:'#bc805a',coat:'#234c5b',hair:'#302421',back:'',front:'<path d="M39 57C28 34 39 21 50 23C55 12 70 18 73 22C89 18 100 36 88 57L83 40Q68 43 49 39L43 58Z"/><circle cx="43" cy="30" r="9"/><circle cx="57" cy="23" r="9"/><circle cx="73" cy="24" r="10"/><circle cx="86" cy="32" r="9"/>',detail:'<path d="M49 87Q64 97 79 86" fill="none" stroke="#694232" stroke-width="3"/><circle cx="88" cy="74" r="3" fill="#f4b179"/>'},
+      {id:'jade',name:'Jade',tag:'La joueuse',bg:'#254f53',accent:'#75cec2',skin:'#7e4e3c',coat:'#b9d6be',hair:'#142e33',back:'<path d="M34 82V44C34 11 96 17 94 47L91 84L82 71L43 74Z"/>',front:'<path d="M38 54L38 34Q62 14 87 32L91 57L80 43L74 31L43 50Z"/>',detail:'<g fill="none" stroke="#e8c684" stroke-width="3"><circle cx="40" cy="78" r="6"/><circle cx="88" cy="78" r="6"/></g>'},
+      {id:'oscar',name:'Oscar',tag:'Le vétéran',bg:'#414757',accent:'#b9c8e0',skin:'#ddbba3',coat:'#3d4050',hair:'#bfc5c9',back:'',front:'<path d="M39 56C28 26 48 22 59 26C75 16 96 32 89 56L83 43L77 35L47 42L43 59Z"/>',detail:'<path d="M43 75Q44 100 64 102Q85 98 86 74L77 85L66 86L52 83Z" fill="#c6cbcd"/><path d="M52 79Q64 71 77 79" fill="none" stroke="#d5d7d5" stroke-width="4"/><g stroke="#9eaaa9" stroke-width="2" fill="none"><path d="M45 51L57 49M71 49L83 51M48 69L54 70M77 70L83 69"/></g>'}
+    ];
+    function character(id) { return CHARACTERS.find(c => c.id === id) || CHARACTERS[0]; }
+    function avatarHTML(id, extra = '') {
+      const c = character(id);
+      return `<span class="avatar ${extra}" role="img" aria-label="Personnage ${c.name}"><svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><rect width="128" height="128" fill="${c.bg}"/><circle cx="93" cy="29" r="49" fill="${c.accent}" opacity=".13"/><g fill="${c.hair}">${c.back}</g><path d="M18 128Q18 97 50 96H78Q110 99 111 128" fill="${c.coat}"/><path d="M52 82H77V103Q64 114 51 102Z" fill="${c.skin}"/><path d="M52 84Q63 95 77 84V93Q65 103 52 94Z" fill="#000" opacity=".12"/><ellipse cx="40" cy="64" rx="5" ry="9" fill="${c.skin}"/><ellipse cx="88" cy="64" rx="5" ry="9" fill="${c.skin}"/><path d="M41 45Q44 29 64 30Q86 30 87 48V69Q85 91 64 95Q43 89 41 69Z" fill="${c.skin}"/><path d="M47 55Q53 51 59 54M70 54Q77 51 82 55" fill="none" stroke="${c.hair}" stroke-width="3" stroke-linecap="round"/><ellipse cx="54" cy="61" rx="3" ry="3.5" fill="#252c31"/><ellipse cx="76" cy="61" rx="3" ry="3.5" fill="#252c31"/><circle cx="55" cy="60" r="1" fill="#fff"/><circle cx="77" cy="60" r="1" fill="#fff"/><path d="M64 63L61 75H67" fill="none" stroke="#513323" opacity=".35" stroke-width="2" stroke-linecap="round"/><path d="M56 82Q64 87 73 81" fill="none" stroke="#74463c" stroke-width="2" stroke-linecap="round"/><g fill="${c.hair}">${c.front}</g>${c.detail}<path d="M49 97L62 110L51 117L40 101M79 97L66 110L78 117L89 102" fill="#fff" opacity=".83"/><path d="M61 111H68L72 128H58Z" fill="${c.accent}"/></svg></span>`;
+    }
+    function renderCharacterChoices(container, group, selected) {
+      $(container).innerHTML = CHARACTERS.map(c => `<label class="character-option"><input type="radio" name="${group}" value="${c.id}" ${c.id === selected ? 'checked' : ''} required>${avatarHTML(c.id)}<span><strong>${c.name}</strong><small>${c.tag}</small></span></label>`).join('');
+    }
     let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
     let entryChoice = false, joinPending = false;
     let historyVersion = null, historyLoading = false, historyEntries = [], reconnectRetry;
+    let settingsLoadedFor = null, profilePending = false;
     const chatNodes = new Map();
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
       $('loginTab').classList.toggle('gold', !register); $('registerTab').classList.toggle('gold', register);
       $('loginTab').setAttribute('aria-pressed', String(!register)); $('registerTab').setAttribute('aria-pressed', String(register));
       $('confirmation').hidden = !register; $('passwordConfirm').required = register;
+      $('registerCharacters').hidden = !register;
+      $('registerCharacterGrid').querySelectorAll('input').forEach(input => input.disabled = !register);
       $('password').autocomplete = register ? 'new-password' : 'current-password';
       $('authSubmit').textContent = register ? 'Créer mon compte · 1 000 jetons' : 'Se connecter →';
       $('notice').textContent = '';
@@ -194,12 +248,14 @@
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
       clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
       $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
+      $('settingsPage').hidden = true; $('settingsTurnAlert').hidden = true; $('openSettings').hidden = true; settingsLoadedFor = null; profilePending = false;
+      for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
       lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
       $('chatInput').value = ''; $('chatError').textContent = ''; clearEffects();
       entryChoice = false; joinPending = false; $('entryAmount').value = ''; renderEntry();
       $('login').hidden = false; $('game').hidden = true;
       document.body.classList.remove('in-club');
-      $('password').value = ''; $('passwordConfirm').value = '';
+      $('password').value = ''; $('passwordConfirm').value = ''; chooseMode('login');
       $('connection').textContent = '○ Non connecté'; $('notice').textContent = message; updateChatAvailability();
     }
     async function api(route, data) {
@@ -231,10 +287,13 @@
       $('mySeat').hidden = !me;
       if (!me) { $('myCards').innerHTML = ''; return; }
       $('mySeat').className = `seat own-seat ${state.turn === me.id ? 'acting' : ''} ${me.folded ? 'folded' : ''} ${state.winners?.some(w => w.id === me.id) ? 'winner-seat' : ''}`;
+      $('myAvatar').innerHTML = avatarHTML(me.avatar || state.avatar); $('mySeat').dataset.slot = 'bottom';
       $('myNick').textContent = me.nick; $('myStack').textContent = money(me.stack); $('myDealer').hidden = !me.dealer;
       $('myCards').innerHTML = (me.cards.length ? me.cards : [null, null])
         .map(c => card(cardsHidden && c ? '??' : c)).join('');
-      $('toggleCards').textContent = cardsHidden ? 'Afficher mes cartes' : 'Cacher mes cartes';
+      const toggleLabel = cardsHidden ? 'Afficher mes cartes' : 'Cacher mes cartes';
+      $('toggleCards').setAttribute('aria-label',toggleLabel); $('toggleCards').title = toggleLabel;
+      $('toggleCards').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>${cardsHidden ? '<path d="m3 3 18 18"/>' : ''}</svg><span>${toggleLabel}</span>`;
       $('toggleCards').disabled = !socket.connected || !me.cards.length;
       $('myStatus').textContent = me.leaving ? 'Sortie en attente' : me.folded ? 'Vous êtes couché'
         : !me.cards.length ? 'Vos cartes apparaîtront à la distribution'
@@ -317,17 +376,25 @@
       return strip;
     }
     function highlightWinningSources() {
-      document.querySelectorAll('.combination-source,.kicker-source').forEach(el => el.classList.remove('combination-source','kicker-source'));
+      const all = document.querySelectorAll('#board .card,#myCards .card,#players .seat-hand .card');
+      all.forEach(el => el.classList.remove('combination-source','kicker-source','nonwinning-card'));
       if (state?.phase !== 'showdown') return;
+      all.forEach(el => el.classList.add('nonwinning-card'));
       const board = new Map();
       for (const winner of state.winners || []) for (const selected of winner.winningHand || []) {
         if (!selected.fromHand) board.set(selected.code, board.get(selected.code) || selected.combination);
         else seatElement(winner.id)?.querySelectorAll('[data-card]').forEach(el => {
-          if (el.dataset.card === selected.code) el.classList.add(selected.combination ? 'combination-source' : 'kicker-source');
+          if (el.dataset.card === selected.code) {
+            if (selected.combination) el.classList.remove('nonwinning-card');
+            el.classList.add(selected.combination ? 'combination-source' : 'kicker-source');
+          }
         });
       }
       $('board').querySelectorAll('[data-card]').forEach(el => {
-        if (board.has(el.dataset.card)) el.classList.add(board.get(el.dataset.card) ? 'combination-source' : 'kicker-source');
+        if (board.has(el.dataset.card)) {
+          if (board.get(el.dataset.card)) el.classList.remove('nonwinning-card');
+          el.classList.add(board.get(el.dataset.card) ? 'combination-source' : 'kicker-source');
+        }
       });
     }
     function refreshWinningCards() {
@@ -357,7 +424,7 @@
       if (single && hasCards) $('winnerCards').append(winningCards(winners[0]));
       const boardOnly = hasCards && winners.every(w => w.winningHand?.every(c => !c.fromHand));
       $('winnerCardLegend').textContent = !hasCards ? '' : boardOnly ? 'Le tableau joue : les cinq cartes communes forment la main gagnante.'
-        : 'Doré : combinaison · Bleu : départage · Main / Table : origine des cartes';
+        : 'Cartes surélevées : combinaison · Cartes grisées : départage · Main / Table : origine';
       $('winnerList').replaceChildren(); $('winnerList').hidden = single;
       if (!single) for (const winner of winners) {
         const row = document.createElement('div'), nick = document.createElement('strong'), reason = document.createElement('p'), amount = document.createElement('span'), pots = document.createElement('p');
@@ -374,8 +441,8 @@
       if (next.celebrationMs >= 2000) $('winnerAnnouncement').querySelectorAll('.winning-cards').forEach((strip, row) => {
         [...strip.children].forEach((slot, index) => motion(slot.firstElementChild,
           [{opacity:0,transform:'translateY(22px) rotateY(100deg) scale(.75)'},
-            {opacity:1,transform:'translateY(-3px) rotateY(0) scale(1.04)',offset:.8},
-            {opacity:1,transform:'translateY(0) scale(1)'}], {duration:520,delay:200 + row * 100 + index * 80,fill:'backwards'}));
+            {opacity:slot.firstElementChild.classList.contains('combination-card') ? 1 : .4,transform:slot.firstElementChild.classList.contains('combination-card') ? 'translateY(-13px) rotateY(0) scale(1.04)' : 'translateY(3px) rotateY(0)',offset:.8},
+            {opacity:slot.firstElementChild.classList.contains('combination-card') ? 1 : .4,transform:slot.firstElementChild.classList.contains('combination-card') ? 'translateY(-10px) scale(1)' : 'translateY(3px) scale(1)'}], {duration:520,delay:200 + row * 100 + index * 80,fill:'backwards'}));
       });
       document.querySelectorAll('.combination-source').forEach(el => motion(el,
         [{boxShadow:'0 0 0 #e8bc7000'},{boxShadow:'0 0 24px #e8bc70aa'},{boxShadow:'0 0 16px #e8bc7070'}], {duration:1000}));
@@ -470,19 +537,93 @@
         complete?.();
       });
     }
+    function settingsRoute() { return location.pathname.replace(/\/$/,'') === '/parametres'; }
+    function updateSettingsAvailability() {
+      const blocked = !state || !socket.connected || storageBlocked || profilePending;
+      document.querySelectorAll('#settingsPage input,#settingsPage button[type=submit]').forEach(el => el.disabled = blocked);
+    }
+    function previewCharacter(id) {
+      const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id);
+      $('settingsCharacterName').textContent = `${c.name} · ${c.tag}`;
+    }
+    function fillSettings() {
+      if (!state) return;
+      settingsLoadedFor = state.me;
+      $('accountNick').value = state.nick; $('settingsProfileName').textContent = state.nick;
+      for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
+      $('characterMessage').textContent = ''; $('accountMessage').textContent = '';
+      renderCharacterChoices('settingsCharacterGrid','settingsAvatar',state.avatar);
+      previewCharacter(state.avatar); updateSettingsAvailability();
+    }
+    $('settingsCharacterGrid').onchange = () => previewCharacter(document.querySelector('input[name="settingsAvatar"]:checked')?.value);
+    $('openSettings').onclick = () => navigate('/parametres');
+    $('settingsBack').onclick = $('settingsTurnAlert').onclick = () => navigate('/');
+    async function saveProfile(data, messageId) {
+      if (!state || profilePending) return;
+      const owner = state.me; profilePending = true; updateSettingsAvailability();
+      $(messageId).classList.remove('success'); $(messageId).textContent = 'Enregistrement…';
+      try {
+        const reply = await api('profile',data);
+        if (state?.me !== owner) return;
+        state.nick = reply.nick; state.avatar = reply.avatar;
+        const me = state.players.find(p => p.id === owner);
+        if (me) { me.nick = reply.nick; me.avatar = reply.avatar; }
+        $('identity').textContent = reply.nick; $('headerAvatar').innerHTML = avatarHTML(reply.avatar);
+        renderOwnHand(); highlightWinningSources();
+        if (settingsRoute()) fillSettings();
+        $(messageId).classList.add('success'); $(messageId).textContent = 'Modifications enregistrées.';
+      } catch (error) {
+        if (state?.me === owner) { $(messageId).textContent = error.message; $('currentPassword').value = ''; }
+      } finally {
+        profilePending = false; updateSettingsAvailability();
+      }
+    }
+    $('characterForm').onsubmit = e => {
+      e.preventDefault(); if ($('saveCharacter').disabled) return;
+      const avatar = document.querySelector('input[name="settingsAvatar"]:checked')?.value;
+      if (avatar) saveProfile({avatar},'characterMessage');
+    };
+    $('accountForm').onsubmit = e => {
+      e.preventDefault(); if ($('saveAccount').disabled) return;
+      if ($('newPassword').value !== $('confirmNewPassword').value) {
+        $('accountMessage').classList.remove('success'); $('accountMessage').textContent = 'Les nouveaux mots de passe ne correspondent pas.'; return;
+      }
+      const data = {nick:$('accountNick').value.trim(),currentPassword:$('currentPassword').value};
+      if ($('newPassword').value) data.newPassword = $('newPassword').value;
+      saveProfile(data,'accountMessage');
+    };
+    function opponentSlots(count) {
+      return ({1:[],2:['top'],3:['top','left'],4:['top','left','right'],
+        5:['upper-left','upper-right','left','right'],6:['top','upper-left','upper-right','left','right']})[count] || [];
+    }
+    function renderSeats(s) {
+      const index = s.players.findIndex(p => p.id === s.me);
+      const others = index >= 0 ? [...s.players.slice(index + 1),...s.players.slice(0,index)] : s.players;
+      const slots = index >= 0 ? opponentSlots(s.players.length) : ['bottom',...opponentSlots(s.players.length)];
+      const arena = document.querySelector('.felt'); arena.dataset.players = s.players.length;
+      $('players').innerHTML = others.map((p,i) => `<article data-player="${escapeHTML(p.id)}" data-slot="${slots[i] || 'top'}" class="seat ${p.disconnectedUntil ? 'reconnecting' : ''} ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
+        <div class="seat-profile"><span class="profile-avatar">${avatarHTML(p.avatar)}</span><div class="seat-identity"><div class="seat-name"><span title="${escapeHTML(p.nick)}">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="dealer-button">D</span>' : ''}</div><p class="seat-stack">${money(p.stack)} <small>jetons</small></p>
+        <p class="seat-status ${p.disconnectedUntil ? 'reconnect-status' : ''}" ${p.disconnectedUntil ? `data-reconnect-until="${p.disconnectedUntil}"` : ''}>${p.disconnectedUntil ? `Reconnexion · ${Math.max(0,Math.ceil((p.disconnectedUntil-Date.now())/1000))} s` : p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 && p.cards.length ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · ${money(p.bet)}` : ''}</p></div></div>
+        <div class="seat-hand" aria-label="Cartes de ${escapeHTML(p.nick)}">${(p.cards.length ? p.cards : [null,null]).map(card).join('')}</div></article>`).join('');
+    }
     function historyRoute() { return location.pathname.replace(/\/$/,'') === '/historique'; }
     function renderRoute() {
-      const viewing = !!state && historyRoute();
-      $('game').hidden = !state || viewing; $('historyPage').hidden = !viewing;
-      document.body.classList.toggle('in-club', !!state && !viewing);
+      const viewing = !!state && historyRoute(), settings = !!state && settingsRoute();
+      $('game').hidden = !state || viewing || settings; $('historyPage').hidden = !viewing; $('settingsPage').hidden = !settings;
+      $('openSettings').hidden = !state;
+      document.body.classList.toggle('in-club', !!state && !viewing && !settings);
       const mine = state?.turn === state?.me && !!state?.turn && !state?.runout;
-      $('historyAlert').hidden = !viewing || !mine;
+      $('historyAlert').hidden = !viewing || !mine; $('settingsTurnAlert').hidden = !settings || !mine;
+      if (settings && settingsLoadedFor !== state.me) fillSettings();
+      if (!settings) { settingsLoadedFor = null; for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = ''; }
+      updateSettingsAvailability();
       if (viewing && !historyLoading && historyVersion !== (state.historyVersion || '')) loadHistory();
     }
     function navigate(path) {
       if (location.pathname !== path) history.pushState({},'',path);
       renderRoute(); window.scrollTo(0,0);
       if (historyRoute() && state) $('historyTitle').focus();
+      if (settingsRoute() && state) $('settingsTitle').focus();
     }
     window.addEventListener('popstate', renderRoute);
     $('openHistory').onclick = () => navigate('/historique');
@@ -571,7 +712,7 @@
       $('authSubmit').disabled = true; $('loginTab').disabled = true; $('registerTab').disabled = true;
       $('notice').textContent = '';
       try {
-        await api(authMode, { nick:$('nick').value.trim(), password:$('password').value });
+        await api(authMode, { nick:$('nick').value.trim(), password:$('password').value, ...(authMode === 'register' ? {avatar:document.querySelector('input[name="registerAvatar"]:checked')?.value} : {}) });
         $('password').value = ''; $('passwordConfirm').value = ''; socket.connect();
       } catch (e) { $('notice').textContent = e.message; }
       finally { $('authSubmit').disabled = false; $('loginTab').disabled = false; $('registerTab').disabled = false; }
@@ -593,16 +734,16 @@
     };
     socket.on('connect', () => {
       clearTimeout(reconnectRetry); $('notice').textContent = '';
-      $('connection').textContent = '● Connecté'; updateChatAvailability(); renderEntry(); renderQuickBets();
+      $('connection').textContent = '● Connecté'; updateChatAvailability(); renderEntry(); renderQuickBets(); updateSettingsAvailability();
     });
     socket.on('session-expired', () => showLogin('Session expirée. Reconnectez-vous.'));
     socket.on('storage-error', data => {
-      storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability(); renderEntry();
+      storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability(); renderEntry(); updateSettingsAvailability();
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
       $('logout').disabled = false;
     });
     socket.on('disconnect', reason => {
-      updateChatAvailability(); renderEntry();
+      updateChatAvailability(); renderEntry(); updateSettingsAvailability();
       if (!state) return;
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
       $('connection').textContent = '○ Reconnexion…';
@@ -634,16 +775,14 @@
       document.body.classList.add('in-club');
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
+      $('headerAvatar').innerHTML = avatarHTML(s.avatar);
       $('identity').textContent = s.nick; $('wallet').textContent = money(s.wallet); $('pot').textContent = money(s.pot);
       $('bankroll').textContent = money(s.bankroll);
       $('profit').textContent = `${s.profit > 0 ? '+' : ''}${money(s.profit)}`;
       $('profit').className = s.profit < 0 ? 'text-rose-300' : 'text-emerald-300';
       $('stage').textContent = `Main ${s.hand} · ${{waiting:'En attente',preflop:'Préflop',flop:'Flop',turn:'Turn',river:'River',showdown:'Résultat'}[s.phase]}`;
       $('board').innerHTML = Array.from({length:5}, (_, i) => card(s.board[i])).join('');
-      $('players').innerHTML = s.players.filter(p => p.id !== s.me).map(p => `<article data-player="${escapeHTML(p.id)}" class="seat ${p.disconnectedUntil ? 'reconnecting' : ''} ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
-        <div class="flex justify-between items-center gap-1 text-sm"><span class="truncate font-semibold">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="text-xs rounded-full bg-[#e8bc70] text-[#12342e] px-2 py-1">D</span>' : ''}</div>
-        <p class="text-[#f2d59d] font-semibold my-2">${money(p.stack)} <span class="text-xs font-normal">jetons</span></p><div class="flex gap-1 min-h-[61px]">${p.cards.map(card).join('')}</div>
-        <p ${p.disconnectedUntil ? `data-reconnect-until="${p.disconnectedUntil}" class="reconnect-status text-xs mt-3"` : 'class="text-xs text-emerald-100/60 mt-3"'}>${p.disconnectedUntil ? `Reconnexion · ${Math.max(0,Math.ceil((p.disconnectedUntil-Date.now())/1000))} s` : p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · mise ${money(p.bet)}` : ''}</p></article>`).join('');
+      renderSeats(s);
       $('empty').hidden = s.players.length > 0;
       renderEntry();
       $('leave').hidden = !me; $('leave').disabled = !!me?.leaving;
@@ -678,9 +817,10 @@
       else if (state?.deadline && socket.connected) $('connection').textContent = `● Connecté · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s`;
       else if (socket.connected) $('connection').textContent = '● Connecté';
       document.querySelectorAll('[data-reconnect-until]').forEach(el => el.textContent = `Reconnexion · ${Math.max(0,Math.ceil((Number(el.dataset.reconnectUntil)-Date.now())/1000))} s`);
-      if (state && !$('historyAlert').hidden) $('historyAlert').textContent = `À vous de jouer · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s · Revenir à la table →`;
+      if (state) for (const id of ['historyAlert','settingsTurnAlert']) if (!$(id).hidden) $(id).textContent = `À vous de jouer · ${Math.max(0,Math.ceil((state.deadline-Date.now())/1000))} s · Revenir à la table →`;
       renderAid();
     }, 250);
+    renderCharacterChoices('registerCharacterGrid','registerAvatar','nova'); chooseMode('login');
     (async () => {
       try { const session = await api('session'); $('nick').value = session.nick; socket.connect(); }
       catch (error) { showLogin(error.status === 503 ? error.message : ''); }
