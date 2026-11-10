@@ -812,16 +812,13 @@ io.on('connection', socket => {
     if (!aidStatus(id).eligible) throw Error(`Seconde chance : hors table, sous ${AID_THRESHOLD} jetons, une fois toutes les 24 h.`);
     u.wallet += 500; u.granted += 500; u.lastAidAt = Date.now();
   });
-  on('join', ({ amount }) => {
+  on('join', () => {
     const id = socket.data.uid, u = users.get(id);
     if (active()) throw Error('Attendez la fin de la main pour rejoindre.');
     if (seat(id)) throw Error('Vous êtes déjà à table.');
     if (table.players.length >= 6) throw Error('Table complète (6 joueurs).');
     if (u.wallet <= 0) throw Error('Il faut au moins un jeton pour rejoindre. Consultez votre seconde chance.');
-    const buyIn = u.wallet <= ENTRY_THRESHOLD ? u.wallet : amount;
-    const minimum = Math.min(u.wallet, ENTRY_THRESHOLD);
-    if (!Number.isSafeInteger(buyIn) || buyIn < minimum || buyIn > u.wallet)
-      throw Error(`Choisissez un nombre entier de jetons entre ${minimum} et ${u.wallet}.`);
+    const buyIn = Math.min(u.wallet, ENTRY_THRESHOLD);
     u.wallet -= buyIn;
     table.players.push({ id, nick: u.nick, stack: buyIn, bet: 0, total: 0, hole: [], folded: false, leaving: false, disconnectedUntil: 0, turnRemaining: 0 });
     addLog(`rejoint la table avec ${buyIn} jetons.`, u);
