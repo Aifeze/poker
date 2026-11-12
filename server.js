@@ -42,7 +42,7 @@ const io = new (load('socket.io').Server)(server, {
   maxHttpBufferSize: 8192,
   allowRequest: (req, done) => done(null, sameOrigin(req))
 });
-app.get(['/', '/historique', '/parametres'], (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get(['/', '/historique', '/parametres', '/boutique', '/quetes'], (_, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/health', (_, res) => res.status(storageReady && !storageUnavailable ? 200 : 503)
   .json({ ok: storageReady && !storageUnavailable }));
 
@@ -50,6 +50,186 @@ const ENTRY_THRESHOLD = 500, AID_THRESHOLD = 500, SMALL = 5, BIG = 10, TURN_MS =
 const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
 const RECONNECT_MS = 30000, HISTORY_LIMIT = 20;
 const AVATARS = ['nova', 'atlas', 'luna', 'rio', 'jade', 'oscar'];
+const CURRENCY = "A' Coins", QUEST_SWAP_MS = 10 * 60000;
+const SHOP_GROUPS = [
+  {id:'back',name:'Dos de cartes',icon:'▱'}, {id:'victory',name:'Victoires',icon:'✦'},
+  {id:'bet',name:'Mises',icon:'◉'}, {id:'arrival',name:'Arrivées',icon:'→'},
+  {id:'frame',name:'Cadres',icon:'◎'}, {id:'table',name:'Tapis de table',icon:'♠'}, {id:'emote',name:'Émotes',icon:'☺'}
+];
+// The catalog is authoritative: the browser never supplies a price or a coin reward.
+const CATALOG = Object.entries({
+  back:[
+    ['classic','Signature noir & or',0,'weave','♠','#191917','#d5b76e'],
+    ['azure','Satin azur',80,'diamond','◆','#132f48','#8ccfea'],
+    ['emerald','Émeraude',100,'rings','♣','#12392e','#88deb5'],
+    ['crimson','Rouge impérial',120,'weave','♥','#4b1825','#eda7a1'],
+    ['midnight','Minuit',140,'stars','☾','#171b38','#bfc5f2'],
+    ['honey','Or alvéolé',220,'hex','⬡','#4a3512','#f2d080'],
+    ['circuit','Circuit vivant',260,'circuit','⌁','#092c33','#70edf0'],
+    ['cosmos','Constellation',340,'stars','✧','#281844','#dcb3ff'],
+    ['sakura','Jardin de nuit',280,'petals','❀','#3c2434','#f3b9d2'],
+    ['royal','Couronne rubis',480,'royal','♛','#351422','#f3c66e'],
+    ['aurora','Aurore boréale',580,'waves','✺','#133536','#adf9df'],
+    ['dragon','Sceau du dragon',900,'scales','龍','#271d15','#f4c46e']
+  ],
+  victory:[
+    ['classic','Éclat signature',0,'gold','✦','#e0bd72','#fff1be'],
+    ['fireworks','Feu d’artifice',240,'fireworks','✷','#f4b770','#eab1fa'],
+    ['blossom','Pluie de sakura',220,'petals','❀','#e8a5c5','#ffe0ee'],
+    ['coins','Fortune dorée',320,'coins','◉','#d8ae51','#fff0b4'],
+    ['storm','Maître des orages',420,'lightning','ϟ','#8fcff7','#f5edb0'],
+    ['ice','Nova de givre',380,'ice','❄','#a6e7f3','#f1ffff'],
+    ['galaxy','Naissance d’une étoile',520,'galaxy','✧','#c397f4','#91deff'],
+    ['portal','Portail royal',650,'portal','◎','#b792ef','#f2d089'],
+    ['phoenix','Renaissance du phénix',850,'phoenix','♨','#f6a15e','#ffdf82'],
+    ['dragon','L’éveil du dragon',1200,'dragon','龍','#edbb63','#ff794b']
+  ],
+  bet:[
+    ['classic','Jetons signature',0,'classic','◉','#d5b76e','#fff0c3'],
+    ['comet','Comète dorée',160,'comet','☄','#edc26e','#fff3ce'],
+    ['electric','Arc électrique',240,'lightning','ϟ','#89d9f2','#ffffff'],
+    ['petals','Bluff en fleurs',180,'petals','❀','#e9abc6','#ffe9f2'],
+    ['rocket','Propulsion',380,'rocket','↟','#f7a35f','#ffdf96'],
+    ['bubbles','Liquidité',220,'bubbles','◌','#8adfd9','#d1fff8'],
+    ['glitch','Erreur de calcul',280,'glitch','⌘','#bcadff','#8cf0e7'],
+    ['frost','Mise de glace',300,'ice','❄','#b6e8fa','#f1ffff']
+  ],
+  arrival:[
+    ['classic','Une place au club',0,'halo','♠','#d7ba79','#fff0ca'],
+    ['wave','Vague d’or',120,'wave','≋','#dfbc67','#fff0b9'],
+    ['portal','Entrée dimensionnelle',340,'portal','◎','#ba9bf0','#fae6aa'],
+    ['stardust','Poussière d’étoiles',240,'stars','✧','#d6b1f4','#fff4cf'],
+    ['bloom','Floraison',200,'petals','❀','#dca8c6','#c0e6bc'],
+    ['thunder','Coup de tonnerre',420,'lightning','ϟ','#9bd5fa','#f8e3a4'],
+    ['royal','Tapis rouge',300,'carpet','♛','#8e3445','#efd18b'],
+    ['vortex','Œil du vortex',650,'vortex','◉','#89dfce','#cdb2fc']
+  ],
+  frame:[
+    ['classic','Liseré signature',0,'classic','◎','#bca779','#ead8aa'],
+    ['gold','Or massif',180,'double','◉','#e0bf69','#fff0bb'],
+    ['sapphire','Halo saphir',220,'glow','✧','#7bc8f4','#bddfff'],
+    ['ember','Cœur de braise',280,'glow','♨','#ee935b','#ffd394'],
+    ['aurora','Couronne d’aurore',360,'aurora','≋','#83d7b8','#c3a5f0'],
+    ['stellar','Orbite stellaire',440,'orbit','✦','#c6a3ef','#fff1c7'],
+    ['carbon','Carbone tressé',300,'carbon','◆','#9faaa8','#e2d5a7'],
+    ['dragon','Garde du dragon',800,'dragon','龍','#d4ac5d','#ffbf72']
+  ],
+  table:[
+    ['classic','Carbone & or',0,'felt','♠','#282925','#151714'],
+    ['emerald','Velours émeraude',220,'felt','♣','#25634c','#112d24'],
+    ['sapphire','Salon saphir',260,'felt','◆','#254363','#141f34'],
+    ['burgundy','Bordeaux privé',280,'felt','♥','#61313c','#301a23'],
+    ['violet','Nuit améthyste',340,'felt','✧','#48385e','#241e32'],
+    ['arctic','Salon arctique',380,'felt','❄','#35545d','#192e34'],
+    ['champagne','Velours champagne',480,'felt','♛','#6b5937','#342c1d']
+  ],
+  emote:[
+    ['hi','Salut la table',0,'hello','👋','#d6bb7b','#fff0bc','Salut la table !'],
+    ['gg','Belle main',0,'respect','👏','#c5d8bb','#f0f8de','Belle main !'],
+    ['bluff','Bluff détecté',0,'wink','🧐','#b6c9e8','#e8edff','Ça sent le bluff…'],
+    ['allin','Sans filet',0,'fire','🔥','#efac6d','#ffe3b1','Tapis. Sans filet.'],
+    ['coffee','Le café du bluff',50,'wink','☕','#cdac87','#f3dcc1','Ton bluff sent le café.'],
+    ['thanks','Merci pour les jetons',70,'cheeky','🪙','#deb96a','#fff0bd','Merci pour les jetons !'],
+    ['pokerface','Poker face',60,'cool','😎','#b7c6d5','#e6edf2','Vous ne lirez rien ici.'],
+    ['noted','Je prends note',60,'wink','📝','#d6c8aa','#fff3d4','Je prends note…'],
+    ['sleep','Réveillez-moi',80,'cheeky','🥱','#c3b6d9','#f0e6ff','Réveillez-moi à la river.'],
+    ['luck','Le petit trèfle',70,'respect','🍀','#9bd6ae','#e5ffe9','Un peu de chance ?'],
+    ['shark','Alerte requin',120,'cheeky','🦈','#9bcfdf','#e2f6ff','Un requin dans la salle.'],
+    ['ice','Sang-froid',100,'cool','🧊','#b3e6f5','#f2ffff','Même pas froid.'],
+    ['popcorn','Place au spectacle',100,'cheeky','🍿','#edcc83','#fff0c5','J’attends le spectacle.'],
+    ['crown','Le patron',160,'royal','👑','#e6c36d','#fff3c2','Le trône est occupé.'],
+    ['dragon','Le dragon se réveille',240,'fire','🐉','#c4d58a','#ffe0a1','Le dragon se réveille.'],
+    ['phoenix','Je reviendrai',180,'fire','🦅','#eda77b','#ffdf9b','Je renais de mes cendres.'],
+    ['heart','Avec le cœur',90,'respect','🖤','#d9b9c5','#ffe6ed','Avec le cœur. Toujours.'],
+    ['rabbit','La river magique',120,'wink','🐇','#dacde9','#fff4ff','Un lapin dans la river ?'],
+    ['zen','Zéro pression',100,'cool','🧘','#b3d9bf','#e8fff0','Zéro pression.'],
+    ['salute','Respect',80,'respect','🫡','#d8c39d','#fff1ce','Respect. On remet ça ?']
+  ]
+}).flatMap(([category,rows]) => rows.map(([key,name,price,style,icon,tone,accent,text]) => ({
+  id:`${category}-${key}`,category,name,price,style,icon,tone,accent,text,
+  rarity:price===0?'starter':price>=800?'legendary':price>=400?'epic':price>=180?'rare':'standard'
+})));
+const ITEMS = new Map(CATALOG.map(item => [item.id,item]));
+const LOADOUT = {back:'back-classic',victory:'victory-classic',bet:'bet-classic',arrival:'arrival-classic',frame:'frame-classic',table:'table-classic'};
+const FREE_ITEMS = CATALOG.filter(item=>item.price===0).map(item=>item.id);
+const QUESTS = [
+  {id:'play',group:'regular',name:'Le rendez-vous',targets:[3,5,8],pay:8,text:n=>`Jouer ${n} mains jusqu’à leur dénouement.`,test:m=>m.played},
+  {id:'win',group:'regular',name:'Prendre l’avantage',targets:[1,2,3],pay:35,text:n=>`Remporter ${n} main${n>1?'s':''} avec un gain net de jetons.`,test:m=>m.won},
+  {id:'see',group:'regular',name:'Jusqu’au verdict',targets:[2,3,4],pay:18,text:n=>`Atteindre ${n} abattages sans vous coucher.`,test:m=>m.showdown},
+  {id:'marathon',group:'regular',name:'Le fauteuil vous va bien',targets:[10,15,20],pay:10,text:n=>`Participer à ${n} mains.`,test:m=>m.played},
+  {id:'flops',group:'regular',name:'Le flop, s’il vous plaît',targets:[3,5,8],pay:12,text:n=>`Voir le flop dans ${n} mains.`,test:m=>m.streets>=1},
+  {id:'rivers',group:'regular',name:'Au bout de la rivière',targets:[2,3,5],pay:20,text:n=>`Voir la river dans ${n} mains.`,test:m=>m.streets>=3},
+  {id:'invest',group:'regular',name:'Mettre du cœur au jeu',targets:[3,5],pay:20,text:n=>`Engager au moins 50 jetons dans ${n} mains.`,test:m=>m.invested>=50},
+  {id:'brave',group:'regular',name:'L’habitude du grand saut',targets:[2,3],pay:35,text:n=>`Faire tapis dans ${n} mains.`,test:m=>m.allin},
+  {id:'streak',group:'regular',name:'Trois à la suite',targets:[1],pay:180,text:()=>"Enchaîner trois mains bénéficiaires.",test:m=>m.streak>0&&m.streak%3===0},
+  ...[
+    ['pair','Une bonne paire',1,50],['two','Deux font la paire',2,80],['trips','Jamais deux sans trois',3,100],
+    ['straight','Tout est lié',4,120],['flush','Même famille',5,120],['full','Maison pleine',6,160],['quads','Carré privé',7,300]
+  ].map(([id,name,category,pay])=>({id,group:'combo',name,targets:[1],pay,text:()=>`Gagner à l’abattage avec ${['','une paire','deux paires','un brelan','une quinte','une couleur','un full','un carré'][category]}.`,test:m=>m.won&&m.showdown&&m.category===category})),
+  {id:'aces',group:'combo',name:'Les As dans la manche',targets:[1],pay:100,text:()=>"Gagner à l’abattage avec une paire d’As.",test:m=>m.won&&m.category===1&&m.rank===14},
+  {id:'royal',group:'combo',name:'L’exception royale',targets:[1],pay:450,text:()=>"Gagner à l’abattage avec une quinte flush.",test:m=>m.won&&m.category===8},
+  {id:'high',group:'combo',name:'Sans même une paire',targets:[1],pay:85,text:()=>"Gagner à l’abattage avec une carte haute.",test:m=>m.won&&m.category===0},
+  {id:'kings',group:'combo',name:'Audience chez le Roi',targets:[1],pay:90,text:()=>"Gagner à l’abattage avec une paire de Rois.",test:m=>m.won&&m.category===1&&m.rank===13},
+  {id:'twoaces',group:'combo',name:'Les As bien entourés',targets:[1],pay:135,text:()=>"Gagner avec deux paires dont une paire d’As.",test:m=>m.won&&m.category===2&&m.rank===14},
+  {id:'aceflush',group:'combo',name:'La couleur du patron',targets:[1],pay:190,text:()=>"Gagner avec une couleur à l’As.",test:m=>m.won&&m.category===5&&m.rank===14},
+  {id:'allin',group:'style',name:'Sans filet',targets:[1],pay:110,text:()=>"Remporter une main après avoir fait tapis.",test:m=>m.won&&m.allin},
+  {id:'steal',group:'style',name:'Un regard suffit',targets:[1,2],pay:45,text:n=>`Gagner ${n} main${n>1?'s':''} en faisant coucher tous les autres joueurs.`,test:m=>m.won&&!m.reveal},
+  {id:'show',group:'style',name:'Cartes sur table',targets:[1,2],pay:45,text:n=>`Gagner ${n} abattage${n>1?'s':''}.`,test:m=>m.won&&m.showdown},
+  {id:'big',group:'style',name:'Gros morceau',targets:[1],pay:95,text:()=>"Remporter au moins 500 jetons dans une main bénéficiaire.",test:m=>m.won&&m.received>=500},
+  {id:'short',group:'style',name:'Petit tapis, grand cœur',targets:[1],pay:100,text:()=>"Gagner une main commencée avec 250 jetons ou moins.",test:m=>m.won&&m.start<=250},
+  {id:'button',group:'style',name:'Le dernier mot',targets:[1,2],pay:45,text:n=>`Remporter ${n} main${n>1?'s':''} au bouton du donneur.`,test:m=>m.won&&m.dealer},
+  {id:'crowd',group:'style',name:'Grande tablée',targets:[1],pay:100,text:()=>"Gagner une main commencée à quatre joueurs ou plus.",test:m=>m.won&&m.players>=4},
+  {id:'signature',group:'style',name:'En main propre',targets:[1],pay:100,text:()=>"Gagner à l’abattage en utilisant vos deux cartes privées.",test:m=>m.won&&m.both},
+  {id:'early',group:'style',name:'Avant le flop',targets:[1,2],pay:45,text:n=>`Remporter ${n} main${n>1?'s':''} avant le flop.`,test:m=>m.won&&m.board===0},
+  {id:'heads',group:'style',name:'Duel au sommet',targets:[1,2],pay:55,text:n=>`Remporter ${n} main${n>1?'s':''} jouée${n>1?'s':''} à deux.`,test:m=>m.won&&m.players===2},
+  {id:'patient',group:'style',name:'Victoire en douceur',targets:[1,2],pay:45,text:n=>`Gagner ${n} abattage${n>1?'s':''} sans avoir fait tapis.`,test:m=>m.won&&m.showdown&&!m.allin},
+  {id:'deep',group:'style',name:'Les grandes profondeurs',targets:[1],pay:130,text:()=>"Gagner une main commencée avec au moins 1 000 jetons à table.",test:m=>m.won&&m.start>=1000},
+  {id:'profit',group:'style',name:'Une belle récolte',targets:[1],pay:150,text:()=>"Terminer une main avec au moins 500 jetons de bénéfice net.",test:m=>m.won&&m.net>=500},
+  {id:'acehand',group:'style',name:'L’As personnel',targets:[1],pay:80,text:()=>"Gagner à l’abattage en utilisant un As de votre main.",test:m=>m.won&&m.aceUsed}
+];
+function makeQuest(group,exclude=[]) {
+  const choices=QUESTS.filter(q=>q.group===group&&!exclude.includes(q.id)), task=choices[randomInt(choices.length)];
+  return {id:randomBytes(12).toString('hex'),task:task.id,target:task.targets[randomInt(task.targets.length)],progress:0};
+}
+function newClub() {
+  const quests=[];
+  for(const group of ['regular','combo','style'])for(let i=0;i<4;i++)quests.push(makeQuest(group,[...quests.map(q=>q.task),...(group==='combo'?['quads','royal']:[])]));
+  return {version:1,revision:0,coins:120,owned:[...FREE_ITEMS],equipped:{...LOADOUT,emotes:['emote-hi','emote-gg','emote-bluff','emote-allin']},
+    quests,nextSwapAt:0,lastHand:'',stats:{hands:0,wins:0,quests:0,earned:120,streak:0},
+    feed:[{id:randomBytes(12).toString('hex'),kind:'welcome',amount:120,title:'Bienvenue dans All-In Room',time:Date.now()}]};
+}
+function validClub(c) {
+  const integer=n=>Number.isSafeInteger(n)&&n>=0;
+  if (!c||c.version!==1||!integer(c.revision)||!integer(c.coins)||!Array.isArray(c.owned)||new Set(c.owned).size!==c.owned.length||c.owned.some(id=>!ITEMS.has(id))
+    ||!c.equipped||Object.keys(LOADOUT).some(key=>!c.owned.includes(c.equipped[key])||ITEMS.get(c.equipped[key])?.category!==key)
+    ||!Array.isArray(c.equipped.emotes)||c.equipped.emotes.length>8||new Set(c.equipped.emotes).size!==c.equipped.emotes.length
+    ||c.equipped.emotes.some(id=>!c.owned.includes(id)||ITEMS.get(id)?.category!=='emote')||!integer(c.nextSwapAt)
+    ||typeof c.lastHand!=='string'||c.lastHand.length>64||!c.stats||['hands','wins','quests','earned','streak'].some(key=>!integer(c.stats[key]))
+    ||!Array.isArray(c.feed)||c.feed.length>12||c.feed.some(e=>!e||typeof e.id!=='string'||typeof e.title!=='string'||e.title.length>200||!Number.isSafeInteger(e.amount)||!integer(e.time))
+    ||!Array.isArray(c.quests)||c.quests.length!==12||new Set(c.quests.map(q=>q?.task)).size!==12) return false;
+  return c.quests.every((q,i)=>{const task=QUESTS.find(t=>t.id===q?.task);return task?.group===['regular','combo','style'][Math.floor(i/4)]&&/^[a-f0-9]{24}$/.test(q.id)&&task.targets.includes(q.target)&&integer(q.progress)&&q.progress<q.target;});
+}
+function clubState(id) {
+  const c=users.get(id).club;
+  return {...c,quests:c.quests.map(q=>{const t=QUESTS.find(t=>t.id===q.task),reward=t.pay*q.target;return {...q,name:t.name,description:t.text(q.target),reward,group:t.group,difficulty:reward>=200?'Prestige':reward>=120?'Expert':reward>=70?'Avancé':'Accessible'};})};
+}
+function publicCosmetics(id) { const {emotes,...loadout}=users.get(id).club.equipped;return loadout; }
+function coinEntry(c,amount,title,kind) {
+  if (!Number.isSafeInteger(c.coins+amount)||c.coins+amount<0) throw Error('Solde de coins invalide.');
+  c.coins+=amount;c.revision++;if(amount>0)c.stats.earned+=amount;
+  c.feed.unshift({id:randomBytes(12).toString('hex'),amount,title,kind,time:Date.now()});c.feed.length=Math.min(c.feed.length,12);
+}
+function rewardHand(id,m,handId) {
+  const c=users.get(id).club;if(c.lastHand===handId)return 0;c.lastHand=handId;c.stats.hands++;
+  c.stats.streak=m.won?c.stats.streak+1:0;m.streak=c.stats.streak;
+  let reward=0;
+  if(m.won){c.stats.wins++;reward=20+(m.showdown?5:0)+(m.allin?10:0);coinEntry(c,reward,`Victoire${m.allin?' au tapis':m.showdown?' à l’abattage':''}`,'win');}
+  for(let i=0;i<c.quests.length;i++){const q=c.quests[i],task=QUESTS.find(t=>t.id===q.task);if(!task.test(m))continue;q.progress++;
+    if(q.progress<q.target)continue;const amount=task.pay*q.target;c.stats.quests++;coinEntry(c,amount,task.name,'quest');
+    c.quests[i]=makeQuest(task.group,c.quests.map(q=>q.task));}
+  c.revision++;
+  return reward;
+}
 const MAX_PHOTO_BYTES = 32768;
 function photoBuffer(value) {
   if (typeof value !== 'string' || value.length > 44000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)) return null;
@@ -81,7 +261,7 @@ const accountByNick = key => [...users].find(([, u]) => nickKey(u.nick) === key)
 const scrypt = promisify(scryptCallback);
 const users = new Map();
 const sessions = new Map(), authAttempts = new Map();
-const chatMessages = [], chatLimits = new Map();
+const chatMessages = [], chatLimits = new Map(), emoteTimes = new Map();
 const reconnectTimers = new Map();
 let handHistory = [];
 let chatSequence = 0;
@@ -108,7 +288,7 @@ function validateAccounts(saved) {
       !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
       !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id) || names.has(nickKey(u.nick))
-      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo)))
+      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo)) || (u.club !== undefined && !validClub(u.club)))
       throw Error('Sauvegarde de comptes invalide.');
     ids.add(u.id); names.add(nickKey(u.nick));
   }
@@ -122,8 +302,8 @@ function restoreUsers(saved) {
   let migrated = false;
   for (const u of saved.users) {
     const avatar = u.avatar || AVATARS[randomInt(AVATARS.length)];
-    if (!u.avatar) migrated = true;
-    users.set(u.id, { ...u, avatar, socket: null });
+    if (!u.avatar || !u.club) migrated = true;
+    users.set(u.id, { ...u, avatar, club:u.club || newClub(), socket: null });
   }
   return migrated;
 }
@@ -256,7 +436,7 @@ async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, photo: u.photo || null, salt: u.salt, hash: u.hash,
-    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
+    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt, club:u.club }));
   const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows, history: handHistory });
   if (postgres) {
     const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
@@ -341,6 +521,7 @@ setInterval(() => {
   for (const [key, v] of authAttempts) if (v.until <= now) authAttempts.delete(key);
   for (const [key, v] of sessions) if (v.expires <= now) sessions.delete(key);
   for (const [key, v] of chatLimits) if (v.until <= now) chatLimits.delete(key);
+  for (const [key,time] of emoteTimes) if (now-time>60000) emoteTimes.delete(key);
 }, 60000).unref();
 app.use('/api', async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -370,7 +551,7 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
         if (accountByNick(key)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
         // L'identifiant du compte reste immuable, même après un changement de pseudo.
         id = key; while (users.has(id)) id = randomBytes(16).toString('hex');
-        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
+        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, club:newClub(), socket: null });
       });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
@@ -464,6 +645,43 @@ app.get('/api/history', async (req, res) => {
     res.json({ hands });
   } catch { res.status(503).json({ error: STORAGE_MESSAGE }); }
 });
+app.get('/api/store',async(req,res)=>{
+  const session=sessionFor(req);if(!session)return res.status(401).json({error:'Connectez-vous pour accéder à la boutique.'});
+  try{const club=await enqueue(()=>structuredClone(clubState(session.id)),false);res.json({items:CATALOG,groups:SHOP_GROUPS,currency:CURRENCY,rules:{welcome:120,win:20,showdown:5,allin:10,swapMs:QUEST_SWAP_MS},club});}
+  catch{res.status(503).json({error:STORAGE_MESSAGE});}
+});
+app.post('/api/store',async(req,res)=>{
+  try{
+    const session=sessionFor(req);if(!session)return res.status(401).json({error:'Reconnectez-vous pour accéder à la boutique.'});
+    if(!consumeAttempt('store:'+session.id,200))return res.status(429).json({error:'Un peu de patience avant de modifier votre collection.'});
+    const {action,itemId,slot}=req.body||{};
+    const result=await enqueue(()=>{
+      if(sessionFor(req)?.token!==session.token)throw Object.assign(Error('Session expirée.'),{status:401});
+      const c=users.get(session.id).club,item=ITEMS.get(itemId);
+      const invalid=message=>{throw Object.assign(Error(message),{status:400});};
+      if(action==='reroll'){
+        if(!Number.isInteger(slot)||slot<0||slot>=c.quests.length)invalid('Quête inconnue.');
+        if(Date.now()<c.nextSwapAt)invalid('Votre changement gratuit de quête sera bientôt disponible.');
+        const old=c.quests[slot],task=QUESTS.find(t=>t.id===old.task);c.quests[slot]=makeQuest(task.group,c.quests.map(q=>q.task));c.nextSwapAt=Date.now()+QUEST_SWAP_MS;
+      }else{
+        if(!item)invalid('Objet inconnu.');
+        if(action==='buy'){
+          if(c.owned.includes(itemId))invalid('Vous possédez déjà cet objet.');
+          if(c.coins<item.price)invalid(`Il vous manque ${item.price-c.coins} ${CURRENCY}.`);
+          coinEntry(c,-item.price,item.name,'purchase');c.owned.push(itemId);
+        }else if(action==='equip'||action==='unequip'){
+          if(!c.owned.includes(itemId))invalid('Achetez cet objet avant de l’équiper.');
+          if(item.category==='emote'){
+            if(action==='unequip')c.equipped.emotes=c.equipped.emotes.filter(id=>id!==itemId);
+            else if(!c.equipped.emotes.includes(itemId)){if(c.equipped.emotes.length>=8)invalid('Votre roue contient déjà huit émotes. Retirez-en une avant d’en ajouter.');c.equipped.emotes.push(itemId);}
+          }else c.equipped[item.category]=action==='unequip'?LOADOUT[item.category]:itemId;
+        }else invalid('Action inconnue.');
+      }
+      c.revision++;return structuredClone(clubState(session.id));
+    });
+    res.json({ok:true,club:result});
+  }catch(error){res.status(error.status||503).json({error:error.status?error.message:STORAGE_MESSAGE});}
+});
 app.post('/api/logout', async (req, res) => {
   const s = sessionFor(req);
   if (s) {
@@ -516,7 +734,7 @@ function mayRaise(p) {
 }
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
-  return { me: id, ...profileFor(id), wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
+  return { me: id, ...profileFor(id), club:clubState(id), wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
     historyVersion: handHistory[0]?.id || '',
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
@@ -525,7 +743,7 @@ function stateFor(id) {
     pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result, winners: table.winners,
     celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
-    players: table.players.map(q => ({ id: q.id, nick: q.nick, avatar: users.get(q.id).avatar, photo:photoUrl(q.id), stack: q.stack,
+    players: table.players.map(q => ({ id: q.id, nick: q.nick, avatar: users.get(q.id).avatar, photo:photoUrl(q.id), cosmetics:publicCosmetics(q.id), stack: q.stack,
       disconnectedUntil: q.disconnectedUntil || 0,
       bet: q.bet, total: q.total, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
@@ -598,9 +816,11 @@ function handReason(score) {
     `Full : ${rank(first)} par ${rank(second)}`, `Carré : ${rank(first)}`, `Quinte flush au ${rank(first)}`][category];
 }
 function finish() {
+  if (!active()) return;
   clearTimeout(timer); table.turn = null; table.deadline = 0;
   table.runout = false; table.runoutAt = 0;
   const ps = table.players, remaining = live(), gains = new Map(), refunds = new Map();
+  const starting=new Map(ps.map(p=>[p.id,{start:p.stack+p.total,allin:p.stack===0&&p.total>0}])),coinRewards=new Map();
   table.reveal = remaining.length > 1;
   // Le tableau est parcouru en premier pour retenir ses cartes lorsqu'elles suffisent à égalité.
   const hands = new Map(remaining.map(p => [p.id, table.reveal ? bestHand([...table.board, ...p.hole]) : null]));
@@ -634,9 +854,18 @@ function finish() {
       awards.get(p.id).shared ||= winners.length > 1;
     });
   }
+  for(const p of ps){
+    const score=scores.get(p.id)||0,hand=hands.get(p.id),won=(gains.get(p.id)||0)+(refunds.get(p.id)||0)-p.total>0;
+    coinRewards.set(p.id,rewardHand(p.id,{played:true,won,showdown:table.reveal&&!p.folded,reveal:table.reveal,
+      invested:p.total,net:(gains.get(p.id)||0)+(refunds.get(p.id)||0)-p.total,streets:p.streetsSeen||0,
+      aceUsed:!!hand&&p.hole.some(code=>code[0]==='A'&&hand.cards.includes(code)),
+      category:hand?Math.floor(score/15**5):-1,rank:hand?Math.floor(score/15**4)%15:0,
+      ...starting.get(p.id),received:gains.get(p.id)||0,dealer:p.id===table.dealer,players:ps.length,board:table.board.length,
+      both:!!hand&&p.hole.every(code=>hand.cards.includes(code))},table.handId));
+  }
   table.winners = [...gains].map(([id, amount]) => {
     const hand = hands.get(id), player = ps.find(p => p.id === id);
-    return { id, nick: users.get(id).nick, avatar: users.get(id).avatar, amount,
+    return { id, nick: users.get(id).nick, avatar: users.get(id).avatar, amount,coins:coinRewards.get(id)||0,cosmetics:publicCosmetics(id),
       reason: table.reveal ? handReason(scores.get(id)) : 'Tous les autres joueurs se sont couchés',
       winningHand: hand ? hand.cards.map(code => ({ code, fromHand: player.hole.includes(code),
         combination: hand.combination.includes(code) })) : [], ...awards.get(id) };
@@ -709,6 +938,7 @@ function dealStreet() {
   table.deck.pop(); // Carte brûlée.
   const dealt = Array.from({ length: table.phase === 'flop' ? 3 : 1 }, () => table.deck.pop());
   table.board.push(...dealt);
+  table.players.filter(p=>!p.folded).forEach(p=>p.streetsSeen=(p.streetsSeen||0)+1);
   addLog(`${{ flop: 'Flop', turn: 'Turn', river: 'River' }[table.phase]} : ${dealt.map(c =>
     (c[0] === 'T' ? '10' : c[0]) + ({ s: '♠', h: '♥', d: '♦', c: '♣' }[c[1]])).join(' ')}.`);
   table.players.forEach(p => { p.bet = 0; });
@@ -753,7 +983,7 @@ function start() {
   for (let i = table.deck.length - 1; i > 0; i--) {
     const j = randomInt(i + 1); [table.deck[i], table.deck[j]] = [table.deck[j], table.deck[i]];
   }
-  ps.forEach(p => { p.hole = []; p.folded = false; p.bet = 0; p.total = 0; });
+  ps.forEach(p => { p.hole = []; p.folded = false; p.bet = 0; p.total = 0; p.streetsSeen = 0; });
   for (let n = 0; n < 2; n++) ps.forEach(p => p.hole.push(table.deck.pop()));
   const sb = ps.length === 2 ? dealer : nextAfter(dealer.id, () => true);
   const bb = nextAfter(sb.id, () => true);
@@ -825,6 +1055,18 @@ io.on('connection', socket => {
   });
   enqueue(() => {}, false).then(() => socket.emit('chat-history', chatMessages))
     .catch(() => socket.emit('storage-error', { message: STORAGE_MESSAGE }));
+  socket.on('emote',(data,ack)=>{
+    try{
+      const id=socket.data.uid,session=sessions.get(socket.data.session),u=users.get(id);
+      if(storageUnavailable)throw Error(STORAGE_MESSAGE);
+      if(!session||session.expires<=Date.now()||session.id!==id||u?.socket!==socket.id)throw Error('Reconnectez-vous pour utiliser vos émotes.');
+      if(!seat(id)||seat(id).leaving)throw Error('Rejoignez la table pour utiliser vos émotes.');
+      if(Date.now()-(emoteTimes.get(id)||0)<5000)throw Error('Une émote toutes les cinq secondes.');
+      const item=ITEMS.get(data?.itemId);if(!item||item.category!=='emote'||!u.club.equipped.emotes.includes(item.id))throw Error('Ajoutez cette émote à votre roue dans la boutique.');
+      const time=Date.now();emoteTimes.set(id,time);io.emit('emote',{id:randomBytes(8).toString('hex'),userId:id,nick:u.nick,itemId:item.id,time});
+      if(typeof ack==='function')ack({ok:true});
+    }catch(error){if(typeof ack==='function')ack({error:error.message});}
+  });
   // Le chat ne passe pas par la file des mises : aucun solde ni délai de jeu n'est modifié.
   socket.on('chat', (data, ack) => {
     try {
