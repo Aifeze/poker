@@ -125,6 +125,13 @@
     #actions{gap:8px}#game #actions>.btn{min-height:46px;padding:10px 16px;font-size:15px;line-height:22px}#game #actions .bet-sizes .btn{min-height:42px;padding:9px 10px;font-size:12px;line-height:20px}#game #actions #raiseTo{width:88px;height:46px;padding:10px;font-size:15px;line-height:22px}#actions label{font-size:13px}#game #controls #start{min-height:44px;padding:10px 16px;font-size:14px;line-height:20px}
     @media(min-width:1024px) and (max-width:1199px){#actions{gap:6px}#game #actions>.btn{min-height:44px;padding:9px 11px;font-size:13px}#game #actions .bet-sizes .btn{min-height:40px;padding:8px}#game #actions #raiseTo{width:80px;height:44px;font-size:13px;line-height:20px}#actions label{font-size:12px;margin-left:0}}
     @media(max-width:1023px){#game #actions>.btn,#game #controls #start{min-height:48px;font-size:16px}#game #actions #raiseTo{height:48px;font-size:16px}}
+    .player-wager{--chip-step:1.2px;--chip-width:14px;--chip-height:6px;position:absolute;left:calc(50% + 40px);top:calc(100% + 8px);width:max-content;min-width:30px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;z-index:5;pointer-events:none}.wager-chips{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:30px;flex-shrink:0;filter:drop-shadow(0 3px 2px #0005)}.wager-stack{position:relative;display:block;width:var(--chip-width);height:calc(var(--levels) * var(--chip-step) + var(--chip-height))}.wager-chip{position:absolute;left:0;bottom:calc(var(--chip) * var(--chip-step));width:var(--chip-width);height:var(--chip-height);border:1px solid #f8dda0;border-radius:50%;background:radial-gradient(ellipse at center,#dcae51 0 35%,transparent 40%),conic-gradient(#fce9bb 0 12%,#bf8734 12% 25%,#fce9bb 25% 37%,#bf8734 37% 50%,#fce9bb 50% 62%,#bf8734 62% 75%,#fce9bb 75% 87%,#bf8734 87%);box-shadow:0 1px 0 #8b5a27,0 2px 0 #4d341c}.wager-amount{display:block;padding:1px 6px;border:1px solid #f2d49540;border-radius:9px;background:#092c26ed;color:#ffe1a2;font-size:11px;font-weight:750;line-height:14px;white-space:nowrap}#myWager{display:contents}.own-seat .player-wager,#players [data-slot=bottom] .player-wager{left:auto;right:calc(100% + 12px);top:50%;transform:translateY(-50%)}#players [data-slot=upper-right] .player-wager{left:auto;right:calc(50% + 40px)}#players [data-slot=left] .player-wager{top:calc(100% + 5px);left:0;transform:none}#players [data-slot=right] .player-wager{top:calc(100% + 5px);left:auto;right:0;transform:none}
+    @media(min-width:1024px) and (max-width:1199px){#players [data-slot=top] .player-wager{left:auto;right:calc(50% + 34px)}}
+    @media(min-width:1024px) and (max-height:640px){#players [data-slot=top] .player-wager{left:auto;right:calc(100% + 8px);top:50%;transform:translateY(-50%)}#players [data-slot=upper-left] .player-wager,#players [data-slot=upper-right] .player-wager{left:calc(50% - 14px);right:auto;top:auto;bottom:calc(100% + 5px);transform:translateX(-50%)}#players [data-slot=upper-right] .player-wager{left:calc(50% + 14px)}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{top:calc(100% + 42px);bottom:auto}}
+    @media(max-width:1023px){.player-wager{--chip-step:.9px;--chip-width:11px;--chip-height:5px;min-width:22px;height:38px;gap:1px;left:calc(50% + 30px);top:calc(100% + 4px)}.wager-chips{height:23px}.wager-amount{padding:0 5px;font-size:10px;line-height:12px}#players [data-slot=upper-right] .player-wager{right:calc(50% + 30px)}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{left:50%;right:auto;top:calc(100% + 43px);transform:translateX(-50%)}}
+    @media(max-width:600px){.own-seat .player-wager{left:6px;right:auto;top:auto;bottom:calc(100% + 8px);transform:none}}
+    @media(max-width:1023px){.felt[data-players="6"] #community{top:47%}}
+    .avatar img{display:block;width:100%;height:100%;object-fit:cover}.photo-picker{margin:14px 0 18px;padding:12px;border:1px dashed #ffffff26;border-radius:12px}.photo-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.photo-actions .btn{font-size:12px;padding:8px 11px}.photo-hint{font-size:11px;line-height:16px;color:#9fbdaf;margin-top:7px}.photo-preview{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:#f1d49b;font-size:12px}.photo-preview .avatar{width:52px;height:52px}.photo-picker.active{border-color:#e8bc7090;background:#304b3c55}
   </style>
 </head>
 <body>
@@ -141,7 +148,7 @@
         <label for="nick" class="text-sm">Votre pseudo</label><input id="nick" autocomplete="username" maxlength="20" minlength="2" placeholder="Ex. RiverRunner" required>
         <label for="password" class="text-sm">Mot de passe</label><input id="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="8 caractères minimum" required>
         <div id="confirmation" class="flex flex-col gap-3" hidden><label for="passwordConfirm" class="text-sm">Confirmer le mot de passe</label><input id="passwordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="128"></div>
-        <fieldset id="registerCharacters" hidden><legend>Votre personnage</legend><p class="picker-hint">Choisissez votre visage à la table. Vous pourrez le changer ensuite.</p><div id="registerCharacterGrid" class="character-grid"></div></fieldset>
+        <fieldset id="registerCharacters" hidden><legend>Votre photo de profil</legend><p class="picker-hint">Choisissez un personnage ou importez votre propre photo.</p><div id="registerCharacterGrid" class="character-grid"></div><div id="registerPhotoPicker" class="photo-picker"><div id="registerPhotoPreview" class="photo-preview" hidden></div><div class="photo-actions"><button id="registerChoosePhoto" type="button" class="btn">Importer ma photo</button><button id="registerClearPhoto" type="button" class="btn" hidden>Revenir aux personnages</button></div><input id="registerPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Importer votre photo de profil" hidden><p class="photo-hint">JPG, PNG ou WebP · 5 Mo maximum · Recadrage carré automatique.</p></div></fieldset>
         <button id="authSubmit" class="btn gold mt-2">Se connecter →</button>
       </form>
       <p class="text-xs text-emerald-100/50 mt-5">Aucun achat, aucun retrait, aucun argent réel. Un compte est nécessaire pour jouer.</p>
@@ -163,6 +170,7 @@
           <div class="seat-profile"><span id="myAvatar" class="profile-avatar"></span><div class="seat-identity"><div class="seat-name"><span id="myNick"></span><span id="myDealer" class="dealer-button" hidden>D</span></div><p class="seat-stack"><span id="myStack"></span> <small>jetons</small></p><p id="myStatus" class="seat-status"></p></div></div>
           <p id="myHeading" class="sr-only">Votre main</p>
           <div id="myCards" class="flex justify-center gap-3 my-4" aria-label="Vos cartes privées"></div>
+          <div id="myWager"></div>
           <button id="toggleCards" type="button" class="btn text-sm" aria-controls="myCards">Cacher mes cartes</button>
         </section>
         <div id="tableFx" aria-hidden="true"></div>
@@ -199,7 +207,7 @@
       <div class="settings-heading"><div><p class="eyebrow">VOTRE ESPACE</p><h2 id="settingsTitle" tabindex="-1">Paramètres du compte</h2><p>Votre profil, votre personnage, votre façon de jouer.</p></div><button id="settingsBack" type="button" class="btn">← Retour à la table</button></div>
       <button id="settingsTurnAlert" type="button" class="btn turn-alert" hidden>À vous de jouer ! Revenir à la table →</button>
       <div class="settings-grid">
-        <section class="panel settings-card"><div class="settings-profile"><div id="settingsAvatarPreview"></div><div><p class="eyebrow">VOTRE PERSONNAGE</p><h3 id="settingsProfileName"></h3><p id="settingsCharacterName"></p></div></div><form id="characterForm"><fieldset><legend>Choisir un personnage</legend><div id="settingsCharacterGrid" class="character-grid"></div></fieldset><button id="saveCharacter" type="submit" class="btn gold">Enregistrer mon personnage</button><p id="characterMessage" class="form-message" role="status"></p></form></section>
+        <section class="panel settings-card"><div class="settings-profile"><div id="settingsAvatarPreview"></div><div><p class="eyebrow">VOTRE PHOTO DE PROFIL</p><h3 id="settingsProfileName"></h3><p id="settingsCharacterName"></p></div></div><form id="characterForm"><fieldset><legend>Choisir un personnage</legend><div id="settingsCharacterGrid" class="character-grid"></div></fieldset><div id="settingsPhotoPicker" class="photo-picker"><div id="settingsPhotoPreview" class="photo-preview" hidden></div><div class="photo-actions"><button id="settingsChoosePhoto" type="button" class="btn">Importer ma photo</button><button id="settingsClearPhoto" type="button" class="btn" hidden>Revenir aux personnages</button></div><input id="settingsPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Importer une nouvelle photo de profil" hidden><p class="photo-hint">JPG, PNG ou WebP · 5 Mo maximum · Recadrage carré automatique.</p></div><button id="saveCharacter" type="submit" class="btn gold">Enregistrer ma photo de profil</button><p id="characterMessage" class="form-message" role="status"></p></form></section>
         <section class="panel settings-card"><p class="eyebrow">IDENTITÉ & CONNEXION</p><h3>Votre compte</h3><p class="settings-help">Votre pseudo sert à vous connecter. Votre mot de passe actuel est nécessaire pour le modifier ou changer de mot de passe.</p><form id="accountForm" class="account-form">
           <label for="accountNick">Pseudo</label><input id="accountNick" autocomplete="username" minlength="2" maxlength="20" required>
           <label for="currentPassword">Mot de passe actuel</label><input id="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
@@ -227,18 +235,21 @@
       {id:'oscar',name:'Oscar',tag:'Le vétéran',position:'100% 100%'}
     ];
     function character(id) { return CHARACTERS.find(c => c.id === id) || CHARACTERS[0]; }
-    function avatarHTML(id, extra = '') {
+    function avatarHTML(id, photo = null) {
       const c = character(id);
-      return `<span class="avatar ${extra}" style="background-position:${c.position}" role="img" aria-label="Personnage ${c.name}"></span>`;
+      const image = typeof photo === 'string' && (/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(photo) || /^\/api\/avatars\/[^/]+\/[a-f0-9]{20}$/.test(photo)) ? `<img src="${escapeHTML(photo)}" alt="" decoding="async">` : '';
+      return `<span class="avatar" style="background-position:${c.position}" role="img" aria-label="${image ? 'Photo de profil personnelle' : `Personnage ${c.name}`}">${image}</span>`;
     }
     function renderCharacterChoices(container, group, selected) {
-      $(container).innerHTML = CHARACTERS.map(c => `<label class="character-option"><input type="radio" name="${group}" value="${c.id}" ${c.id === selected ? 'checked' : ''} required>${avatarHTML(c.id)}<span><strong>${c.name}</strong><small>${c.tag}</small></span></label>`).join('');
+      $(container).innerHTML = CHARACTERS.map(c => `<label class="character-option"><input type="radio" name="${group}" value="${c.id}" ${c.id === selected ? 'checked' : ''} ${selected ? 'required' : ''}>${avatarHTML(c.id)}<span><strong>${c.name}</strong><small>${c.tag}</small></span></label>`).join('');
     }
     let state, authMode = 'login', lastDecision = '', cardsHidden = false, lastLogId = 0, storageBlocked = false;
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
     let joinPending = false;
     let historyVersion = null, historyLoading = false, historyEntries = [], reconnectRetry;
     let settingsLoadedFor = null, profilePending = false;
+    let registerPhoto = null, settingsPhoto = null, registerPhotoBusy = false, settingsPhotoBusy = false, authPending = false;
+    const photoJobs = {register:0,settings:0};
     const chatNodes = new Map();
     function chooseMode(mode) {
       authMode = mode; const register = mode === 'register';
@@ -246,16 +257,18 @@
       $('loginTab').setAttribute('aria-pressed', String(!register)); $('registerTab').setAttribute('aria-pressed', String(register));
       $('confirmation').hidden = !register; $('passwordConfirm').required = register;
       $('registerCharacters').hidden = !register;
-      $('registerCharacterGrid').querySelectorAll('input').forEach(input => input.disabled = !register);
+      updatePhotoPicker('register'); updateAuthAvailability();
       $('password').autocomplete = register ? 'new-password' : 'current-password';
       $('authSubmit').textContent = register ? 'Créer mon compte · 1 000 jetons' : 'Se connecter →';
       $('notice').textContent = '';
     }
     function showLogin(message = '') {
       state = null; lastDecision = ''; cardsHidden = false; storageBlocked = false; socket.disconnect();
+      photoJobs.register++; photoJobs.settings++; registerPhotoBusy = settingsPhotoBusy = false; registerPhoto = settingsPhoto = null;
       clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
       $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
       $('settingsPage').hidden = true; $('settingsTurnAlert').hidden = true; $('openSettings').hidden = true; settingsLoadedFor = null; profilePending = false;
+      $('settingsPhotoPreview').replaceChildren(); $('settingsAvatarPreview').replaceChildren();
       for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
       lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
       $('chatInput').value = ''; $('chatError').textContent = ''; clearEffects();
@@ -284,6 +297,71 @@
       }
       return reply;
     }
+    function updateAuthAvailability() {
+      const busy = authPending || registerPhotoBusy;
+      for (const id of ['authSubmit','loginTab','registerTab','registerChoosePhoto','registerClearPhoto']) $(id).disabled = busy;
+      $('registerPhotoInput').disabled = busy || authMode !== 'register';
+      $('registerCharacterGrid').querySelectorAll('input').forEach(el => el.disabled = busy || authMode !== 'register');
+    }
+    function updatePhotoPicker(kind) {
+      const photo = kind === 'register' ? registerPhoto : settingsPhoto, grid = $(kind + 'CharacterGrid');
+      $(kind + 'PhotoPicker').classList.toggle('active',!!photo);
+      $(kind + 'PhotoPreview').hidden = !photo;
+      $(kind + 'PhotoPreview').innerHTML = photo ? `${avatarHTML('nova',photo)}<span>Photo personnelle sélectionnée</span>` : '';
+      $(kind + 'ClearPhoto').hidden = !photo;
+      $(kind + 'ChoosePhoto').textContent = photo ? 'Changer ma photo' : 'Importer ma photo';
+      grid.querySelectorAll('input').forEach(el => { el.required = !photo && (kind !== 'register' || authMode === 'register'); if (photo) el.checked = false; });
+      if (!photo && !grid.querySelector('input:checked')) {
+        const selected = kind === 'settings' ? state?.avatar : 'nova';
+        const choice = [...grid.querySelectorAll('input')].find(el => el.value === selected); if (choice) choice.checked = true;
+      }
+    }
+    async function preparePhoto(file) {
+      if (!['image/jpeg','image/png','image/webp'].includes(file.type) || !file.size) throw Error('Choisissez une photo JPG, PNG ou WebP.');
+      if (file.size > 5 * 1024 * 1024) throw Error('Choisissez une photo de 5 Mo maximum.');
+      const source = URL.createObjectURL(file), image = new Image();
+      try {
+        image.src = source;
+        try { await image.decode(); } catch { throw Error('Cette image est illisible. Essayez une autre photo.'); }
+        if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth > 12000 || image.naturalHeight > 12000) throw Error('Cette image est trop grande. Choisissez une photo plus petite.');
+        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 192;
+        const context = canvas.getContext('2d'), side = Math.min(image.naturalWidth,image.naturalHeight);
+        context.fillStyle = '#123436'; context.fillRect(0,0,192,192);
+        context.drawImage(image,(image.naturalWidth-side)/2,(image.naturalHeight-side)/2,side,side,0,0,192,192);
+        for (const quality of [.86,.76,.66,.56]) {
+          const photo = canvas.toDataURL('image/jpeg',quality);
+          if (atob(photo.slice(23)).length <= 32768) return photo;
+        }
+        throw Error('Cette photo est trop détaillée. Essayez une autre image.');
+      } finally { URL.revokeObjectURL(source); }
+    }
+    for (const kind of ['register','settings']) {
+      $(kind + 'ChoosePhoto').onclick = () => $(kind + 'PhotoInput').click();
+      $(kind + 'ClearPhoto').onclick = () => {
+        if (kind === 'register') registerPhoto = null; else settingsPhoto = null;
+        updatePhotoPicker(kind);
+        if (kind === 'settings') previewCharacter(document.querySelector('input[name="settingsAvatar"]:checked')?.value);
+      };
+      $(kind + 'PhotoInput').onchange = async event => {
+        const file = event.target.files[0]; if (!file) return;
+        const job = ++photoJobs[kind], owner = state?.me, message = kind === 'register' ? $('notice') : $('characterMessage');
+        message.classList.remove('success'); message.textContent = 'Préparation de votre photo…';
+        if (kind === 'register') registerPhotoBusy = true; else settingsPhotoBusy = true;
+        updateAuthAvailability(); updateSettingsAvailability();
+        try {
+          const photo = await preparePhoto(file);
+          if (job !== photoJobs[kind] || (kind === 'settings' && (state?.me !== owner || !settingsRoute()))) return;
+          if (kind === 'register') registerPhoto = photo; else settingsPhoto = photo;
+          updatePhotoPicker(kind); if (kind === 'settings') previewCharacter(state.avatar);
+          message.textContent = kind === 'register' ? 'Votre photo est prête pour la création du compte.' : 'Aperçu prêt. Enregistrez votre photo pour l’appliquer.';
+        } catch (error) { if (job === photoJobs[kind]) message.textContent = error.message; }
+        finally {
+          if (job === photoJobs[kind]) { if (kind === 'register') registerPhotoBusy = false; else settingsPhotoBusy = false; }
+          event.target.value = ''; updateAuthAvailability(); updateSettingsAvailability();
+        }
+      };
+    }
+    $('registerCharacterGrid').onchange = () => { registerPhoto = null; updatePhotoPicker('register'); };
     function card(c) {
       if (!c) return '<span class="card empty" aria-label="Carte à venir">·</span>';
       if (c === '??' || typeof c !== 'string' || !/^[2-9TJQKA][shdc]$/.test(c)) return '<span class="card back" aria-label="Carte cachée"><span>♠</span><span>♠</span></span>';
@@ -292,12 +370,13 @@
     function renderOwnHand() {
       const me = state?.players.find(p => p.id === state.me);
       $('mySeat').hidden = !me;
-      if (!me) { $('myCards').innerHTML = ''; return; }
+      if (!me) { $('myCards').innerHTML = ''; $('myWager').replaceChildren(); return; }
       $('mySeat').className = `seat own-seat ${state.turn === me.id ? 'acting' : ''} ${me.folded ? 'folded' : ''} ${state.winners?.some(w => w.id === me.id) ? 'winner-seat' : ''}`;
-      $('myAvatar').innerHTML = avatarHTML(me.avatar || state.avatar); $('mySeat').dataset.slot = 'bottom';
+      $('myAvatar').innerHTML = avatarHTML(me.avatar || state.avatar,me.photo || state.photo); $('mySeat').dataset.slot = 'bottom';
       $('myNick').textContent = me.nick; $('myStack').textContent = money(me.stack); $('myDealer').hidden = !me.dealer;
       $('myCards').innerHTML = (me.cards.length ? me.cards : [null, null])
         .map(c => card(cardsHidden && c ? '??' : c)).join('');
+      $('myWager').innerHTML = wagerHTML(me,state);
       const toggleLabel = cardsHidden ? 'Afficher mes cartes' : 'Cacher mes cartes';
       $('toggleCards').setAttribute('aria-label',toggleLabel); $('toggleCards').title = toggleLabel;
       $('toggleCards').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>${cardsHidden ? '<path d="m3 3 18 18"/>' : ''}</svg><span>${toggleLabel}</span>`;
@@ -467,6 +546,9 @@
       if (previous && next.hand !== previous.hand) clearEffects();
       if (!previous) lastLogId = next.logs?.at(-1)?.id || 0;
       if (previous) {
+        for (const player of next.players) if (player.total > (next.hand === previous.hand ? previous.players.find(p => p.id === player.id)?.total || 0 : 0)) {
+          motion(seatElement(player.id)?.querySelector('.wager-chips'),[{transform:'translateY(-7px) scale(.9)',opacity:.5},{transform:'translateY(0) scale(1)',opacity:1}],{duration:350});
+        }
         if (next.pot > previous.pot) motion($('pot'), [{transform:'scale(1)'},{transform:'scale(1.2)',color:'#fff2cf'},{transform:'scale(1)'}]);
         if (next.hand !== previous.hand) {
           dealAnimation([...$('myCards').children]); dealAnimation([...$('players').querySelectorAll('.card')]);
@@ -488,7 +570,7 @@
             badge.textContent = {fold:'COUCHÉ',check:'CHECK',call:`SUIT ${money(effect.amount || 0)}`,raise:`RELANCE ${money(effect.amount || 0)}`,bet:`MISE ${money(effect.amount || 0)}`,allin:'TAPIS !'}[effect.type] || '';
             badge.setAttribute('aria-hidden','true'); element.append(badge); setTimeout(() => badge.remove(), 1600);
             motion(badge, [{opacity:0,transform:'translate(-50%,5px) scale(.8)'},{opacity:1,transform:'translate(-50%,0) scale(1)'}]);
-            if (effect.amount > 0) { flyChips(element, $('pot')); chipDeposit(effect.paid ?? effect.amount); }
+            if (effect.amount > 0) { flyChips(element, element.querySelector('.player-wager') || $('pot')); chipDeposit(effect.paid ?? effect.amount); }
             if (effect.type === 'fold') element.querySelectorAll('.card').forEach(card => motion(card,
               [{transform:'rotate(0)',opacity:1},{transform:'translateY(8px) rotate(-8deg)',opacity:.25}], {duration:450,fill:'forwards'}));
           }
@@ -546,23 +628,24 @@
     }
     function settingsRoute() { return location.pathname.replace(/\/$/,'') === '/parametres'; }
     function updateSettingsAvailability() {
-      const blocked = !state || !socket.connected || storageBlocked || profilePending;
-      document.querySelectorAll('#settingsPage input,#settingsPage button[type=submit]').forEach(el => el.disabled = blocked);
+      const blocked = !state || !socket.connected || storageBlocked || profilePending || settingsPhotoBusy;
+      document.querySelectorAll('#settingsPage input,#characterForm button,#accountForm button').forEach(el => el.disabled = blocked);
     }
     function previewCharacter(id) {
-      const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id);
-      $('settingsCharacterName').textContent = `${c.name} · ${c.tag}`;
+      const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id,settingsPhoto);
+      $('settingsCharacterName').textContent = settingsPhoto ? 'Votre photo personnelle' : `${c.name} · ${c.tag}`;
     }
     function fillSettings() {
       if (!state) return;
       settingsLoadedFor = state.me;
+      photoJobs.settings++; settingsPhotoBusy = false; settingsPhoto = state.photo || null;
       $('accountNick').value = state.nick; $('settingsProfileName').textContent = state.nick;
       for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
       $('characterMessage').textContent = ''; $('accountMessage').textContent = '';
-      renderCharacterChoices('settingsCharacterGrid','settingsAvatar',state.avatar);
-      previewCharacter(state.avatar); updateSettingsAvailability();
+      renderCharacterChoices('settingsCharacterGrid','settingsAvatar',settingsPhoto ? null : state.avatar);
+      updatePhotoPicker('settings'); previewCharacter(state.avatar); updateSettingsAvailability();
     }
-    $('settingsCharacterGrid').onchange = () => previewCharacter(document.querySelector('input[name="settingsAvatar"]:checked')?.value);
+    $('settingsCharacterGrid').onchange = () => { settingsPhoto = null; updatePhotoPicker('settings'); previewCharacter(document.querySelector('input[name="settingsAvatar"]:checked')?.value); };
     $('openSettings').onclick = () => navigate('/parametres');
     $('settingsBack').onclick = $('settingsTurnAlert').onclick = () => navigate('/');
     async function saveProfile(data, messageId) {
@@ -572,10 +655,10 @@
       try {
         const reply = await api('profile',data);
         if (state?.me !== owner) return;
-        state.nick = reply.nick; state.avatar = reply.avatar;
+        state.nick = reply.nick; state.avatar = reply.avatar; state.photo = reply.photo;
         const me = state.players.find(p => p.id === owner);
-        if (me) { me.nick = reply.nick; me.avatar = reply.avatar; }
-        $('identity').textContent = reply.nick; $('headerAvatar').innerHTML = avatarHTML(reply.avatar);
+        if (me) { me.nick = reply.nick; me.avatar = reply.avatar; me.photo = reply.photo; }
+        $('identity').textContent = reply.nick; $('headerAvatar').innerHTML = avatarHTML(reply.avatar,reply.photo);
         renderOwnHand(); highlightWinningSources();
         if (settingsRoute()) fillSettings();
         $(messageId).classList.add('success'); $(messageId).textContent = 'Modifications enregistrées.';
@@ -588,7 +671,9 @@
     $('characterForm').onsubmit = e => {
       e.preventDefault(); if ($('saveCharacter').disabled) return;
       const avatar = document.querySelector('input[name="settingsAvatar"]:checked')?.value;
-      if (avatar) saveProfile({avatar},'characterMessage');
+      if (settingsPhoto?.startsWith('data:')) saveProfile({photo:settingsPhoto},'characterMessage');
+      else if (settingsPhoto) $('characterMessage').textContent = 'Cette photo est déjà enregistrée.';
+      else if (avatar) saveProfile({avatar,photo:null},'characterMessage');
     };
     $('accountForm').onsubmit = e => {
       e.preventDefault(); if ($('saveAccount').disabled) return;
@@ -603,15 +688,28 @@
       return ({1:[],2:['top'],3:['top','left'],4:['top','left','right'],
         5:['upper-left','upper-right','left','right'],6:['top','upper-left','upper-right','left','right']})[count] || [];
     }
+    function wagerHTML(player,s) {
+      const total = Number.isSafeInteger(player.total) && player.total > 0 ? player.total : 0;
+      if (!total) return '';
+      // A shared scale, fixed by starting stacks, keeps piles comparable throughout the hand.
+      const largest = Math.max(500,...s.players.map(p => p.stack + (p.total || 0)));
+      const unit = Math.max(5,Math.ceil(largest / 500) * 5), count = Math.min(100,Math.ceil(total / unit));
+      let stacks = '';
+      for (let offset = 0; offset < count; offset += 20) {
+        const size = Math.min(20,count-offset);
+        stacks += `<span class="wager-stack" style="--levels:${size-1}">${Array.from({length:size},(_,i)=>`<i class="wager-chip" style="--chip:${i}"></i>`).join('')}</span>`;
+      }
+      return `<div class="player-wager" data-wager="${escapeHTML(player.id)}" data-total="${total}" role="img" aria-label="${escapeHTML(player.nick)} : ${money(total)} jetons engagés dans cette main" title="${money(total)} jetons engagés dans cette main"><div class="wager-chips" aria-hidden="true">${stacks}</div><span class="wager-amount" aria-hidden="true">${money(total)}</span></div>`;
+    }
     function renderSeats(s) {
       const index = s.players.findIndex(p => p.id === s.me);
       const others = index >= 0 ? [...s.players.slice(index + 1),...s.players.slice(0,index)] : s.players;
       const slots = index >= 0 ? opponentSlots(s.players.length) : ['bottom',...opponentSlots(s.players.length)];
       const arena = document.querySelector('.felt'); arena.dataset.players = s.players.length;
       $('players').innerHTML = others.map((p,i) => `<article data-player="${escapeHTML(p.id)}" data-slot="${slots[i] || 'top'}" class="seat ${p.disconnectedUntil ? 'reconnecting' : ''} ${s.winners?.some(w => w.id === p.id) ? 'winner-seat' : ''} ${p.id === s.turn ? 'acting' : ''} ${p.folded ? 'folded' : ''}">
-        <div class="seat-profile"><span class="profile-avatar">${avatarHTML(p.avatar)}</span><div class="seat-identity"><div class="seat-name"><span title="${escapeHTML(p.nick)}">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="dealer-button">D</span>' : ''}</div><p class="seat-stack">${money(p.stack)} <small>jetons</small></p>
+        <div class="seat-profile"><span class="profile-avatar">${avatarHTML(p.avatar,p.photo)}</span><div class="seat-identity"><div class="seat-name"><span title="${escapeHTML(p.nick)}">${escapeHTML(p.nick)}</span>${p.dealer ? '<span class="dealer-button">D</span>' : ''}</div><p class="seat-stack">${money(p.stack)} <small>jetons</small></p>
         <p class="seat-status ${p.disconnectedUntil ? 'reconnect-status' : ''}" ${p.disconnectedUntil ? `data-reconnect-until="${p.disconnectedUntil}"` : ''}>${p.disconnectedUntil ? `Reconnexion · ${Math.max(0,Math.ceil((p.disconnectedUntil-Date.now())/1000))} s` : p.leaving ? 'Sortie en attente' : p.folded ? 'Couché' : p.stack === 0 && p.cards.length ? 'Tapis' : p.id === s.turn ? 'À son tour' : 'À table'}${p.bet ? ` · ${money(p.bet)}` : ''}</p></div></div>
-        <div class="seat-hand" aria-label="Cartes de ${escapeHTML(p.nick)}">${(p.cards.length ? p.cards : [null,null]).map(card).join('')}</div></article>`).join('');
+        <div class="seat-hand" aria-label="Cartes de ${escapeHTML(p.nick)}">${(p.cards.length ? p.cards : [null,null]).map(card).join('')}</div>${wagerHTML(p,s)}</article>`).join('');
     }
     function historyRoute() { return location.pathname.replace(/\/$/,'') === '/historique'; }
     function renderRoute() {
@@ -703,16 +801,17 @@
     $('loginTab').onclick = () => chooseMode('login'); $('registerTab').onclick = () => chooseMode('register');
     $('loginForm').onsubmit = async e => {
       e.preventDefault();
+      if (authPending || registerPhotoBusy) return;
       if (authMode === 'register' && $('password').value !== $('passwordConfirm').value) {
         $('notice').textContent = 'Les mots de passe ne correspondent pas.'; return;
       }
-      $('authSubmit').disabled = true; $('loginTab').disabled = true; $('registerTab').disabled = true;
+      authPending = true; updateAuthAvailability();
       $('notice').textContent = '';
       try {
-        await api(authMode, { nick:$('nick').value.trim(), password:$('password').value, ...(authMode === 'register' ? {avatar:document.querySelector('input[name="registerAvatar"]:checked')?.value} : {}) });
+        await api(authMode, { nick:$('nick').value.trim(), password:$('password').value, ...(authMode === 'register' ? {avatar:document.querySelector('input[name="registerAvatar"]:checked')?.value || 'nova',photo:registerPhoto} : {}) });
         $('password').value = ''; $('passwordConfirm').value = ''; socket.connect();
       } catch (e) { $('notice').textContent = e.message; }
-      finally { $('authSubmit').disabled = false; $('loginTab').disabled = false; $('registerTab').disabled = false; }
+      finally { authPending = false; updateAuthAvailability(); }
     };
     $('logout').onclick = async () => {
       $('logout').disabled = true;
@@ -772,7 +871,7 @@
       document.body.classList.add('in-club');
       document.querySelectorAll('#game button').forEach(b => b.disabled = false);
       const me = s.players.find(p => p.id === s.me), playing = !['waiting','showdown'].includes(s.phase);
-      $('headerAvatar').innerHTML = avatarHTML(s.avatar);
+      $('headerAvatar').innerHTML = avatarHTML(s.avatar,s.photo);
       $('identity').textContent = s.nick; $('wallet').textContent = money(s.wallet); $('pot').textContent = money(s.pot);
       $('bankroll').textContent = money(s.bankroll);
       $('profit').textContent = `${s.profit > 0 ? '+' : ''}${money(s.profit)}`;

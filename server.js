@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
-const { randomInt, randomBytes, scrypt: scryptCallback, timingSafeEqual } = require('node:crypto');
+const { randomInt, randomBytes, createHash, scrypt: scryptCallback, timingSafeEqual } = require('node:crypto');
 const { promisify } = require('node:util');
 const { createRequire } = require('node:module');
 const { spawnSync } = require('node:child_process');
@@ -24,7 +24,10 @@ if (process.argv.includes('--install')) { console.log('Dépendances prêtes.'); 
 const app = load('express')();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
-app.use(load('express').json({ limit: '4kb' }));
+app.use(load('express').json({ limit: '64kb' }));
+app.use((error, req, res, next) => error?.type === 'entity.too.large'
+  ? res.status(413).json({ error:'Photo trop volumineuse. Importez-la avec le sélecteur de photo.' }) : error instanceof SyntaxError
+    ? res.status(400).json({ error:'Requête invalide.' }) : next(error));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
@@ -47,6 +50,31 @@ const ENTRY_THRESHOLD = 500, AID_THRESHOLD = 500, SMALL = 5, BIG = 10, TURN_MS =
 const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
 const RECONNECT_MS = 30000, HISTORY_LIMIT = 20;
 const AVATARS = ['nova', 'atlas', 'luna', 'rio', 'jade', 'oscar'];
+const MAX_PHOTO_BYTES = 32768;
+function photoBuffer(value) {
+  if (typeof value !== 'string' || value.length > 44000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)) return null;
+  const data = Buffer.from(value.slice(23),'base64');
+  if (data.length < 12 || data.length > MAX_PHOTO_BYTES || data.readUInt16BE(0) !== 0xffd8 || data.readUInt16BE(data.length-2) !== 0xffd9) return null;
+  for (let offset = 2; offset + 4 < data.length;) {
+    if (data[offset++] !== 255) return null;
+    while (data[offset] === 255) offset++;
+    const marker = data[offset++];
+    if (marker === 0xda || marker === 0xd9 || offset + 2 > data.length) return null;
+    const length = data.readUInt16BE(offset);
+    if (length < 2 || offset + length > data.length) return null;
+    if (marker === 0xc0 || marker === 0xc2) {
+      if (length < 8) return null;
+      const height = data.readUInt16BE(offset+3), width = data.readUInt16BE(offset+5);
+      return width > 0 && height > 0 && width <= 256 && height <= 256 ? data : null;
+    }
+    offset += length;
+  }
+  return null;
+}
+function photoUrl(id,u = users.get(id)) {
+  return u.photo ? `/api/avatars/${encodeURIComponent(id)}/${createHash('sha256').update(u.photo).digest('hex').slice(0,20)}` : null;
+}
+function profileFor(id) { const u = users.get(id); return {nick:u.nick,avatar:u.avatar,photo:photoUrl(id,u)}; }
 const nickKey = nick => nick.trim().normalize('NFKC').toLocaleLowerCase('fr');
 const validNick = nick => typeof nick === 'string' && /^[\p{L}\p{N}_ -]{2,20}$/u.test(nick.trim());
 const accountByNick = key => [...users].find(([, u]) => nickKey(u.nick) === key);
@@ -80,7 +108,7 @@ function validateAccounts(saved) {
       !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
       !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id) || names.has(nickKey(u.nick))
-      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)))
+      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo)))
       throw Error('Sauvegarde de comptes invalide.');
     ids.add(u.id); names.add(nickKey(u.nick));
   }
@@ -227,7 +255,7 @@ function bankroll(id) {
 async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
-  const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, salt: u.salt, hash: u.hash,
+  const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, photo: u.photo || null, salt: u.salt, hash: u.hash,
     wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt }));
   const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows, history: handHistory });
   if (postgres) {
@@ -300,7 +328,7 @@ function issueSession(req, res, id) {
 }
 function createSession(req, res, id) {
   issueSession(req, res, id);
-  res.json({ ok: true, nick: users.get(id).nick, avatar: users.get(id).avatar });
+  res.json({ ok: true, ...profileFor(id) });
 }
 function consumeAttempt(key, limit) {
   const now = Date.now();
@@ -324,7 +352,7 @@ app.use('/api', async (req, res, next) => {
 });
 for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, res) => {
   try {
-    const { nick, password, avatar } = req.body || {};
+    const { nick, password, avatar, photo } = req.body || {};
     if (!consumeAttempt('ip:' + req.ip, 40)) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
     if (!validNick(nick) ||
       typeof password !== 'string' || password.length < 8 || password.length > 128)
@@ -335,13 +363,14 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
     let id = found?.[0];
     if (mode === 'register') {
       if (avatar !== undefined && !AVATARS.includes(avatar)) return res.status(400).json({ error:'Choisissez un personnage de la collection.' });
+      if (photo != null && !photoBuffer(photo)) return res.status(400).json({ error:'Photo invalide. Utilisez le sélecteur pour importer une image.' });
       const salt = randomBytes(16).toString('hex');
       const hash = (await scrypt(password, salt, 64)).toString('hex');
       await enqueue(() => {
         if (accountByNick(key)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
         // L'identifiant du compte reste immuable, même après un changement de pseudo.
         id = key; while (users.has(id)) id = randomBytes(16).toString('hex');
-        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
+        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, socket: null });
       });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
@@ -364,13 +393,13 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
 app.get('/api/session', (req, res) => {
   const s = sessionFor(req);
   if (!s) return res.status(401).json({ error: 'Connectez-vous.' });
-  res.json({ ok: true, nick: users.get(s.id).nick, avatar: users.get(s.id).avatar });
+  res.json({ ok: true, ...profileFor(s.id) });
 });
 app.get('/api/profile', async (req, res) => {
   const session = sessionFor(req);
   if (!session) return res.status(401).json({ error:'Connectez-vous pour accéder au compte.' });
   try {
-    const profile = await enqueue(() => { const u = users.get(session.id); return { nick:u.nick, avatar:u.avatar }; }, false);
+    const profile = await enqueue(() => profileFor(session.id), false);
     res.json(profile);
   } catch { res.status(503).json({ error:STORAGE_MESSAGE }); }
 });
@@ -383,9 +412,10 @@ app.post('/api/profile', async (req, res) => {
     const sensitive = body.nick !== undefined || body.newPassword !== undefined;
     if (body.nick !== undefined && !validNick(body.nick)) return res.status(400).json({ error:'Le pseudo doit contenir de 2 à 20 caractères : lettres, chiffres, espaces, tirets ou _.' });
     if (body.avatar !== undefined && !AVATARS.includes(body.avatar)) return res.status(400).json({ error:'Personnage inconnu.' });
+    if (body.photo !== undefined && body.photo !== null && !photoBuffer(body.photo)) return res.status(400).json({ error:'Photo invalide. Importez une image avec le sélecteur de photo.' });
     if (body.newPassword !== undefined && (typeof body.newPassword !== 'string' || body.newPassword.length < 8 || body.newPassword.length > 128))
       return res.status(400).json({ error:'Le nouveau mot de passe doit contenir de 8 à 128 caractères.' });
-    if (!sensitive && body.avatar === undefined) return res.status(400).json({ error:'Aucune modification demandée.' });
+    if (!sensitive && body.avatar === undefined && body.photo === undefined) return res.status(400).json({ error:'Aucune modification demandée.' });
     const oldHash = u.hash, oldSalt = u.salt;
     let salt, hash;
     if (sensitive) {
@@ -406,8 +436,9 @@ app.post('/api/profile', async (req, res) => {
         if (player) { player.nick = current.nick; if (previous !== current.nick) addLog(`change de pseudo : ${previous} devient ${current.nick}.`, player); }
       }
       if (body.avatar !== undefined) current.avatar = body.avatar;
+      if (body.photo !== undefined) current.photo = body.photo;
       if (hash) { current.salt = salt; current.hash = hash; }
-      return { nick:current.nick, avatar:current.avatar };
+      return profileFor(session.id);
     });
     if (hash) {
       const token = issueSession(req,res,session.id);
@@ -418,6 +449,13 @@ app.post('/api/profile', async (req, res) => {
     }
     res.json({ ok:true, ...profile });
   } catch (error) { res.status(error.status || 503).json({ error:error.status ? error.message : STORAGE_MESSAGE }); }
+});
+app.get('/api/avatars/:id/:version', (req,res) => {
+  if (!sessionFor(req)) return res.status(401).json({ error:'Connectez-vous.' });
+  const u = users.get(req.params.id);
+  if (!u?.photo || photoUrl(req.params.id,u).split('/').at(-1) !== req.params.version) return res.sendStatus(404);
+  res.setHeader('Cache-Control','private, max-age=31536000, immutable');
+  res.type('image/jpeg').send(photoBuffer(u.photo));
 });
 app.get('/api/history', async (req, res) => {
   if (!sessionFor(req)) return res.status(401).json({ error: 'Connectez-vous pour consulter l’historique.' });
@@ -478,7 +516,7 @@ function mayRaise(p) {
 }
 function stateFor(id) {
   const u = users.get(id), p = seat(id);
-  return { me: id, nick: u.nick, avatar: u.avatar, wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
+  return { me: id, ...profileFor(id), wallet: u.wallet, entryThreshold: ENTRY_THRESHOLD, aidThreshold: AID_THRESHOLD,
     historyVersion: handHistory[0]?.id || '',
     bankroll: bankroll(id), profit: bankroll(id) - u.granted, aid: aidStatus(id),
     phase: table.phase, board: table.board, hand: table.hand, turn: table.turn, logs: table.logs,
@@ -487,9 +525,9 @@ function stateFor(id) {
     pot: table.players.reduce((n, q) => n + q.total, 0), result: table.result, winners: table.winners,
     celebrationMs: table.phase === 'showdown' ? Math.max(0, 3600 - (Date.now() - table.endedAt)) : 0,
     canRaise: !!p && mayRaise(p),
-    players: table.players.map(q => ({ id: q.id, nick: q.nick, avatar: users.get(q.id).avatar, stack: q.stack,
+    players: table.players.map(q => ({ id: q.id, nick: q.nick, avatar: users.get(q.id).avatar, photo:photoUrl(q.id), stack: q.stack,
       disconnectedUntil: q.disconnectedUntil || 0,
-      bet: q.bet, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
+      bet: q.bet, total: q.total, folded: q.folded, leaving: q.leaving, dealer: q.id === table.dealer,
       cards: q.id === id || (table.reveal && !q.folded) ? q.hole : q.hole.map(() => '??') })) };
 }
 function broadcast() {
