@@ -70,19 +70,34 @@ const CATALOG = Object.entries({
     ['sakura','Jardin de nuit',280,'petals','❀','#3c2434','#f3b9d2'],
     ['royal','Couronne rubis',480,'royal','♛','#351422','#f3c66e'],
     ['aurora','Aurore boréale',580,'waves','✺','#133536','#adf9df'],
-    ['dragon','Sceau du dragon',900,'scales','龍','#271d15','#f4c46e']
+    ['dragon','Sceau du dragon',900,'scales','龍','#271d15','#f4c46e'],
+    ['dragon-frost','Sceau du dragon · Givre',900,'scales','龍','#0b2437','#a0efff','Écailles bleu nuit et sceau de glace argentée.'],
+    ['dragon-jade','Sceau du dragon · Jade',900,'scales','龍','#0b2b25','#88f6b8','Un dragon de jade gravé sur des écailles de malachite.'],
+    ['dragon-crimson','Sceau du dragon · Braise',900,'scales','龍','#350f19','#ff9274','Rouge obsidienne et gravure de cuivre incandescent.'],
+    ['dragon-amethyst','Sceau du dragon · Améthyste',900,'scales','龍','#241139','#d9a0ff','Écailles violettes et gravure d’améthyste lumineuse.'],
+    ['dragon-obsidian','Sceau du dragon · Obsidienne',950,'scales','龍','#15151d','#e1dce9','Une édition monochrome : obsidienne et platine.'],
+    ['leviathan','Abysses du Léviathan',1100,'abyss','◎','#071f30','#68e3ed','Un œil abyssal, des tentacules et une gravure océanique.'],
+    ['orrery','L’Horloge des astres',1000,'orrery','✧','#231b32','#f4d296','Orbites célestes, astres gravés et mécanique d’or.'],
+    ['seraph','Les Ailes du séraphin',1100,'seraph','✦','#29221e','#fff0cb','Deux ailes de lumière encadrent un joyau solaire.']
   ],
   victory:[
     ['classic','Éclat signature',0,'gold','✦','#e0bd72','#fff1be'],
     ['fireworks','Feu d’artifice',240,'fireworks','✷','#f4b770','#eab1fa'],
     ['blossom','Pluie de sakura',220,'petals','❀','#e8a5c5','#ffe0ee'],
     ['coins','Fortune dorée',320,'coins','◉','#d8ae51','#fff0b4'],
-    ['storm','Maître des orages',420,'lightning','ϟ','#8fcff7','#f5edb0'],
-    ['ice','Nova de givre',380,'ice','❄','#a6e7f3','#f1ffff'],
-    ['galaxy','Naissance d’une étoile',520,'galaxy','✧','#c397f4','#91deff'],
-    ['portal','Portail royal',650,'portal','◎','#b792ef','#f2d089'],
+    ['storm','Maître des orages',420,'lightning','ϟ','#8fcff7','#f5edb0','Cinq éclairs frappent la table au milieu d’un ciel électrique.'],
+    ['ice','Nova de givre',380,'ice','❄','#a6e7f3','#f1ffff','Un cristal géant se déploie et une vague de givre envahit les bords du tapis.'],
+    ['galaxy','Naissance d’une étoile',520,'galaxy','✧','#c397f4','#91deff','Un noyau cosmique, un disque orbital et des poussières d’étoiles.'],
+    ['portal','Portail royal',650,'portal','◎','#b792ef','#f2d089','Un portail gravé s’ouvre dans un jaillissement d’anneaux astraux.'],
     ['phoenix','Renaissance du phénix',850,'phoenix','♨','#f6a15e','#ffdf82'],
-    ['dragon','L’éveil du dragon',1200,'dragon','龍','#edbb63','#ff794b']
+    ['dragon','L’éveil du dragon',1200,'dragon','龍','#edbb63','#ff794b'],
+    ['frostwyrm','Le dragon des glaces',1200,'dragon','龍','#a3ebff','#8aafff','Un dragon de givre déploie ses ailes et souffle un feu bleu.'],
+    ['leviathan','Le réveil du Léviathan',1600,'leviathan','◎','#6de4e4','#ad9aff','Des tentacules surgissent des abysses autour d’un œil géant.'],
+    ['singularity','Point de non-retour',1600,'singularity','◉','#d3a0ff','#ffc58b','Un trou noir déforme la lumière puis libère son disque d’accrétion.'],
+    ['chronos','Le règne de Chronos',1400,'chronos','◷','#e9c77d','#c4edff','Une horloge monumentale accélère avant de briser le temps.'],
+    ['supernova','Le dernier soleil',1500,'supernova','✹','#ffb176','#fff2b1','Une étoile se contracte puis explose en couronne de plasma.'],
+    ['seraph','Le sacre du séraphin',1700,'seraph','✦','#ffe2a2','#fff9e8','Six ailes célestes, une couronne et une pluie de plumes dorées.'],
+    ['eclipse','L’Éclipse souveraine',1500,'eclipse','☾','#d1b2ff','#ffd58a','La lune masque le soleil, puis une couronne de feu embrase la table.']
   ],
   bet:[
     ['classic','Jetons signature',0,'classic','◉','#d5b76e','#fff0c3'],
@@ -92,7 +107,11 @@ const CATALOG = Object.entries({
     ['rocket','Propulsion',380,'rocket','↟','#f7a35f','#ffdf96'],
     ['bubbles','Liquidité',220,'bubbles','◌','#8adfd9','#d1fff8'],
     ['glitch','Erreur de calcul',280,'glitch','⌘','#bcadff','#8cf0e7'],
-    ['frost','Mise de glace',300,'ice','❄','#b6e8fa','#f1ffff']
+    ['frost','Mise de glace',300,'ice','❄','#b6e8fa','#f1ffff'],
+    ['dragonfire','Souffle draconique',1000,'dragonfire','龍','#ffad67','#ffe6ae','Une tête de dragon projette une lance de feu jusqu’aux jetons.'],
+    ['railgun','Canon orbital',950,'railgun','ϟ','#8de8ff','#e4b3ff','Charge énergétique, faisceau orbital et onde de choc à l’impact.'],
+    ['rift','Contrebande dimensionnelle',1100,'rift','◎','#c599ff','#89f4e4','Les jetons entrent dans un portail et ressortent à destination.'],
+    ['royalblades','Les Lames du roi',900,'royalblades','♛','#f6d48b','#fff0cc','Trois lames dorées volent en éventail et se croisent à l’impact.']
   ],
   arrival:[
     ['classic','Une place au club',0,'halo','♠','#d7ba79','#fff0ca'],
@@ -100,9 +119,13 @@ const CATALOG = Object.entries({
     ['portal','Entrée dimensionnelle',340,'portal','◎','#ba9bf0','#fae6aa'],
     ['stardust','Poussière d’étoiles',240,'stars','✧','#d6b1f4','#fff4cf'],
     ['bloom','Floraison',200,'petals','❀','#dca8c6','#c0e6bc'],
-    ['thunder','Coup de tonnerre',420,'lightning','ϟ','#9bd5fa','#f8e3a4'],
+    ['thunder','Coup de tonnerre',420,'lightning','ϟ','#9bd5fa','#f8e3a4','Deux éclairs convergent vers votre siège et libèrent une onde lumineuse.'],
     ['royal','Tapis rouge',300,'carpet','♛','#8e3445','#efd18b'],
-    ['vortex','Œil du vortex',650,'vortex','◉','#89dfce','#cdb2fc']
+    ['vortex','Œil du vortex',650,'vortex','◉','#89dfce','#cdb2fc','Une faille cosmique se déploie autour de votre place avant de se refermer.'],
+    ['stargate','La Porte des étoiles',1300,'stargate','◎','#bba2ff','#8ce9ff','Une porte astrale s’ouvre au milieu de la table et vous révèle.'],
+    ['leviathan','Marée abyssale',1400,'leviathan','◎','#6de4e4','#b4b1ff','La table devient un océan : une créature des profondeurs vous escorte.'],
+    ['meteor','Chute du souverain',1100,'meteor','☄','#ffaf74','#fff0b1','Un météore fend le tapis et libère une double onde de choc.'],
+    ['chronos','Le Maître des heures',1200,'chronos','◷','#e8cb87','#a1e8ff','Un cadran céleste se forme autour de votre siège et remonte le temps.']
   ],
   frame:[
     ['classic','Liseré signature',0,'classic','◎','#bca779','#ead8aa'],
@@ -112,7 +135,9 @@ const CATALOG = Object.entries({
     ['aurora','Couronne d’aurore',360,'aurora','≋','#83d7b8','#c3a5f0'],
     ['stellar','Orbite stellaire',440,'orbit','✦','#c6a3ef','#fff1c7'],
     ['carbon','Carbone tressé',300,'carbon','◆','#9faaa8','#e2d5a7'],
-    ['dragon','Garde du dragon',800,'dragon','龍','#d4ac5d','#ffbf72']
+    ['dragon','Garde du dragon',800,'dragon','龍','#d4ac5d','#ffbf72'],
+    ['eclipse','Couronne d’éclipse',950,'eclipse','☾','#d1b2ff','#ffd58a','Une couronne solaire et un halo violet entourent votre portrait.'],
+    ['chronos','Gardien du temps',900,'chronos','◷','#e8cb87','#b5eeff','Un cadran d’horlogerie gravé autour de votre personnage.']
   ],
   table:[
     ['classic','Carbone & or',0,'felt','♠','#282925','#151714'],
