@@ -188,6 +188,11 @@
     .cosmetic-flight.petals{width:14px;height:22px;border-radius:90% 0 90% 0;background:linear-gradient(130deg,var(--fx-accent),var(--fx-tone));font-size:0;box-shadow:0 0 7px color-mix(in srgb,var(--fx-tone),transparent 40%)}.cosmetic-flight.rocket{clip-path:polygon(50% 0,85% 45%,100% 100%,50% 78%,0 100%,15% 45%);background:linear-gradient(90deg,var(--fx-tone),var(--fx-accent),var(--fx-tone));height:30px;width:19px;font-size:0}.cosmetic-flight.comet{font-size:0;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#fff,var(--fx-accent) 30%,var(--fx-tone) 70%);box-shadow:0 0 9px var(--fx-tone)}
     @keyframes abyss-sway{from{transform:skewX(-3deg) scaleY(.94)}to{transform:skewX(3deg) scaleY(1.04)}}@keyframes seraph-open{from{transform:scaleX(.92) scaleY(.96)}to{transform:scaleX(1.05) scaleY(1.04)}}@keyframes clock-turn{to{transform:rotate(360deg)}}@keyframes orbit-stream{to{stroke-dashoffset:-58}}@keyframes abyss-tide{from{transform:translateY(70px) scale(1.1)}to{transform:translateY(0) scale(1)}}
     @media(prefers-reduced-motion:reduce){.relic-art *,.relic-veil{animation:none!important}.relic-art{filter:none}}
+    .profile-tabs{display:flex;gap:8px;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid #c8b17833}.profile-tabs button{padding:11px 20px;border:1px solid #c8b17840;border-radius:12px;color:#bcb8ad;background:#242321;font-size:13px;font-weight:650}.profile-tabs button[aria-selected=true]{background:#d4b776;color:#221e16;border-color:#d4b776}.profile-tabs button:focus-visible{outline:2px solid #ffe2a2;outline-offset:3px}
+    .collection-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:24px 0}.collection-heading h3{font-family:Georgia,serif;font-size:30px;color:#f0e1b5;margin:4px 0 8px}.collection-heading h3 span{display:inline-block;font-family:inherit;font-size:13px;color:#b5aa90;margin-left:10px}.collection-heading p:last-child{font-size:12px;line-height:1.7;color:#aaa69d}.collection-heading>.btn{white-space:nowrap;font-size:12px}.loadout-title{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#cdb982;margin-bottom:10px}
+    .profile-loadout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:15px}.loadout-slot{min-width:0;padding:15px 17px;border:1px solid #c8b17840;border-radius:14px;background:linear-gradient(135deg,#333026,#22211f);display:flex;flex-direction:column;align-items:flex-start}.loadout-slot small{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#b8aa8b}.loadout-slot strong{font-size:13px;line-height:19px;color:#f0dfb0;margin:6px 0 10px;overflow-wrap:anywhere}.loadout-slot .btn{font-size:10px;padding:5px 9px;margin-top:auto}.signature-label{font-size:10px;color:#a7a297;margin-top:auto}
+    .collection-emotes{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;margin-bottom:25px;border:1px solid #c8b17833;border-radius:14px;background:#242321}.collection-emotes strong{font-size:13px;color:#e6d8b5}.collection-emotes strong span{color:#bca16e;margin-left:6px;font-size:11px}.collection-emotes p{font-size:11px;color:#9d988e;margin-top:5px}.profile-emotes{display:flex;flex-wrap:wrap;gap:6px;max-width:360px}.profile-emotes .btn{width:37px;height:37px;display:grid;place-items:center;padding:0;font-size:22px;position:relative}.profile-emotes .btn::after{content:'×';position:absolute;right:-2px;top:-6px;font-size:11px;border-radius:50%;width:13px;height:13px;line-height:13px;background:#504637;color:#f1ddae}.profile-emotes:empty::after{content:'Votre roue est vide.';font-size:11px;color:#aaa69d}.inventory-card[data-equipped=true]{border-color:#e7c67d99}.inventory-card[data-equipped=true] .owned-tag{background:#d5b675;color:#241f16}.collection-empty{grid-column:1/-1;border:1px dashed #c8b17855;border-radius:14px;padding:35px;text-align:center;color:#b4aa94;font-size:13px;line-height:1.8}
+    @media(max-width:760px){.profile-tabs button{flex:1;padding:11px 9px;font-size:12px}.profile-loadout{grid-template-columns:repeat(2,minmax(0,1fr))}.collection-heading{flex-wrap:wrap;gap:12px}.collection-heading h3{font-size:27px}.collection-heading>.btn{width:100%}.collection-emotes{align-items:flex-start;flex-direction:column}.loadout-slot{padding:13px}.profile-emotes{max-width:none}}
   </style>
 </head>
 <body>
@@ -262,9 +267,10 @@
       <p id="historyStatus" role="status"></p><div id="historyList"></div>
     </section>
     <section id="settingsPage" aria-labelledby="settingsTitle" hidden>
-      <div class="settings-heading"><div><p class="eyebrow">VOTRE ESPACE</p><h2 id="settingsTitle" tabindex="-1">Paramètres du compte</h2><p>Votre profil, votre personnage, votre façon de jouer.</p></div><button id="settingsBack" type="button" class="btn">← Retour à la table</button></div>
+      <div class="settings-heading"><div><p class="eyebrow">VOTRE ESPACE</p><h2 id="settingsTitle" tabindex="-1">Mon profil</h2><p>Votre compte, votre personnage et votre collection.</p></div><button id="settingsBack" type="button" class="btn">← Retour à la table</button></div>
       <button id="settingsTurnAlert" type="button" class="btn turn-alert" hidden>À vous de jouer ! Revenir à la table →</button>
-      <div class="settings-grid">
+      <div class="profile-tabs" role="tablist" aria-label="Rubriques du profil"><button id="profileAccountTab" type="button" role="tab" aria-selected="true" aria-controls="profileAccountPanel">Compte & photo</button><button id="profileCollectionTab" type="button" role="tab" aria-selected="false" aria-controls="profileCollectionPanel" tabindex="-1">◇ Ma collection</button></div>
+      <div id="profileAccountPanel" class="settings-grid" role="tabpanel" aria-labelledby="profileAccountTab">
         <section class="panel settings-card"><div class="settings-profile"><div id="settingsAvatarPreview"></div><div><p class="eyebrow">VOTRE PHOTO DE PROFIL</p><h3 id="settingsProfileName"></h3><p id="settingsCharacterName"></p></div></div><form id="characterForm"><fieldset><legend>Choisir un personnage</legend><div id="settingsCharacterGrid" class="character-grid"></div></fieldset><div id="settingsPhotoPicker" class="photo-picker"><div id="settingsPhotoPreview" class="photo-preview" hidden></div><div class="photo-actions"><button id="settingsChoosePhoto" type="button" class="btn">Importer ma photo</button><button id="settingsClearPhoto" type="button" class="btn" hidden>Revenir aux personnages</button></div><input id="settingsPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Importer une nouvelle photo de profil" hidden><p class="photo-hint">JPG, PNG ou WebP · 5 Mo maximum · Recadrage carré automatique.</p></div><button id="saveCharacter" type="submit" class="btn gold">Enregistrer ma photo de profil</button><p id="characterMessage" class="form-message" role="status"></p></form></section>
         <section class="panel settings-card"><p class="eyebrow">IDENTITÉ & CONNEXION</p><h3>Votre compte</h3><p class="settings-help">Votre pseudo sert à vous connecter. Votre mot de passe actuel est nécessaire pour le modifier ou changer de mot de passe.</p><form id="accountForm" class="account-form">
           <label for="accountNick">Pseudo</label><input id="accountNick" autocomplete="username" minlength="2" maxlength="20" required>
@@ -274,6 +280,14 @@
           <button id="saveAccount" type="submit" class="btn gold">Enregistrer les modifications</button><p id="accountMessage" class="form-message" role="status"></p>
         </form></section>
       </div>
+      <section id="profileCollectionPanel" role="tabpanel" aria-labelledby="profileCollectionTab" hidden>
+        <div class="collection-heading"><div><p class="eyebrow">VOTRE SIGNATURE</p><h3>Ma collection <span id="profileCollectionCount">0 objets</span></h3><p>Équipez vos trouvailles ou retirez-les pour retrouver le style Signature. Vos objets restent acquis.</p></div><button id="collectionToShop" type="button" class="btn gold">Visiter la boutique →</button></div>
+        <h4 class="loadout-title">Votre sélection actuelle</h4><div id="profileLoadout" class="profile-loadout"></div>
+        <div class="collection-emotes"><div><strong>Votre roue d’émotes <span id="profileEmoteCount">0 / 8</span></strong><p>Retirez une émote pour libérer une place dans votre roue.</p></div><div id="profileEmotes" class="profile-emotes"></div></div>
+        <div id="collectionCategories" class="category-tabs" role="group" aria-label="Catégories de votre collection"></div>
+        <div class="store-filters"><input id="collectionSearch" type="search" placeholder="Chercher dans ma collection…" aria-label="Rechercher un objet possédé"><select id="collectionFilter" aria-label="Filtrer votre sélection"><option value="all">Tous mes objets</option><option value="equipped">Équipés</option><option value="reserve">Non équipés</option></select></div>
+        <p id="collectionStatus" class="club-status" role="status"></p><div id="collectionGrid" class="shop-grid"></div>
+      </section>
     </section>
     <section id="shopPage" class="club-page" aria-labelledby="shopTitle" hidden><div class="club-heading"><div><p class="eyebrow">L’ATELIER ALL-IN ROOM</p><h2 id="shopTitle" tabindex="-1">Le jeu a du style.</h2><p>Une collection qui vous ressemble. Des effets que toute la table remarquera.</p></div><button type="button" class="btn" data-home>← Retour à la table</button></div><button id="shopTurnAlert" type="button" class="btn turn-alert" hidden>À vous de jouer · Revenir à la table →</button><div class="store-banner"><div><span class="eyebrow">VOTRE COLLECTION</span><strong><span id="collectionCount">0</span> <small>objets possédés</small></strong></div><div class="store-banner-coins"><span class="coin-symbol">A’</span><div><strong id="shopCoins">0</strong><small>A’ Coins disponibles</small></div></div><button id="shopToQuests" type="button" class="btn gold">Gagner des A’ Coins →</button></div><div class="store-toolbar"><div id="shopCategories" class="category-tabs" role="group" aria-label="Catégories de la boutique"></div><div class="store-filters"><input id="shopSearch" type="search" placeholder="Chercher un style…" aria-label="Rechercher un objet"><select id="shopRarity" aria-label="Filtrer par rareté"><option value="all">Toutes les raretés</option><option value="standard">Classique</option><option value="rare">Rare</option><option value="epic">Épique</option><option value="legendary">Légendaire</option></select><label class="collection-toggle"><input id="ownedOnly" type="checkbox"> Ma collection</label></div></div><p id="shopStatus" class="club-status" role="status"></p><div id="shopGrid" class="shop-grid"></div></section>
     <section id="questsPage" class="club-page" aria-labelledby="questsTitle" hidden><div class="club-heading"><div><p class="eyebrow">CHAQUE MAIN A SON DÉFI</p><h2 id="questsTitle" tabindex="-1">Toujours une raison de jouer.</h2><p>12 quêtes actives. Des récompenses à la hauteur du défi. Chaque quête terminée laisse place à une nouvelle.</p></div><button type="button" class="btn" data-home>← Retour à la table</button></div><button id="questTurnAlert" type="button" class="btn turn-alert" hidden>À vous de jouer · Revenir à la table →</button><div class="quest-summary"><div class="panel"><span class="eyebrow">VOTRE SOLDE</span><strong><span id="questCoins">0</span> <small>A’ Coins</small></strong></div><div class="panel"><span class="eyebrow">QUÊTES ACCOMPLIES</span><strong id="completedQuests">0</strong></div><div class="panel"><span class="eyebrow">VICTOIRES BÉNÉFICIAIRES</span><strong id="clubWins">0</strong></div></div><div class="quest-help panel"><span class="coin-symbol" aria-hidden="true">A’</span><div><h3>Votre jeu. Vos récompenses.</h3><p>120 A’ Coins de bienvenue · 20 par main bénéficiaire · +5 à l’abattage · +10 après votre tapis. Les quêtes s’ajoutent à ces récompenses. Un pot reçu sans bénéfice net ne compte pas comme une victoire.</p><p>Vos jetons restent dédiés au poker. Vos A’ Coins débloquent uniquement des cosmétiques, réutilisables à volonté.</p></div><button id="questsToShop" type="button" class="btn gold">Voir la boutique ◇</button></div><div class="quests-toolbar"><div id="questFilters" class="category-tabs" role="group" aria-label="Types de quêtes"><button type="button" data-quest-group="all" class="active">Toutes</button><button type="button" data-quest-group="regular">Régularité</button><button type="button" data-quest-group="combo">Combinaisons</button><button type="button" data-quest-group="style">Style de jeu</button></div><p id="rerollInfo"></p></div><p id="questStatus" class="club-status" role="status"></p><div id="questGrid" class="quest-grid"></div><div class="reward-journal panel"><div><p class="eyebrow">VOS DERNIERS MOUVEMENTS</p><h3>Le carnet de coins</h3></div><div id="rewardJournal"></div></div></section>
@@ -332,6 +346,7 @@
       clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
       $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
       $('settingsPage').hidden = true; $('settingsTurnAlert').hidden = true; $('openSettings').hidden = true; settingsLoadedFor = null; profilePending = false;
+      collectionCategory='all';$('collectionSearch').value='';$('collectionFilter').value='all';$('collectionStatus').textContent='';$('collectionGrid').replaceChildren();$('profileLoadout').replaceChildren();$('profileEmotes').replaceChildren();setProfileTab('account');
       $('settingsPhotoPreview').replaceChildren(); $('settingsAvatarPreview').replaceChildren();
       for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
       lastLogId = 0; winnerHand = 0; chatPending = false; chatNodes.clear(); $('chatMessages').replaceChildren(); $('chatEmpty').hidden = false;
@@ -699,10 +714,10 @@
     function settingsRoute() { return location.pathname.replace(/\/$/,'') === '/parametres'; }
     function updateSettingsAvailability() {
       const blocked = !state || !socket.connected || storageBlocked || profilePending || settingsPhotoBusy;
-      document.querySelectorAll('#settingsPage input,#characterForm button,#accountForm button').forEach(el => el.disabled = blocked);
+      document.querySelectorAll('#characterForm input,#accountForm input,#characterForm button,#accountForm button').forEach(el => el.disabled = blocked);
     }
     function previewCharacter(id) {
-      const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id,settingsPhoto);
+      const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id,settingsPhoto,state?.club?.equipped);
       $('settingsCharacterName').textContent = settingsPhoto ? 'Votre photo personnelle' : `${c.name} · ${c.tag}`;
     }
     function fillSettings() {
@@ -783,12 +798,12 @@
     }
     function historyRoute() { return location.pathname.replace(/\/$/,'') === '/historique'; }
     function renderRoute() {
-      const enteredShop=$('shopPage').hidden,enteredQuests=$('questsPage').hidden;
+      const enteredShop=$('shopPage').hidden,enteredQuests=$('questsPage').hidden,enteredSettings=$('settingsPage').hidden;
       const viewing = !!state && historyRoute(), settings = !!state && settingsRoute(),shopping=!!state&&shopRoute(),quests=!!state&&questsRoute();
       $('welcome').hidden=!!state;$('game').hidden = !state || viewing || settings || shopping || quests; $('historyPage').hidden = !viewing; $('settingsPage').hidden = !settings;$('shopPage').hidden=!shopping;$('questsPage').hidden=!quests;$('clubNav').hidden=!state;
       $('openSettings').hidden = !state;
       document.body.classList.toggle('in-club', !!state && !viewing && !settings&&!shopping&&!quests);document.body.classList.toggle('club-route',shopping||quests);
-      $('openShop').dataset.active=shopping;$('openQuests').dataset.active=quests;if(!shopping&&$('cosmeticPreview').open)$('cosmeticPreview').close();
+      $('openShop').dataset.active=shopping;$('openQuests').dataset.active=quests;if(!shopping&&!settings&&$('cosmeticPreview').open)$('cosmeticPreview').close();
       const mine = state?.turn === state?.me && !!state?.turn && !state?.runout;
       $('historyAlert').hidden = !viewing || !mine; $('settingsTurnAlert').hidden = !settings || !mine;
       $('shopTurnAlert').hidden=!shopping||!mine;$('questTurnAlert').hidden=!quests||!mine;
@@ -796,7 +811,7 @@
       if (!settings) { settingsLoadedFor = null; for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = ''; }
       updateSettingsAvailability();
       if (viewing && !historyLoading && historyVersion !== (state.historyVersion || '')) loadHistory();
-      if(shopping&&enteredShop)renderShop();if(quests&&enteredQuests)renderQuests();renderClub();
+      if(shopping&&enteredShop)renderShop();if(quests&&enteredQuests)renderQuests();if(settings&&enteredSettings&&profileTab==='collection')renderCollection();renderClub();
     }
     function navigate(path) {
       closeEmoteWheel();
@@ -1163,7 +1178,7 @@
     };
     const RARITIES={starter:'Signature',standard:'Classique',rare:'Rare',epic:'Épique',legendary:'Légendaire'};
     const CATEGORY_COPY={back:'Votre signature, même lorsque vos cartes restent cachées.',victory:'Une célébration visible par toute la table.',bet:'Chaque mise prend du caractère.',arrival:'Faites une entrée qui se remarque.',frame:'Un cadre pour votre personnage ou votre photo.',table:'Une ambiance qui personnalise votre propre vue de la table.',emote:'Une réplique à ajouter à votre roue. Réutilisable à volonté.'};
-    let shopGroups=[],catalogLoading=false,catalogLoaded=false,shopCategory='all',questGroup='all',shopPending=false,clubFingerprint='',previewItemId=null,clubToastTimer,emoteReadyAt=0;
+    let shopGroups=[],catalogLoading=false,catalogLoaded=false,shopCategory='all',questGroup='all',shopPending=false,clubFingerprint='',previewItemId=null,clubToastTimer,emoteReadyAt=0,profileTab='account',collectionCategory='all';
     const shopItem=(id,category='back')=>shopItems.get(id)||BASE_ITEMS[category]||BASE_ITEMS.back;
     const ownsItem=id=>!!state?.club?.owned.includes(id);
     const equippedItem=item=>item.category==='emote'?!!state?.club?.equipped.emotes.includes(item.id):state?.club?.equipped[item.category]===item.id;
@@ -1175,7 +1190,7 @@
       if(!state||catalogLoading||catalogLoaded)return;
       const owner=state.me;catalogLoading=true;
       try{const reply=await api('store');if(state?.me!==owner)return;shopGroups=reply.groups;shopItems.clear();reply.items.forEach(item=>shopItems.set(item.id,item));catalogLoaded=true;adoptClub(reply.club);renderClub(true);renderSeats(state);renderOwnHand();$('headerAvatar').innerHTML=avatarHTML(state.avatar,state.photo,state.club.equipped);refreshWinningCards();highlightWinningSources();}
-      catch(error){if(state?.me===owner){$('shopStatus').textContent=error.message;$('questStatus').textContent=error.message;}}
+      catch(error){if(state?.me===owner){$('shopStatus').textContent=error.message;$('questStatus').textContent=error.message;$('collectionStatus').textContent=error.message;}}
       finally{catalogLoading=false;}
     }
     function showClubToast(title,description='',kind='info'){
@@ -1196,7 +1211,7 @@
       $('collectionCount').textContent=money(state.club.owned.length);$('completedQuests').textContent=money(state.club.stats.quests);$('clubWins').textContent=money(state.club.stats.wins);
       const almost=state.club.quests.filter(q=>q.progress>0).length;$('questMini').textContent=almost?`${almost} défis en cours`:'12 défis · A’ Coins';
       applyTableTheme();const fingerprint=JSON.stringify(state.club);
-      if(force||fingerprint!==clubFingerprint){clubFingerprint=fingerprint;if(shopRoute())renderShop();if(questsRoute())renderQuests();if(!$('emoteWheel').hidden)renderEmoteWheel();updatePreviewButton();}
+      if(force||fingerprint!==clubFingerprint){clubFingerprint=fingerprint;if(shopRoute())renderShop();if(questsRoute())renderQuests();if(settingsRoute()&&profileTab==='collection')renderCollection();if(!$('emoteWheel').hidden)renderEmoteWheel();updatePreviewButton();}
       updateClubAvailability();if(!catalogLoaded)loadCatalog();
     }
     function itemThumbnail(item){
@@ -1209,10 +1224,33 @@
       return `<div class="thumb-effect" aria-hidden="true">${escapeHTML(item.icon)}</div>`;
     }
     function itemAction(item){
-      const owned=ownsItem(item.id),equipped=equippedItem(item),missing=Math.max(0,item.price-(state?.club?.coins||0));
-      return {action:!owned?'buy':equipped&&item.category==='emote'?'unequip':'equip',
-        label:!owned?`Acquérir · ${money(item.price)} A’`:equipped?(item.category==='emote'?'Retirer de la roue':'Équipé'):item.category==='emote'?'Ajouter à la roue':'Équiper',
-        disabled:clubBlocked()||(!owned&&missing>0)||(owned&&equipped&&item.category!=='emote'),title:!owned&&missing?`Il vous manque ${money(missing)} ${COIN_NAME}.`:''};
+      const owned=ownsItem(item.id),equipped=equippedItem(item),missing=Math.max(0,item.price-(state?.club?.coins||0)),signature=item.id===BASE_ITEMS[item.category]?.id;
+      const full=owned&&!equipped&&item.category==='emote'&&state.club.equipped.emotes.length>=8;
+      return {action:!owned?'buy':equipped&&!signature?'unequip':'equip',
+        label:!owned?`Acquérir · ${money(item.price)} A’`:equipped?(item.category==='emote'?'Retirer de la roue':signature?'Signature active':'Déséquiper'):item.category==='emote'?'Ajouter à la roue':'Équiper',
+        disabled:clubBlocked()||(!owned&&missing>0)||(owned&&equipped&&signature)||full,title:full?'Retirez une émote de votre roue pour libérer une place.':!owned&&missing?`Il vous manque ${money(missing)} ${COIN_NAME}.`:''};
+    }
+    function cosmeticCard(item,inventory=false){
+      const owned=ownsItem(item.id),equipped=equippedItem(item),action=itemAction(item),category=shopGroups.find(g=>g.id===item.category)?.name||'';
+      return `<article class="shop-item ${inventory?'inventory-card':''}" data-rarity="${item.rarity}" data-item="${item.id}" data-equipped="${equipped}" style="--item-tone:${item.tone};--item-accent:${item.accent}"><div class="shop-thumb"><span class="rarity">${RARITIES[item.rarity]}</span>${owned?`<span class="owned-tag">${equipped?'✓ Équipé':'✓ Possédé'}</span>`:''}${itemThumbnail(item)}</div><div class="shop-info"><small>${escapeHTML(category)}</small><h3>${escapeHTML(item.name)}</h3><p>${escapeHTML(item.text||CATEGORY_COPY[item.category])}</p><div class="shop-item-actions"><button type="button" class="btn preview-button" data-preview="${item.id}" aria-label="Voir l’aperçu de ${escapeHTML(item.name)}" title="Voir l’aperçu">▷</button><button type="button" class="btn ${!owned||inventory&&!equipped?'gold':''} purchase-button" data-store-action="${action.action}" data-item-id="${item.id}" ${action.disabled?'disabled':''} title="${escapeHTML(action.title)}">${escapeHTML(action.label)}</button></div></div></article>`;
+    }
+    function setProfileTab(tab){
+      profileTab=tab;const collection=tab==='collection';
+      for(const [id,selected]of [['profileAccountTab',!collection],['profileCollectionTab',collection]]){$(id).setAttribute('aria-selected',String(selected));$(id).tabIndex=selected?0:-1;}
+      $('profileAccountPanel').hidden=collection;$('profileCollectionPanel').hidden=!collection;
+      if(collection)renderCollection();else if($('cosmeticPreview').open)$('cosmeticPreview').close();
+    }
+    function renderCollection(){
+      if(!state?.club)return;
+      const owned=[...shopItems.values()].filter(item=>ownsItem(item.id)),emotes=state.club.equipped.emotes.map(id=>shopItems.get(id)).filter(Boolean);
+      $('profileCollectionCount').textContent=`${money(state.club.owned.length)} objets`;$('profileEmoteCount').textContent=`${emotes.length} / 8`;
+      if(!catalogLoaded){$('collectionGrid').innerHTML='<p class="collection-empty">Chargement de votre collection…</p>';return;}
+      $('profileLoadout').innerHTML=shopGroups.filter(g=>g.id!=='emote').map(group=>{const item=shopItem(state.club.equipped[group.id],group.id),signature=item.id===BASE_ITEMS[group.id]?.id;return `<div class="loadout-slot" data-loadout="${group.id}"><small>${escapeHTML(group.name)}</small><strong>${escapeHTML(item.name)}</strong>${signature?'<span class="signature-label">Style Signature</span>':`<button type="button" class="btn" data-store-action="unequip" data-item-id="${item.id}" aria-label="Déséquiper ${escapeHTML(item.name)}" ${clubBlocked()?'disabled':''}>Retirer ×</button>`}</div>`;}).join('');
+      $('profileEmotes').innerHTML=emotes.map(item=>`<button type="button" class="btn" data-store-action="unequip" data-item-id="${item.id}" title="Retirer ${escapeHTML(item.name)} de la roue" aria-label="Retirer ${escapeHTML(item.name)} de la roue" ${clubBlocked()?'disabled':''}>${escapeHTML(item.icon)}</button>`).join('');
+      $('collectionCategories').innerHTML=[{id:'all',name:'Tout',icon:'◇'},...shopGroups].map(group=>`<button type="button" class="${group.id===collectionCategory?'active':''}" data-collection-category="${group.id}" aria-pressed="${group.id===collectionCategory}">${escapeHTML(group.icon)} ${escapeHTML(group.name)} · ${owned.filter(i=>group.id==='all'||i.category===group.id).length}</button>`).join('');
+      const normalize=value=>value.toLocaleLowerCase('fr').normalize('NFD').replace(/\p{M}/gu,''),search=normalize($('collectionSearch').value.trim()),filter=$('collectionFilter').value;
+      const items=owned.filter(item=>(collectionCategory==='all'||item.category===collectionCategory)&&(filter==='all'||equippedItem(item)===(filter==='equipped'))&&(!search||normalize(item.name+' '+(item.text||'')).includes(search))).sort((a,b)=>Number(equippedItem(b))-Number(equippedItem(a)));
+      $('collectionGrid').innerHTML=items.length?items.map(item=>cosmeticCard(item,true)).join(''):'<p class="collection-empty">Aucun objet ne correspond à cette sélection. Retrouvez vos autres objets avec les filtres ou découvrez la boutique.</p>';
     }
     function renderShop(){
       if(!state?.club)return;
@@ -1221,8 +1259,7 @@
       const featured=['victory-leviathan','bet-dragonfire','arrival-stargate','back-dragon-frost','victory-seraph','bet-railgun','arrival-meteor','back-seraph','victory-singularity','bet-rift','arrival-chronos','back-leviathan','victory-dragon','frame-eclipse','back-orrery','table-emerald'];
       const items=[...shopItems.values()].filter(item=>(shopCategory==='all'||item.category===shopCategory)&&(!$('ownedOnly').checked||ownsItem(item.id))&&(rarity==='all'||item.rarity===rarity)&&(!search||normalize(item.name+' '+(item.text||'')).includes(search)));
       if(shopCategory==='all')items.sort((a,b)=>(featured.includes(a.id)?featured.indexOf(a.id):-1+100)-(featured.includes(b.id)?featured.indexOf(b.id):-1+100));
-      $('shopGrid').innerHTML=items.map(item=>{const owned=ownsItem(item.id),equipped=equippedItem(item),action=itemAction(item),category=shopGroups.find(g=>g.id===item.category)?.name||'';
-        return `<article class="shop-item" data-rarity="${item.rarity}" data-item="${item.id}" style="--item-tone:${item.tone};--item-accent:${item.accent}"><div class="shop-thumb"><span class="rarity">${RARITIES[item.rarity]}</span>${owned?`<span class="owned-tag">${equipped?'✓ Équipé':'✓ Possédé'}</span>`:''}${itemThumbnail(item)}</div><div class="shop-info"><small>${escapeHTML(category)}</small><h3>${escapeHTML(item.name)}</h3><p>${escapeHTML(item.text||CATEGORY_COPY[item.category])}</p><div class="shop-item-actions"><button type="button" class="btn preview-button" data-preview="${item.id}" aria-label="Voir l’aperçu de ${escapeHTML(item.name)}" title="Voir l’aperçu">▷</button><button type="button" class="btn ${!owned?'gold':''} purchase-button" data-store-action="${action.action}" data-item-id="${item.id}" ${action.disabled?'disabled':''} title="${escapeHTML(action.title)}">${escapeHTML(action.label)}</button></div></div></article>`;}).join('');
+      $('shopGrid').innerHTML=items.map(item=>cosmeticCard(item)).join('');
       if(!items.length)$('shopGrid').innerHTML=`<p class="club-status">${catalogLoaded?'Aucun objet ne correspond à vos filtres.':'La collection arrive…'}</p>`;
     }
     function renderQuests(){
@@ -1243,11 +1280,12 @@
       updatePreviewButton();
     }
     async function storeAction(action,itemId,slot){
-      if(clubBlocked())return;const owner=state.me;shopPending=true;updateClubAvailability();const status=action==='reroll'?$('questStatus'):$('shopStatus');status.textContent='Enregistrement…';$('previewStatus').textContent='';
+      if(clubBlocked())return;const owner=state.me;shopPending=true;updateClubAvailability();const status=action==='reroll'?$('questStatus'):settingsRoute()?$('collectionStatus'):$('shopStatus');status.textContent='Enregistrement…';$('previewStatus').textContent='';
       try{const reply=await api('store',{action,itemId,slot});if(state?.me!==owner)return;adoptClub(reply.club);renderClub(true);
         const item=shopItems.get(itemId),message=action==='buy'?`${item.name} rejoint votre collection.`:action==='reroll'?'Une nouvelle quête vous attend.':action==='unequip'?'Objet retiré de votre sélection.':item?.category==='emote'?'Émote ajoutée à votre roue.':`${item.name} est équipé.`;
         status.textContent=message;$('previewStatus').textContent=message;showClubToast(action==='buy'?'Nouvelle acquisition':action==='reroll'?'Nouveau défi':'Votre signature évolue',message);
         renderSeats(state);renderOwnHand();highlightWinningSources();$('headerAvatar').innerHTML=avatarHTML(state.avatar,state.photo,state.club.equipped);
+        if(settingsRoute())previewCharacter(document.querySelector('input[name="settingsAvatar"]:checked')?.value||state.avatar);
       }catch(error){if(state?.me===owner){status.textContent=error.message;$('previewStatus').textContent=error.message;}}
       finally{shopPending=false;updateClubAvailability();}
     }
@@ -1257,7 +1295,11 @@
     $('shopTurnAlert').onclick=$('questTurnAlert').onclick=()=>navigate('/');
     $('shopCategories').onclick=event=>{const button=event.target.closest('[data-shop-category]');if(button){shopCategory=button.dataset.shopCategory;renderShop();}};
     $('shopSearch').oninput=$('shopRarity').onchange=$('ownedOnly').onchange=renderShop;
-    $('shopGrid').onclick=event=>{const preview=event.target.closest('[data-preview]'),action=event.target.closest('[data-store-action]');if(preview)showCosmeticPreview(preview.dataset.preview);else if(action)storeAction(action.dataset.storeAction,action.dataset.itemId);};
+    for(const id of ['shopGrid','collectionGrid','profileLoadout','profileEmotes'])$(id).onclick=event=>{const preview=event.target.closest('[data-preview]'),action=event.target.closest('[data-store-action]');if(preview)showCosmeticPreview(preview.dataset.preview);else if(action&&!action.disabled)storeAction(action.dataset.storeAction,action.dataset.itemId);};
+    $('profileAccountTab').onclick=()=>setProfileTab('account');$('profileCollectionTab').onclick=()=>setProfileTab('collection');
+    document.querySelector('.profile-tabs').onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();setProfileTab(event.key==='Home'?'account':event.key==='End'?'collection':profileTab==='account'?'collection':'account');$(profileTab==='account'?'profileAccountTab':'profileCollectionTab').focus();};
+    $('collectionCategories').onclick=event=>{const button=event.target.closest('[data-collection-category]');if(button){collectionCategory=button.dataset.collectionCategory;renderCollection();}};
+    $('collectionSearch').oninput=$('collectionFilter').onchange=renderCollection;$('collectionToShop').onclick=()=>navigate('/boutique');
     $('questFilters').onclick=event=>{const button=event.target.closest('[data-quest-group]');if(button){questGroup=button.dataset.questGroup;renderQuests();}};
     $('questGrid').onclick=event=>{const button=event.target.closest('[data-reroll]');if(button&&!button.disabled)storeAction('reroll',null,Number(button.dataset.reroll));};
     function showCosmeticPreview(id){
