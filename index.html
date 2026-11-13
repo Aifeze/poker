@@ -64,7 +64,7 @@
       body.in-club header{flex-shrink:0;margin-bottom:10px;gap:8px}body.in-club header h1{font-size:24px;line-height:28px}body.in-club header>div>p:first-child{margin-bottom:0;font-size:10px;line-height:14px}
       #game{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px}
       #accountBar{padding:10px 14px;gap:12px}#accountBar .text-xl{font-size:18px;line-height:24px}#accountBar #identity{line-height:18px}
-      #game .btn{padding:8px 12px;font-size:13px;line-height:20px}#game input{padding:8px;font-size:13px;line-height:20px}#raiseTo{width:90px}
+      #game .btn{padding:8px 12px;font-size:13px;line-height:20px}#game input{padding:8px;font-size:13px;line-height:20px}
       #gameLayout{grid-template-columns:minmax(0,1fr) 260px;gap:12px;margin:0;min-height:0}
       #tableColumn{grid-template-rows:minmax(0,1fr) auto;gap:10px;min-height:0}
       .felt{min-height:0;padding:12px 16px;border-width:6px;border-radius:2rem;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
@@ -117,14 +117,14 @@
     #toggleCards{top:50%;left:calc(100% + 12px);right:auto;bottom:auto;transform:translateY(-50%);width:154px;min-height:46px;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid #e8bc7080;background:#29473a;color:#f4d9a6;padding:10px 12px!important;border-radius:12px;font-size:12px!important;line-height:16px!important;white-space:normal;box-shadow:0 4px 14px #0004}#toggleCards:hover:enabled{background:#3a5841;border-color:#f4d9a6}#toggleCards:focus-visible{outline:2px solid #f4d9a6;outline-offset:3px}#toggleCards svg{width:20px;height:20px;flex-shrink:0}
     #tableFx{border-radius:24px}#winnerAnnouncement{z-index:20}#tableToast{z-index:16}.felt.allin-moment{animation:none}.felt.allin-moment #pokerTable{animation:allin-glow 1.8s ease-out}.action-badge{bottom:-8px;z-index:8}
     .winning-cards .card.combination-card{transform:translateY(-10px);box-shadow:0 9px 14px #0005,0 0 14px #e8bc7050}.winning-cards .card.kicker-card{transform:translateY(3px);filter:grayscale(1);opacity:.4;border-color:#778781;background:#cbd5d0;box-shadow:none}.card.combination-source{transform:translateY(-10px);outline:1px solid #f0c36e;box-shadow:0 10px 16px #0005,0 0 12px #e8bc7050}.card.kicker-source,.card.nonwinning-card{filter:grayscale(1);opacity:.38;outline:none;box-shadow:none}.winning-cards{padding-top:10px}.winner-item .winning-cards{padding-top:7px}
-    @media(min-width:1024px){body.in-club main{max-width:1520px}.felt{min-height:0}#game input#raiseTo{width:80px}#actions{gap:5px}#actions>.btn{padding:8px 9px;font-size:12px}#actions label{font-size:11px}#myCards .card{width:54px;height:74px}}
+    @media(min-width:1024px){body.in-club main{max-width:1520px}.felt{min-height:0}#actions{gap:5px}#actions>.btn{padding:8px 9px;font-size:12px}#actions label{font-size:11px}#myCards .card{width:54px;height:74px}}
     @media(min-width:1024px) and (max-width:1199px){#gameLayout{grid-template-columns:minmax(0,1fr) 220px}}
     @media(min-width:1024px) and (max-height:640px){.header-account{gap:8px}.account-settings{padding:3px 7px}#headerAvatar{width:22px;height:22px}#pokerTable{inset:19% 8% 20%;border-width:9px}#community{top:40%;min-width:230px}#community>p:nth-child(2){font-size:23px;line-height:26px}#board{margin-top:4px;gap:5px}#board .card{width:38px;height:52px;font-size:18px;padding:4px}.felt .seat{padding:5px 7px;border-radius:12px}.seat-profile,#players .seat>div:first-child{min-height:44px}.profile-avatar{width:38px;height:38px}.seat-name>span:first-child{font-size:11px}.seat-stack{font-size:13px;line-height:18px}.seat-status{font-size:8px;line-height:12px}.felt .own-seat{width:210px;padding:6px 9px}#myNick{font-size:12px}#myStack{font-size:15px}#myStatus{font-size:9px;line-height:12px}#myCards{bottom:calc(100% + 5px);gap:6px}#myCards .card{width:44px;height:60px;font-size:21px;padding:5px}#players .seat-hand .card{width:24px;height:34px;font-size:12px;padding:2px}#players [data-slot=top] .seat-hand{left:calc(100% + 6px);top:50%;bottom:auto;transform:translateY(-50%)}#players [data-slot=upper-left],#players [data-slot=upper-right]{top:30%}#empty{top:67%;font-size:10px}}
     @media(max-width:1023px){.felt{height:580px;min-height:580px;margin:12px 0 18px}#pokerTable{inset:17% 5% 19%;border-width:9px}#tableStage{font-size:9px}#community{top:44%;min-width:0;width:180px}#community>p:first-child{font-size:8px;letter-spacing:.13em}#community>p:nth-child(2){font-size:23px;line-height:27px}#board{gap:3px;margin-top:5px}#board .card{width:28px;height:41px;font-size:15px;padding:3px}.felt .seat{width:140px;padding:6px;border-radius:12px}.seat-profile,#players .seat>div:first-child{min-height:44px}.profile-avatar{width:36px;height:36px}.seat-name>span:first-child{font-size:10px}.seat-stack{font-size:12px;line-height:17px}.seat-stack small{font-size:8px}.seat-status{font-size:8px;line-height:12px}#players [data-slot=left],#players [data-slot=right]{width:86px;top:49%;padding:5px;text-align:center}#players [data-slot=left]{left:13%}#players [data-slot=right]{left:87%}#players [data-slot=left] .seat-profile,#players [data-slot=right] .seat-profile{display:block;padding-top:15px}#players [data-slot=left] .profile-avatar,#players [data-slot=right] .profile-avatar{position:absolute;left:50%;top:-21px;transform:translateX(-50%);width:34px;height:34px}#players [data-slot=left] .seat-name,#players [data-slot=right] .seat-name{justify-content:center}#players [data-slot=left] .seat-stack small,#players [data-slot=right] .seat-stack small{display:none}#players [data-slot=left] .seat-hand,#players [data-slot=right] .seat-hand{left:50%;right:auto;top:auto;bottom:calc(100% + 27px);transform:translateX(-50%)}#players .seat-hand .card{width:22px;height:32px;font-size:11px;padding:2px}#players [data-slot=upper-left],#players [data-slot=upper-right]{width:105px;top:27%;padding:5px}#players [data-slot=upper-left]{left:19%}#players [data-slot=upper-right]{left:81%}#players [data-slot=upper-left] .profile-avatar,#players [data-slot=upper-right] .profile-avatar{width:28px;height:28px}#players [data-slot=upper-left] .seat-profile,#players [data-slot=upper-right] .seat-profile{gap:4px}.felt[data-players="5"] #players [data-slot=upper-left]{left:27%;top:7%}.felt[data-players="5"] #players [data-slot=upper-right]{left:73%;top:7%}.felt[data-players="6"] #players [data-slot=left],.felt[data-players="6"] #players [data-slot=right]{top:64%}.felt .own-seat{width:190px;padding:8px;bottom:1%}#myAvatar{width:44px;height:44px}#myNick{font-size:12px}#myStack{font-size:15px}#myStatus{font-size:9px}#myCards{bottom:calc(100% + 7px);gap:7px}#myCards .card{width:48px;height:67px;font-size:23px;padding:5px}#empty{left:20%;right:20%;top:70%;font-size:10px}#winnerAnnouncement{width:94%;max-height:90%}.settings-heading .btn{font-size:12px}.header-account>div{display:none}}
     @media(max-width:600px){.felt .own-seat{left:0;transform:none;width:calc(100% - 144px)}#toggleCards{left:calc(100% + 10px);width:134px;gap:7px;font-size:11px!important;padding:9px 8px!important}#myCards{left:calc(50% + 72px)}}
-    #actions{gap:8px}#game #actions>.btn{min-height:46px;padding:10px 16px;font-size:15px;line-height:22px}#game #actions .bet-sizes .btn{min-height:42px;padding:9px 10px;font-size:12px;line-height:20px}#game #actions #raiseTo{width:88px;height:46px;padding:10px;font-size:15px;line-height:22px}#actions label{font-size:13px}#game #controls #start{min-height:44px;padding:10px 16px;font-size:14px;line-height:20px}
-    @media(min-width:1024px) and (max-width:1199px){#actions{gap:6px}#game #actions>.btn{min-height:44px;padding:9px 11px;font-size:13px}#game #actions .bet-sizes .btn{min-height:40px;padding:8px}#game #actions #raiseTo{width:80px;height:44px;font-size:13px;line-height:20px}#actions label{font-size:12px;margin-left:0}}
-    @media(max-width:1023px){#game #actions>.btn,#game #controls #start{min-height:48px;font-size:16px}#game #actions #raiseTo{height:48px;font-size:16px}}
+    #actions{gap:8px}#game #actions>.btn{min-height:46px;padding:10px 16px;font-size:15px;line-height:22px}#game #actions .bet-sizes .btn{min-height:42px;padding:9px 10px;font-size:12px;line-height:20px}#actions label{font-size:13px}#game #controls #start{min-height:44px;padding:10px 16px;font-size:14px;line-height:20px}
+    @media(min-width:1024px) and (max-width:1199px){#actions{gap:6px}#game #actions>.btn{min-height:44px;padding:9px 11px;font-size:13px}#game #actions .bet-sizes .btn{min-height:40px;padding:8px}#actions label{font-size:12px;margin-left:0}}
+    @media(max-width:1023px){#game #actions>.btn,#game #controls #start{min-height:48px;font-size:16px}}
     .player-wager{--chip-step:1.2px;--chip-width:14px;--chip-height:6px;position:absolute;left:calc(50% + 40px);top:calc(100% + 8px);width:max-content;min-width:30px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;z-index:5;pointer-events:none}.wager-chips{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:30px;flex-shrink:0;filter:drop-shadow(0 3px 2px #0005)}.wager-stack{position:relative;display:block;width:var(--chip-width);height:calc(var(--levels) * var(--chip-step) + var(--chip-height))}.wager-chip{position:absolute;left:0;bottom:calc(var(--chip) * var(--chip-step));width:var(--chip-width);height:var(--chip-height);border:1px solid #f8dda0;border-radius:50%;background:radial-gradient(ellipse at center,#dcae51 0 35%,transparent 40%),conic-gradient(#fce9bb 0 12%,#bf8734 12% 25%,#fce9bb 25% 37%,#bf8734 37% 50%,#fce9bb 50% 62%,#bf8734 62% 75%,#fce9bb 75% 87%,#bf8734 87%);box-shadow:0 1px 0 #8b5a27,0 2px 0 #4d341c}.wager-amount{display:block;padding:1px 6px;border:1px solid #f2d49540;border-radius:9px;background:#092c26ed;color:#ffe1a2;font-size:11px;font-weight:750;line-height:14px;white-space:nowrap}#myWager{display:contents}.own-seat .player-wager,#players [data-slot=bottom] .player-wager{left:auto;right:calc(100% + 12px);top:50%;transform:translateY(-50%)}#players [data-slot=upper-right] .player-wager{left:auto;right:calc(50% + 40px)}#players [data-slot=left] .player-wager{top:calc(100% + 5px);left:0;transform:none}#players [data-slot=right] .player-wager{top:calc(100% + 5px);left:auto;right:0;transform:none}
     @media(min-width:1024px) and (max-width:1199px){#players [data-slot=top] .player-wager{left:auto;right:calc(50% + 34px)}}
     @media(min-width:1024px) and (max-height:640px){#players [data-slot=top] .player-wager{left:auto;right:calc(100% + 8px);top:50%;transform:translateY(-50%)}#players [data-slot=upper-left] .player-wager,#players [data-slot=upper-right] .player-wager{left:calc(50% - 14px);right:auto;top:auto;bottom:calc(100% + 5px);transform:translateX(-50%)}#players [data-slot=upper-right] .player-wager{left:calc(50% + 14px)}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{top:calc(100% + 42px);bottom:auto}}
@@ -202,6 +202,12 @@
     @media(min-width:1024px) and (max-width:1199px) and (min-height:641px){.felt:not([data-players="6"]) #players [data-slot=left] .seat-hand,.felt:not([data-players="6"]) #players [data-slot=right] .seat-hand{top:calc(50% - 52px)}}
     @media(min-width:1024px) and (max-height:640px){#players .seat-hand .card{width:29px;height:41px;font-size:14px;padding:3px}#players [data-slot=top] .player-wager{left:auto;right:calc(100% + 8px)}#players [data-slot=upper-left] .player-wager{left:calc(50% - 14px)}#players [data-slot=upper-right] .player-wager{left:calc(50% + 14px)}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{top:calc(100% + 6px);left:calc(50% - 75px);right:auto;transform:none}.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{left:calc(50% + 42px)}}
     @media(max-width:1023px){#players .seat-hand .card{width:27px;height:39px;font-size:13px;padding:3px}#players .player-wager{left:calc(50% + 36px)}#players [data-slot=upper-right] .player-wager{left:auto;right:calc(50% + 36px)}#players [data-slot=left] .player-wager{left:0}#players [data-slot=right] .player-wager{left:auto}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{left:50%;top:calc(100% + 50px)}}
+    .raise-control{display:flex;align-items:center;gap:12px;flex:1 1 235px;min-width:200px;max-width:340px;min-height:46px;padding:0 3px}.raise-value{flex-shrink:0}.raise-value>div{white-space:nowrap;line-height:23px}#game #actions .raise-value label{display:block;margin:0;color:#bfb49c;font-size:10px;line-height:14px}.raise-value output{font-size:19px;font-weight:750;color:#f1d085;font-variant-numeric:tabular-nums}.raise-value>div>span{font-size:9px;color:#a69d8c}.raise-track{min-width:0;flex:1}.raise-limits{display:flex;justify-content:space-between;gap:8px;font-size:9px;line-height:12px;color:#a9a08e;white-space:nowrap}.raise-control.at-max .raise-value output,.raise-control.at-max #raiseMaximum{color:#ffb3a3}.raise-control.unavailable{opacity:.45}
+    #game #actions #raiseSlider{appearance:none;-webkit-appearance:none;width:100%;height:28px;display:block;padding:0;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;cursor:pointer;touch-action:pan-y;outline:none;--raise-fill:0%}
+    #raiseSlider::-webkit-slider-runnable-track{height:6px;border-radius:9px;background:linear-gradient(90deg,#edc674 0 var(--raise-fill),#514c40 var(--raise-fill) 100%);box-shadow:inset 0 1px 2px #0007}#raiseSlider::-moz-range-track{height:6px;border-radius:9px;background:linear-gradient(90deg,#edc674 0 var(--raise-fill),#514c40 var(--raise-fill) 100%)}#raiseSlider::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;border:2px solid #ffe9ae;background:#e9bd62;box-shadow:0 2px 6px #0007}#raiseSlider::-moz-range-thumb{width:17px;height:17px;border-radius:50%;border:2px solid #ffe9ae;background:#e9bd62;box-shadow:0 2px 6px #0007}#raiseSlider:focus-visible::-webkit-slider-thumb{outline:3px solid #e9c37e66;outline-offset:3px}#raiseSlider:focus-visible::-moz-range-thumb{outline:3px solid #e9c37e66;outline-offset:3px}#game #actions #raiseSlider:disabled{cursor:default}
+    #game #actions #allin{background:linear-gradient(145deg,#b94047,#8f2933);border-color:#e57e7780;color:#fff1de;box-shadow:inset 0 1px 0 #ffc6b530}#game #actions #allin:hover:enabled{background:linear-gradient(145deg,#d45154,#a3323b);border-color:#ffb1a5}#game #actions #allin:focus-visible{outline:2px solid #ffb1a5;outline-offset:3px}
+    @media(min-width:1024px) and (max-width:1199px){.raise-control{flex-basis:205px;min-width:190px;gap:8px}.raise-value output{font-size:17px}.raise-limits{font-size:8px}}
+    @media(max-width:600px){#actions{gap:8px}#actions #fold,#actions #call{order:1;flex:1 1 calc(50% - 8px)}#actions .raise-control{order:2;flex:1 1 100%;max-width:none;gap:16px;margin:3px 0}#actions .bet-sizes{order:3;flex:1 1 100%;display:flex}#actions .bet-sizes .btn{flex:1}#actions #raise,#actions #allin{order:4;flex:1 1 calc(50% - 8px)}.raise-limits{font-size:10px}.raise-value output{font-size:22px}}
   </style>
 </head>
 <body>
@@ -253,7 +259,7 @@
       </section>
       <section id="controls" class="panel p-5">
         <div id="controlsHeading" class="flex flex-wrap justify-between gap-3 items-center mb-4"><div><p id="turn" class="font-semibold">Rejoignez la table pour jouer.</p><p id="hint" class="text-sm text-emerald-100/50 mt-1">Entrée avec 500 jetons maximum. Si vous en avez moins, vous entrez avec tout votre solde.</p></div><div id="controlsTools"><button id="emoteToggle" type="button" class="btn" aria-controls="emoteWheel" aria-expanded="false" hidden>☺ Émotes</button><button id="start" class="btn gold" hidden>Distribuer une main</button></div></div>
-        <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><label for="raiseTo" class="text-sm ml-1">Relancer à</label><input id="raiseTo" type="number" step="1" min="10" aria-label="Mise totale pour ce tour"><div class="bet-sizes" role="group" aria-label="Préparer une mise rapide"><button id="betMin" type="button" class="btn">Min.</button><button id="betHalf" type="button" class="btn">½ pot</button><button id="betPot" type="button" class="btn">Pot</button></div><button id="raise" class="btn gold">Relancer</button><button id="allin" class="btn">Tapis</button></div>
+        <div id="actions" class="flex flex-wrap items-center gap-2" hidden><button id="fold" class="btn">Se coucher</button><button id="call" class="btn gold">Suivre</button><div id="raiseControl" class="raise-control"><div class="raise-value"><label for="raiseSlider">Relancer à</label><div><output id="raiseAmount" for="raiseSlider" aria-live="off">0</output><span> jetons</span></div></div><div class="raise-track"><input id="raiseSlider" type="range" min="0" max="0" step="1" value="0" aria-label="Montant total de la relance" aria-describedby="raiseLimits" disabled><div id="raiseLimits" class="raise-limits"><span id="raiseMinimum">Min. 0</span><span id="raiseMaximum">Tapis 0</span></div></div></div><div class="bet-sizes" role="group" aria-label="Préparer une mise rapide"><button id="betMin" type="button" class="btn">Min.</button><button id="betHalf" type="button" class="btn">½ pot</button><button id="betPot" type="button" class="btn">Pot</button></div><button id="raise" class="btn gold">Relancer</button><button id="allin" class="btn">Tapis</button></div>
         <p id="result" class="text-center text-sm text-[#f2d59d] mt-3" role="status"></p>
       </section>
       </div>
@@ -868,6 +874,9 @@
         }
       }
     }
+    let raiseSteps=[],selectedRaise=0;
+    function raiseBounds(){const p=state?.players.find(p=>p.id===state.me),max=p?p.bet+p.stack:0;return{max,min:Math.min(max,(state?.currentBet||0)+(state?.minRaise||0))};}
+    function raiseAllowed(){const p=state?.players.find(p=>p.id===state.me);return !!p&&state.turn===state.me&&!state.runout&&!p.leaving&&!p.folded&&state.canRaise&&p.stack+p.bet>state.currentBet&&socket.connected&&!storageBlocked;}
     function quickBetAmount(kind) {
       const p = state?.players.find(p => p.id === state.me);
       if (!p) return 0;
@@ -875,16 +884,41 @@
       const extra = kind === 'min' ? state.minRaise : Math.max(state.minRaise, Math.floor((state.pot + due) * (kind === 'half' ? .5 : 1)));
       return Math.min(max, state.currentBet + extra);
     }
+    function buildRaiseSteps(min,max,anchors=[]){
+      const amounts=new Set([min,max,...anchors.filter(n=>Number.isSafeInteger(n)&&n>=min&&n<=max)]),bands=[[100,5],[500,10],[2000,25],[10000,100]];
+      for(let scale=10000;scale<max;scale*=10)bands.push([Math.min(max,scale*10),scale/20]);
+      let lower=0;
+      for(const [limit,step]of bands){const end=Math.min(max,limit),start=Math.max(min,lower);for(let n=Math.ceil(start/step)*step;n<=end;n+=step)if(Number.isSafeInteger(n))amounts.add(n);lower=limit;if(limit>=max)break;}
+      return [...amounts].sort((a,b)=>a-b);
+    }
+    function paintRaiseAmount(){
+      const slider=$('raiseSlider'),{min,max}=raiseBounds(),atMax=max>0&&selectedRaise===max;
+      $('raiseAmount').value=money(selectedRaise);$('raiseControl').classList.toggle('at-max',atMax);
+      slider.style.setProperty('--raise-fill',`${raiseSteps.length>1?100*Number(slider.value)/(raiseSteps.length-1):atMax?100:0}%`);
+      slider.setAttribute('aria-valuemin',String(min));slider.setAttribute('aria-valuemax',String(max));slider.setAttribute('aria-valuenow',String(selectedRaise));slider.setAttribute('aria-valuetext',`${money(selectedRaise)} jetons${atMax?' · Tapis':''}`);
+    }
+    function setRaiseAmount(amount){
+      const {min,max}=raiseBounds();selectedRaise=Math.max(min,Math.min(max,amount));
+      if(!raiseSteps.includes(selectedRaise))raiseSteps=[...raiseSteps,selectedRaise].sort((a,b)=>a-b);
+      $('raiseSlider').max=Math.max(0,raiseSteps.length-1);$('raiseSlider').value=raiseSteps.indexOf(selectedRaise);paintRaiseAmount();
+    }
+    function renderRaiseSlider(allowed){
+      const {min,max}=raiseBounds(),decision=state?`${state.hand}/${state.phase}/${state.currentBet}/${state.turn}`:'';
+      selectedRaise=lastDecision!==decision?min:Math.max(min,Math.min(max,selectedRaise));lastDecision=decision;
+      raiseSteps=buildRaiseSteps(min,max,[selectedRaise,quickBetAmount('half'),quickBetAmount('pot')]);
+      $('raiseSlider').disabled=!allowed||raiseSteps.length<2;$('raise').disabled=!allowed;
+      $('raiseMinimum').textContent=`Min. ${money(min)}`;$('raiseMaximum').textContent=`Tapis ${money(max)}`;$('raiseControl').classList.toggle('unavailable',!allowed);setRaiseAmount(selectedRaise);
+    }
+    $('raiseSlider').oninput=()=>{selectedRaise=raiseSteps[Number($('raiseSlider').value)]??raiseBounds().min;paintRaiseAmount();};
     function renderQuickBets() {
-      const p = state?.players.find(p => p.id === state.me);
-      const allowed = p && state.turn === state.me && state.canRaise && p.stack + p.bet > state.currentBet && socket.connected && !storageBlocked;
+      const allowed=raiseAllowed();renderRaiseSlider(allowed);
       for (const [id,kind] of [['betMin','min'],['betHalf','half'],['betPot','pot']]) {
         $(id).disabled = !allowed;
         $(id).title = allowed ? `Préparer une relance à ${money(quickBetAmount(kind))} jetons, puis cliquer sur Relancer.` : 'Relance indisponible';
       }
     }
     for (const [id,kind] of [['betMin','min'],['betHalf','half'],['betPot','pot']]) $(id).onclick = () => {
-      $('raiseTo').value = quickBetAmount(kind); $('raiseTo').focus();
+      if(!raiseAllowed())return;setRaiseAmount(quickBetAmount(kind));$('raiseSlider').focus();
     };
     function renderEntry() {
       const seated = state?.players.some(p => p.id === state.me);
@@ -926,9 +960,10 @@
     $('claimAid').onclick = () => send('claim-aid');
     $('fold').onclick = () => send('action', {type:'fold'});
     $('call').onclick = () => send('action', {type:'call'});
-    $('raise').onclick = () => send('action', {type:'raise',amount:Number($('raiseTo').value)});
+    $('raise').onclick = () => {if(raiseAllowed())send('action', {type:'raise',amount:selectedRaise});};
     $('allin').onclick = () => {
       const p = state.players.find(p => p.id === state.me), amount = p.stack + p.bet;
+      setRaiseAmount(amount);
       send('action', amount > state.currentBet ? {type:'raise',amount} : {type:'call'});
     };
     socket.on('connect', () => {
@@ -941,10 +976,10 @@
       storageBlocked = true; $('notice').textContent = data.message; updateChatAvailability(); renderEntry(); updateSettingsAvailability();
       document.querySelectorAll('#game button').forEach(b => b.disabled = true);
       $('logout').disabled = false;
-      closeEmoteWheel();updateClubAvailability();
+      closeEmoteWheel();updateClubAvailability();renderQuickBets();
     });
     socket.on('disconnect', reason => {
-      updateChatAvailability(); renderEntry(); updateSettingsAvailability();
+      updateChatAvailability(); renderEntry(); updateSettingsAvailability();renderQuickBets();
       closeEmoteWheel();updateClubAvailability();
       if (!state) return;
       if (reason === 'io server disconnect') { showLogin('Session terminée. Reconnectez-vous.'); return; }
@@ -998,9 +1033,6 @@
       if (me) {
         const max = me.stack + me.bet, min = Math.min(max,s.currentBet+s.minRaise);
         $('call').textContent = due ? `Suivre ${money(Math.min(due,me.stack))}` : 'Check';
-        $('raiseTo').min = min; $('raiseTo').max = max;
-        const decision = `${s.hand}/${s.phase}/${s.currentBet}/${s.turn}`;
-        if (lastDecision !== decision) { $('raiseTo').value = min; lastDecision = decision; }
         $('raise').disabled = !s.canRaise || max <= s.currentBet;
         $('allin').disabled = max > s.currentBet && !s.canRaise;
         $('hint').textContent = me.leaving ? 'Vos jetons seront rendus à la fin de la main.' : s.runout
