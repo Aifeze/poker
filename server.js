@@ -181,7 +181,25 @@ const CATALOG = Object.entries({
     ['heart','Avec le cœur',90,'respect','🖤','#d9b9c5','#ffe6ed','Avec le cœur. Toujours.'],
     ['rabbit','La river magique',120,'wink','🐇','#dacde9','#fff4ff','Un lapin dans la river ?'],
     ['zen','Zéro pression',100,'cool','🧘','#b3d9bf','#e8fff0','Zéro pression.'],
-    ['salute','Respect',80,'respect','🫡','#d8c39d','#fff1ce','Respect. On remet ça ?']
+    ['salute','Respect',80,'respect','🫡','#d8c39d','#fff1ce','Respect. On remet ça ?'],
+    ['circus','Le clown de la table',100,'trash','🤡','#f1a18b','#ffe3bf','Le cirque a appelé. Il cherche son clown.'],
+    ['atm','Distributeur automatique',120,'trash','🏧','#e4bd78','#fff0bd','T’es pas un joueur, t’es un distributeur.'],
+    ['delivery','Service livraison',110,'trash','📦','#d4a57f','#ffe5c3','Continue de spew, je ramasse tes conneries.'],
+    ['buffet','Le buffet est ouvert',140,'trash','🦈','#9ad8e2','#e5f6ff','Tu te prends pour un requin ? T’es le buffet.'],
+    ['tutorial','Retour au tuto',90,'trash','📚','#c9a7e4','#f3e2ff','Coupe le cinéma. Ouvre un tuto.'],
+    ['trashbluff','Bluff à la poubelle',140,'trash','🚮','#b4cf9e','#efffdc','Ton bluff pue la merde.'],
+    ['rent','Le loyer du patron',120,'trash','🏠','#e1bf7c','#fff0be','Ton tapis paie le loyer du mien.'],
+    ['salty','La salière',100,'trash','🧂','#c8d7e7','#f3f6ff','Garde ton sel, j’ai déjà tes jetons.'],
+    ['fishchips','Fish & chips',160,'trash','🐟','#93d3dc','#dffff9','Un fish, des jetons. J’avais commandé les deux.'],
+    ['mute','Grande bouche, petit tapis',160,'trash','🔇','#e3a0b2','#ffe2eb','Baisse d’un ton. Ton tapis est déjà assez petit.'],
+    ['plucked','Plumage intégral',180,'trash','🪶','#e3c397','#fff2d7','Je te plume et tu redemandes une main.'],
+    ['donation','Association caritative',120,'trash','🎁','#d2b0eb','#f7e8ff','T’as confondu poker et don de jetons.'],
+    ['excuses','Champion des excuses',180,'trash','🏆','#edc774','#fff2c6','Même tes excuses sont mieux jouées que tes mains.'],
+    ['ashes','Tapis en cendres',200,'trash','🧯','#eea179','#ffe6bd','Ton tapis ? Du fric jeté au feu.'],
+    ['foldboss','Va te coucher',140,'trash','🛏️','#b8afe1','#eee6ff','Couche-toi, ça limitera les dégâts.'],
+    ['rivercarry','Porté par la river',180,'trash','🛟','#ebba7e','#fff0cf','Sans ta river miracle, t’es perdu.'],
+    ['forehead','Le call du front',220,'trash','🤦','#e6ae86','#ffead0','Putain ce call… T’as cliqué avec le front ?'],
+    ['demolished','Démontage express',240,'trash','💥','#f2a16e','#ffe6b6','Je t’ai démonté. On remet ça ?']
   ]
 }).flatMap(([category,rows]) => rows.map(([key,name,price,style,icon,tone,accent,text]) => ({
   id:`${category}-${key}`,category,name,price,style,icon,tone,accent,text,
