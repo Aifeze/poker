@@ -193,6 +193,14 @@
     .profile-loadout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:15px}.loadout-slot{min-width:0;padding:15px 17px;border:1px solid #c8b17840;border-radius:14px;background:linear-gradient(135deg,#333026,#22211f);display:flex;flex-direction:column;align-items:flex-start}.loadout-slot small{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#b8aa8b}.loadout-slot strong{font-size:13px;line-height:19px;color:#f0dfb0;margin:6px 0 10px;overflow-wrap:anywhere}.loadout-slot .btn{font-size:10px;padding:5px 9px;margin-top:auto}.signature-label{font-size:10px;color:#a7a297;margin-top:auto}
     .collection-emotes{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;margin-bottom:25px;border:1px solid #c8b17833;border-radius:14px;background:#242321}.collection-emotes strong{font-size:13px;color:#e6d8b5}.collection-emotes strong span{color:#bca16e;margin-left:6px;font-size:11px}.collection-emotes p{font-size:11px;color:#9d988e;margin-top:5px}.profile-emotes{display:flex;flex-wrap:wrap;gap:6px;max-width:360px}.profile-emotes .btn{width:37px;height:37px;display:grid;place-items:center;padding:0;font-size:22px;position:relative}.profile-emotes .btn::after{content:'×';position:absolute;right:-2px;top:-6px;font-size:11px;border-radius:50%;width:13px;height:13px;line-height:13px;background:#504637;color:#f1ddae}.profile-emotes:empty::after{content:'Votre roue est vide.';font-size:11px;color:#aaa69d}.inventory-card[data-equipped=true]{border-color:#e7c67d99}.inventory-card[data-equipped=true] .owned-tag{background:#d5b675;color:#241f16}.collection-empty{grid-column:1/-1;border:1px dashed #c8b17855;border-radius:14px;padding:35px;text-align:center;color:#b4aa94;font-size:13px;line-height:1.8}
     @media(max-width:760px){.profile-tabs button{flex:1;padding:11px 9px;font-size:12px}.profile-loadout{grid-template-columns:repeat(2,minmax(0,1fr))}.collection-heading{flex-wrap:wrap;gap:12px}.collection-heading h3{font-size:27px}.collection-heading>.btn{width:100%}.collection-emotes{align-items:flex-start;flex-direction:column}.loadout-slot{padding:13px}.profile-emotes{max-width:none}}
+    .allin-signature{z-index:5}.allin-signature>small{position:absolute;left:50%;top:100%;transform:translateX(-50%);max-width:180px;width:max-content;padding:4px 9px;border:1px solid color-mix(in srgb,var(--fx-tone),transparent 35%);border-radius:8px;background:#171614e8;color:var(--fx-accent);font-size:10px;font-weight:700;line-height:14px;text-align:center;letter-spacing:.04em}.allin-preview-banner{position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);z-index:10;text-align:center;pointer-events:none;width:max-content;max-width:95%;color:#ffe7ae;text-shadow:0 2px 18px #000}.allin-preview-banner strong{display:block;font-size:31px;font-weight:850;letter-spacing:.1em}.allin-preview-banner small{display:block;font-size:9px;letter-spacing:.03em;color:#d6c49e}.allin-signature[data-effect=timebreak] .relic-clock-hand{animation-duration:.7s}.allin-signature[data-effect=reactor] svg,.allin-signature[data-effect=orbital] svg{animation:clock-turn 3s linear infinite}.allin-still{filter:none}
+    /* Give opponents' collectible card backs more room, including on short laptop screens. */
+    #players .seat-hand .card{width:34px;height:48px;font-size:15px;padding:4px;border-radius:6px}
+    #players .player-wager{left:calc(50% + 46px)}#players [data-slot=upper-right] .player-wager{left:auto;right:calc(50% + 46px)}#players [data-slot=left] .player-wager{left:0}#players [data-slot=right] .player-wager{left:auto}#players [data-slot=bottom] .player-wager{left:auto}
+    @media(min-width:1024px) and (max-width:1199px){#players [data-slot=top] .player-wager{left:auto;right:calc(50% + 42px)}}
+    @media(min-width:1024px) and (max-width:1199px) and (min-height:641px){.felt:not([data-players="6"]) #players [data-slot=left] .seat-hand,.felt:not([data-players="6"]) #players [data-slot=right] .seat-hand{top:calc(50% - 52px)}}
+    @media(min-width:1024px) and (max-height:640px){#players .seat-hand .card{width:29px;height:41px;font-size:14px;padding:3px}#players [data-slot=top] .player-wager{left:auto;right:calc(100% + 8px)}#players [data-slot=upper-left] .player-wager{left:calc(50% - 14px)}#players [data-slot=upper-right] .player-wager{left:calc(50% + 14px)}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{top:calc(100% + 6px);left:calc(50% - 75px);right:auto;transform:none}.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{left:calc(50% + 42px)}}
+    @media(max-width:1023px){#players .seat-hand .card{width:27px;height:39px;font-size:13px;padding:3px}#players .player-wager{left:calc(50% + 36px)}#players [data-slot=upper-right] .player-wager{left:auto;right:calc(50% + 36px)}#players [data-slot=left] .player-wager{left:0}#players [data-slot=right] .player-wager{left:auto}.felt[data-players="5"] #players [data-slot=upper-left] .player-wager,.felt[data-players="5"] #players [data-slot=upper-right] .player-wager{left:50%;top:calc(100% + 50px)}}
   </style>
 </head>
 <body>
@@ -659,7 +667,10 @@
             if (effect.type === 'fold') element.querySelectorAll('.card').forEach(card => motion(card,
               [{transform:'rotate(0)',opacity:1},{transform:'translateY(8px) rotate(-8deg)',opacity:.25}], {duration:450,fill:'forwards'}));
           }
-          if (effect.type === 'allin' && next.phase !== 'showdown') showToast('TAPIS !', `${next.players.find(p => p.id === entry.actorId)?.nick || 'Un joueur'} · ${money(effect.total ?? effect.amount)} jetons`);
+          if (effect.type === 'allin' && next.phase !== 'showdown') {
+            showToast('TAPIS !', `${next.players.find(p => p.id === entry.actorId)?.nick || 'Un joueur'} · ${money(effect.total ?? effect.amount)} jetons`);
+            allInCosmetic(shopItem(effect.allinSkin||next.players.find(p=>p.id===entry.actorId)?.cosmetics?.allin,'allin'),element,$('tableFx'));
+          }
         }
         lastLogId = next.logs?.at(-1)?.id || lastLogId;
       }
@@ -1161,6 +1172,32 @@
       }
       fxRing(item,host,b.x,b.y,28,delay+600,true);
     }
+    function allInSVG(style){
+      if(style==='wyrm')return creatureSVG('dragon');
+      const art={thunder:'railgun',reactor:'railgun',void:'singularity',abyssal:'leviathan',orbital:'railgun',timebreak:'chronos',darksun:'eclipse'}[style];
+      if(art)return relicSVG(art);
+      if(style==='icefall')return `<svg viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3">${Array.from({length:6},(_,i)=>`<path d="M100 100V12M100 32L80 52M100 32L120 52M100 62L76 84M100 62L124 84" transform="rotate(${i*60} 100 100)"/>`).join('')}</g><path d="M100 75L115 100L100 125L85 100Z" fill="var(--fx-accent,currentColor)"/></svg>`;
+      if(style==='inferno')return '<svg viewBox="0 0 200 200" aria-hidden="true"><path d="M100 12C129 62 91 66 142 43C173 105 186 160 125 183C61 210 14 149 44 103L51 144C57 96 91 88 100 12Z" fill="currentColor"/><path d="M103 92C110 124 139 130 122 158C106 187 65 161 83 139C84 155 103 158 103 92Z" fill="var(--fx-accent,currentColor)"/></svg>';
+      return '<svg viewBox="0 0 240 200" aria-hidden="true"><path d="M120 20C96 58 44 84 44 126C44 166 90 176 112 151L105 184H135L128 151C150 176 196 166 196 126C196 84 144 58 120 20Z" fill="currentColor"/></svg>';
+    }
+    function allInCosmetic(item,target,host){
+      if(!target||!host.clientWidth||item.style==='none')return;
+      const w=host.clientWidth,h=host.clientHeight,p=fxPoint(host,target),size=Math.min(w*.45,h*.56,210),x=Math.max(size*.5+8,Math.min(w-size*.5-8,p.x)),y=Math.max(size*.44+8,Math.min(h-size*.44-20,p.y-Math.min(70,h*.14))),kind=item.style;
+      const crest=fxElement('div','allin-signature relic-art',host,item,2900);crest.dataset.item=item.id;crest.dataset.actor=target.dataset.player||state?.me||'preview';crest.style.width=`${size}px`;crest.style.height=`${size*5/6}px`;crest.style.left=`${x-size/2}px`;crest.style.top=`${y-size*5/12}px`;crest.innerHTML=allInSVG(kind)+`<small>${escapeHTML(item.name)}</small>`;
+      if(reducedMotion()){crest.classList.add('allin-still');return;}
+      motion(crest,[{opacity:0,transform:'translateY(25px) scale(.15)'},{opacity:1,transform:'translateY(0) scale(1.08)',offset:.28},{opacity:1,transform:'translateY(-4px) scale(1)',offset:.72},{opacity:0,transform:'translateY(-25px) scale(1.25)'}],{duration:2600,fill:'both',easing:'cubic-bezier(.2,.7,.3,1)'});
+      fxRing(item,host,p.x,p.y,75,180,true);
+      if(kind==='inferno'){fxBurst(item,host,x,y,28,['◆','·','✦'],145,200);fxBeam(item,host,{x:p.x,y:p.y},{x,y:Math.max(0,y-size*.6)},120);}
+      else if(kind==='icefall'){fxVeil(item,host,'frost',2300);fxBurst(item,host,x,y,26,['❄','◆','·'],170,350);fxRing(item,host,x,y,120,300);}
+      else if(kind==='thunder'){for(const start of [0,w*.5,w])fxLightning(item,host,p.x,p.y,start,0);fxBurst(item,host,x,y,22,['ϟ','·'],140,400);}
+      else if(kind==='reactor'){fxVortex(item,host,x,y,130);for(const dx of [-.26,0,.26])fxBeam(item,host,{x,y},{x:w*(.5+dx),y:h*.36},650);fxRing(item,host,x,y,130,750);}
+      else if(kind==='void'){fxVortex(item,host,x,y,170);fxRing(item,host,x,y,140,700,true);}
+      else if(kind==='wyrm'){const flame=document.createElement('span');flame.className='dragon-breath';flame.style.left='74%';flame.style.top='31%';crest.append(flame);fxBeam(item,host,{x:x+size*.25,y:y-size*.1},{x:w*.5,y:h*.43},550);fxBurst(item,host,w*.5,h*.43,25,['◆','✦','·'],150,800);}
+      else if(kind==='abyssal'){fxVeil(item,host,'sea',2600);for(let i=0;i<3;i++)fxRing(item,host,p.x,p.y,100+i*25,i*170,true);fxBurst(item,host,x,y,25,['◌','✧','·'],150,300);}
+      else if(kind==='orbital'){for(const offset of [-.22,0,.22])fxBeam(item,host,{x:w*(.5+offset),y:0},{x:p.x,y:p.y},500+Math.abs(offset)*500);fxRing(item,host,p.x,p.y,160,850,true);fxBurst(item,host,p.x,p.y,30,['✦','·','◆'],170,800);}
+      else if(kind==='timebreak'){fxVortex(item,host,x,y,140);fxBurst(item,host,x,y,30,['◆','·','✧'],170,900);fxRing(item,host,p.x,p.y,150,950,true);}
+      else if(kind==='darksun'){fxVeil(item,host,'aura',2400);for(let i=0;i<2;i++){const wave=fxElement('div','cosmetic-wave',host,{...item,tone:i?item.accent:item.tone},2500);motion(wave,[{opacity:0,transform:`translateX(${i?w*1.5:-w*.4}px) skewX(-15deg)`},{opacity:.65,offset:.35},{opacity:0,transform:`translateX(${i?-w*.4:w*1.5}px) skewX(-15deg)`}],{duration:1900,delay:i*180,fill:'both'});}fxRing(item,host,x,y,140,600);}
+    }
     function emoteBubble(item,nick,target,host){
       if(!host.clientWidth)return;host.querySelectorAll(`[data-emote-owner="${CSS.escape(nick)}"]`).forEach(el=>el.remove());const p=fxPoint(host,target),el=fxElement('div','seat-emote',host,item,4400);el.dataset.emoteOwner=nick;el.innerHTML=`<span>${escapeHTML(item.icon)}</span><p>${escapeHTML(item.text)}</p><small>${escapeHTML(nick)}</small>`;
       const width=innerWidth<600?128:145;el.style.width=`${width}px`;el.style.left=`${Math.max(6,Math.min(host.clientWidth-width-6,p.x-width/2))}px`;el.style.top=`${Math.max(8,Math.min(host.clientHeight-95,p.y-112))}px`;
@@ -1172,12 +1209,13 @@
       back:{id:'back-classic',category:'back',name:'Signature noir & or',style:'weave',icon:'♠',tone:'#191917',accent:'#d5b76e'},
       victory:{id:'victory-classic',category:'victory',style:'gold',icon:'✦',tone:'#e0bd72',accent:'#fff1be'},
       bet:{id:'bet-classic',category:'bet',style:'classic',icon:'◉',tone:'#d5b76e',accent:'#fff0c3'},
+      allin:{id:'allin-classic',category:'allin',name:'Tapis signature',style:'none',icon:'♠',tone:'#d5b76e',accent:'#fff0c3'},
       arrival:{id:'arrival-classic',category:'arrival',style:'halo',icon:'♠',tone:'#d7ba79',accent:'#fff0ca'},
       frame:{id:'frame-classic',category:'frame',style:'classic',icon:'◎',tone:'#bca779',accent:'#ead8aa'},
       table:{id:'table-classic',category:'table',style:'felt',icon:'♠',tone:'#30312a',accent:'#191d16'}
     };
     const RARITIES={starter:'Signature',standard:'Classique',rare:'Rare',epic:'Épique',legendary:'Légendaire'};
-    const CATEGORY_COPY={back:'Votre signature, même lorsque vos cartes restent cachées.',victory:'Une célébration visible par toute la table.',bet:'Chaque mise prend du caractère.',arrival:'Faites une entrée qui se remarque.',frame:'Un cadre pour votre personnage ou votre photo.',table:'Une ambiance qui personnalise votre propre vue de la table.',emote:'Une réplique à ajouter à votre roue. Réutilisable à volonté.'};
+    const CATEGORY_COPY={back:'Votre signature, même lorsque vos cartes restent cachées.',victory:'Une célébration visible par toute la table.',bet:'Chaque mise prend du caractère.',allin:'Votre animation personnelle de tapis, en plus de l’effet général.',arrival:'Faites une entrée qui se remarque.',frame:'Un cadre pour votre personnage ou votre photo.',table:'Une ambiance qui personnalise votre propre vue de la table.',emote:'Une réplique à ajouter à votre roue. Réutilisable à volonté.'};
     let shopGroups=[],catalogLoading=false,catalogLoaded=false,shopCategory='all',questGroup='all',shopPending=false,clubFingerprint='',previewItemId=null,clubToastTimer,emoteReadyAt=0,profileTab='account',collectionCategory='all';
     const shopItem=(id,category='back')=>shopItems.get(id)||BASE_ITEMS[category]||BASE_ITEMS.back;
     const ownsItem=id=>!!state?.club?.owned.includes(id);
@@ -1216,6 +1254,7 @@
     }
     function itemThumbnail(item){
       if(item.category==='back')return card('??',item.id)+card('??',item.id);
+      if(item.category==='allin')return `<div class="thumb-relic" aria-hidden="true">${allInSVG(item.style)}</div>`;
       if(item.category==='emote')return `<span class="thumb-emote" aria-hidden="true">${escapeHTML(item.icon)}</span>`;
       if(item.category==='frame')return avatarHTML(state?.avatar,state?.photo,{frame:item.id});
       if(item.category==='table')return `<div class="thumb-felt" aria-hidden="true">${escapeHTML(item.icon)}</div>`;
@@ -1256,7 +1295,7 @@
       if(!state?.club)return;
       $('shopCategories').innerHTML=[{id:'all',icon:'◇',name:'Tout',count:shopItems.size},...shopGroups].map(group=>`<button type="button" data-shop-category="${group.id}" class="${shopCategory===group.id?'active':''}" aria-pressed="${shopCategory===group.id}">${escapeHTML(group.icon)} ${escapeHTML(group.name)}${group.id==='all'?` · ${group.count}`:''}</button>`).join('');
       const normalize=s=>s.toLocaleLowerCase('fr').normalize('NFD').replace(/\p{M}/gu,''),search=normalize($('shopSearch').value.trim()),rarity=$('shopRarity').value;
-      const featured=['victory-leviathan','bet-dragonfire','arrival-stargate','back-dragon-frost','victory-seraph','bet-railgun','arrival-meteor','back-seraph','victory-singularity','bet-rift','arrival-chronos','back-leviathan','victory-dragon','frame-eclipse','back-orrery','table-emerald'];
+      const featured=['allin-wyrm','allin-orbital','allin-darksun','allin-timebreak','victory-leviathan','bet-dragonfire','arrival-stargate','back-dragon-frost','victory-seraph','bet-railgun','arrival-meteor','back-seraph','victory-singularity','bet-rift','arrival-chronos','back-leviathan','victory-dragon','frame-eclipse','back-orrery','table-emerald'];
       const items=[...shopItems.values()].filter(item=>(shopCategory==='all'||item.category===shopCategory)&&(!$('ownedOnly').checked||ownsItem(item.id))&&(rarity==='all'||item.rarity===rarity)&&(!search||normalize(item.name+' '+(item.text||'')).includes(search)));
       if(shopCategory==='all')items.sort((a,b)=>(featured.includes(a.id)?featured.indexOf(a.id):-1+100)-(featured.includes(b.id)?featured.indexOf(b.id):-1+100));
       $('shopGrid').innerHTML=items.map(item=>cosmeticCard(item)).join('');
@@ -1312,6 +1351,10 @@
     function playPreview(){
       const item=shopItems.get(previewItemId);if(!item)return;const host=$('previewFx'),stage=$('previewStage');host.replaceChildren();stage.querySelectorAll('.preview-cards').forEach(el=>el.remove());
       stage.style.setProperty('--preview-tone','#3c4134');stage.style.setProperty('--preview-accent','#1c2416');$('previewPlayer').innerHTML=`${avatarHTML(state.avatar,state.photo,item.category==='frame'?{frame:item.id}:state.club.equipped)}<span>Votre signature</span>`;$('previewPot').hidden=['back','frame','table'].includes(item.category);
+      if(item.category==='allin'){
+        const label=fxElement('div','allin-preview-banner',host,item,20000);label.innerHTML='<strong>TAPIS !</strong><small>Animation générale + votre signature</small>';
+        allInCosmetic(item,$('previewPlayer'),host);if(!reducedMotion())motion(label,[{opacity:0,transform:'translate(-50%,-50%) scale(.5)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:400,fill:'both'});else $('previewStatus').textContent='Aperçu fixe : votre appareil limite les animations.';return;
+      }
       if(reducedMotion()&&['bet','victory','arrival'].includes(item.category)){staticCosmetic(item,host);$('previewStatus').textContent='Aperçu fixe : votre appareil limite les animations.';return;}
       if(item.category==='back'){const cards=document.createElement('div');cards.className='preview-cards';cards.innerHTML=card('??',item.id)+card('??',item.id);stage.append(cards);dealAnimation([...cards.children]);}
       else if(item.category==='table'){stage.style.setProperty('--preview-tone',item.tone);stage.style.setProperty('--preview-accent',item.accent);}

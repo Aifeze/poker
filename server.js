@@ -53,7 +53,7 @@ const AVATARS = ['nova', 'atlas', 'luna', 'rio', 'jade', 'oscar'];
 const CURRENCY = "A' Coins", QUEST_SWAP_MS = 10 * 60000;
 const SHOP_GROUPS = [
   {id:'back',name:'Dos de cartes',icon:'▱'}, {id:'victory',name:'Victoires',icon:'✦'},
-  {id:'bet',name:'Mises',icon:'◉'}, {id:'arrival',name:'Arrivées',icon:'→'},
+  {id:'bet',name:'Mises',icon:'◉'}, {id:'allin',name:'Tapis (all-in)',icon:'♨'}, {id:'arrival',name:'Arrivées',icon:'→'},
   {id:'frame',name:'Cadres',icon:'◎'}, {id:'table',name:'Tapis de table',icon:'♠'}, {id:'emote',name:'Émotes',icon:'☺'}
 ];
 // The catalog is authoritative: the browser never supplies a price or a coin reward.
@@ -112,6 +112,19 @@ const CATALOG = Object.entries({
     ['railgun','Canon orbital',950,'railgun','ϟ','#8de8ff','#e4b3ff','Charge énergétique, faisceau orbital et onde de choc à l’impact.'],
     ['rift','Contrebande dimensionnelle',1100,'rift','◎','#c599ff','#89f4e4','Les jetons entrent dans un portail et ressortent à destination.'],
     ['royalblades','Les Lames du roi',900,'royalblades','♛','#f6d48b','#fff0cc','Trois lames dorées volent en éventail et se croisent à l’impact.']
+  ],
+  allin:[
+    ['classic','Tapis signature',0,'none','♠','#d5b76e','#fff0c3','L’animation générale de tapis, sans effet personnel supplémentaire.'],
+    ['inferno','Brasier de jetons',220,'inferno','♨','#ff9a57','#ffe4a1','Une colonne de braises jaillit de votre siège et sème des étincelles sur le tapis.'],
+    ['icefall','Cœur polaire',260,'icefall','❄','#a5e9ff','#e5faff','Des cristaux se dressent autour de votre place et propagent une onde de givre.'],
+    ['thunder','Foudre souveraine',450,'thunder','ϟ','#9bdbff','#faf2bf','Plusieurs éclairs convergent vers votre siège avant de libérer une onde de choc.'],
+    ['reactor','Réacteur à plasma',520,'reactor','✹','#83f3e2','#c3acff','Un réacteur se charge devant vous puis expulse trois faisceaux de plasma.'],
+    ['void','Faille du néant',600,'void','◎','#c5a0ff','#91eee3','Un vortex aspire des poussières de lumière autour de vos derniers jetons.'],
+    ['wyrm','Serment du dragon',950,'wyrm','龍','#ffb76e','#ff754d','Un dragon émerge de votre place et crache une lance de feu vers le centre.'],
+    ['abyssal','Le Pacte du Léviathan',1100,'abyssal','◎','#70e9e0','#b8a5ff','Une créature des abysses surgit près de vous, escortée par une marée lumineuse.'],
+    ['orbital','Ultimatum orbital',1000,'orbital','ϟ','#a1e6ff','#dfb8ff','Un viseur verrouille votre mise et déclenche une frappe depuis l’orbite.'],
+    ['timebreak','Rupture temporelle',1200,'timebreak','◷','#edcf8f','#b5edff','Une horloge géante se forme à votre place, accélère et éclate en fragments d’or.'],
+    ['darksun','Couronne de l’éclipse',1300,'darksun','☾','#cfabff','#ffd789','Une éclipse couronne votre siège et propage deux vagues d’or et de violet.']
   ],
   arrival:[
     ['classic','Une place au club',0,'halo','♠','#d7ba79','#fff0ca'],
@@ -175,7 +188,7 @@ const CATALOG = Object.entries({
   rarity:price===0?'starter':price>=800?'legendary':price>=400?'epic':price>=180?'rare':'standard'
 })));
 const ITEMS = new Map(CATALOG.map(item => [item.id,item]));
-const LOADOUT = {back:'back-classic',victory:'victory-classic',bet:'bet-classic',arrival:'arrival-classic',frame:'frame-classic',table:'table-classic'};
+const LOADOUT = {back:'back-classic',victory:'victory-classic',bet:'bet-classic',allin:'allin-classic',arrival:'arrival-classic',frame:'frame-classic',table:'table-classic'};
 const FREE_ITEMS = CATALOG.filter(item=>item.price===0).map(item=>item.id);
 const QUESTS = [
   {id:'play',group:'regular',name:'Le rendez-vous',targets:[3,5,8],pay:8,text:n=>`Jouer ${n} mains jusqu’à leur dénouement.`,test:m=>m.played},
@@ -226,7 +239,7 @@ function newClub() {
 function validClub(c) {
   const integer=n=>Number.isSafeInteger(n)&&n>=0;
   if (!c||c.version!==1||!integer(c.revision)||!integer(c.coins)||!Array.isArray(c.owned)||new Set(c.owned).size!==c.owned.length||c.owned.some(id=>!ITEMS.has(id))
-    ||!c.equipped||Object.keys(LOADOUT).some(key=>!c.owned.includes(c.equipped[key])||ITEMS.get(c.equipped[key])?.category!==key)
+    ||!c.equipped||Object.keys(LOADOUT).some(key=>(key!=='allin'||c.equipped.allin!==undefined)&&(!c.owned.includes(c.equipped[key])||ITEMS.get(c.equipped[key])?.category!==key))
     ||!Array.isArray(c.equipped.emotes)||c.equipped.emotes.length>8||new Set(c.equipped.emotes).size!==c.equipped.emotes.length
     ||c.equipped.emotes.some(id=>!c.owned.includes(id)||ITEMS.get(id)?.category!=='emote')||!integer(c.nextSwapAt)
     ||typeof c.lastHand!=='string'||c.lastHand.length>64||!c.stats||['hands','wins','quests','earned','streak'].some(key=>!integer(c.stats[key]))
@@ -328,7 +341,10 @@ function restoreUsers(saved) {
   for (const u of saved.users) {
     const avatar = u.avatar || AVATARS[randomInt(AVATARS.length)];
     if (!u.avatar || !u.club) migrated = true;
-    users.set(u.id, { ...u, avatar, club:u.club || newClub(), socket: null });
+    const club=u.club || newClub();
+    // Add the new cosmetic slot once; keep existing coins, purchases, quests and account data intact.
+    if(club.equipped.allin===undefined){club.equipped.allin=LOADOUT.allin;if(!club.owned.includes(LOADOUT.allin))club.owned.push(LOADOUT.allin);club.revision++;migrated=true;}
+    users.set(u.id, { ...u, avatar, club, socket: null });
   }
   return migrated;
 }
@@ -443,6 +459,7 @@ const table = { players: [], phase: 'waiting', board: [], deck: [], dealer: null
   hand: 0, handId: '', startedAt: 0, handLogs: [], result: 'Bienvenue à la table.', deadline: 0, endedAt: 0, reveal: false, logs: [], winners: [], runout: false, runoutAt: 0 };
 let logSequence = 0;
 function addLog(message, player, effect = null) {
+  if(effect?.type==='allin'&&player)effect={...effect,allinSkin:users.get(player.id).club.equipped.allin};
   table.logs.push({ id: ++logSequence, hand: table.hand, time: Date.now(),
     message: player ? `[${player.nick}] ${message}` : message, actorId: player?.id, effect });
   if (table.logs.length > 100) table.logs.splice(0, table.logs.length - 100);
