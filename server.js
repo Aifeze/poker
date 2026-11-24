@@ -51,6 +51,7 @@ const RUNOUT_FIRST_MS = 1600, RUNOUT_STREET_MS = 1800, RUNOUT_RESULT_MS = 2200;
 const RECONNECT_MS = 30000, HISTORY_LIMIT = 20;
 const AVATARS = ['nova', 'atlas', 'luna', 'rio', 'jade', 'oscar'];
 const CURRENCY = "A' Coins", QUEST_SWAP_MS = 10 * 60000;
+const MAX_PURSE_MEMBERS = 12;
 const SHOP_GROUPS = [
   {id:'back',name:'Dos de cartes',icon:'▱'}, {id:'victory',name:'Victoires',icon:'✦'},
   {id:'bet',name:'Mises',icon:'◉'}, {id:'allin',name:'Tapis (all-in)',icon:'♨'}, {id:'arrival',name:'Arrivées',icon:'→'},
@@ -250,16 +251,20 @@ function makeQuest(group,exclude=[]) {
 function newClub() {
   const quests=[];
   for(const group of ['regular','combo','style'])for(let i=0;i<4;i++)quests.push(makeQuest(group,[...quests.map(q=>q.task),...(group==='combo'?['quads','royal']:[])]));
-  return {version:1,revision:0,coins:120,owned:[...FREE_ITEMS],equipped:{...LOADOUT,emotes:['emote-hi','emote-gg','emote-bluff','emote-allin']},
+  return {version:1,revision:0,equipped:{...LOADOUT,emotes:['emote-hi','emote-gg','emote-bluff','emote-allin']},
     quests,nextSwapAt:0,lastHand:'',stats:{hands:0,wins:0,quests:0,earned:120,streak:0},
     feed:[{id:randomBytes(12).toString('hex'),kind:'welcome',amount:120,title:'Bienvenue dans All-In Room',time:Date.now()}]};
 }
-function validClub(c) {
+function validPurse(purse) {
+  return purse && Number.isSafeInteger(purse.coins) && purse.coins >= 0 && Array.isArray(purse.owned)
+    && new Set(purse.owned).size === purse.owned.length && purse.owned.every(id => ITEMS.has(id));
+}
+function validClub(c, owned) {
   const integer=n=>Number.isSafeInteger(n)&&n>=0;
-  if (!c||c.version!==1||!integer(c.revision)||!integer(c.coins)||!Array.isArray(c.owned)||new Set(c.owned).size!==c.owned.length||c.owned.some(id=>!ITEMS.has(id))
-    ||!c.equipped||Object.keys(LOADOUT).some(key=>(key!=='allin'||c.equipped.allin!==undefined)&&(!c.owned.includes(c.equipped[key])||ITEMS.get(c.equipped[key])?.category!==key))
+  if (!c||c.version!==1||!integer(c.revision)
+    ||!c.equipped||Object.keys(LOADOUT).some(key=>(key!=='allin'||c.equipped.allin!==undefined)&&(!owned.includes(c.equipped[key])||ITEMS.get(c.equipped[key])?.category!==key))
     ||!Array.isArray(c.equipped.emotes)||c.equipped.emotes.length>8||new Set(c.equipped.emotes).size!==c.equipped.emotes.length
-    ||c.equipped.emotes.some(id=>!c.owned.includes(id)||ITEMS.get(id)?.category!=='emote')||!integer(c.nextSwapAt)
+    ||c.equipped.emotes.some(id=>!owned.includes(id)||ITEMS.get(id)?.category!=='emote')||!integer(c.nextSwapAt)
     ||typeof c.lastHand!=='string'||c.lastHand.length>64||!c.stats||['hands','wins','quests','earned','streak'].some(key=>!integer(c.stats[key]))
     ||!Array.isArray(c.feed)||c.feed.length>12||c.feed.some(e=>!e||typeof e.id!=='string'||typeof e.title!=='string'||e.title.length>200||!Number.isSafeInteger(e.amount)||!integer(e.time))
     ||!Array.isArray(c.quests)||c.quests.length!==12||new Set(c.quests.map(q=>q?.task)).size!==12) return false;
@@ -267,21 +272,27 @@ function validClub(c) {
 }
 function clubState(id) {
   const c=users.get(id).club;
-  return {...c,quests:c.quests.map(q=>{const t=QUESTS.find(t=>t.id===q.task),reward=t.pay*q.target;return {...q,name:t.name,description:t.text(q.target),reward,group:t.group,difficulty:reward>=200?'Prestige':reward>=120?'Expert':reward>=70?'Avancé':'Accessible'};})};
+  const {coins, owned, members} = purseFor(id);
+  return {...c,coins,owned,purseMembers:[...members].map(member=>users.get(member).nick),purseMemberLimit:MAX_PURSE_MEMBERS,
+    quests:c.quests.map(q=>{const t=QUESTS.find(t=>t.id===q.task),reward=t.pay*q.target;return {...q,name:t.name,description:t.text(q.target),reward,group:t.group,difficulty:reward>=200?'Prestige':reward>=120?'Expert':reward>=70?'Avancé':'Accessible'};})};
 }
 function publicCosmetics(id) { const {emotes,...loadout}=users.get(id).club.equipped;return loadout; }
-function coinEntry(c,amount,title,kind) {
-  if (!Number.isSafeInteger(c.coins+amount)||c.coins+amount<0) throw Error('Solde de coins invalide.');
-  c.coins+=amount;c.revision++;if(amount>0)c.stats.earned+=amount;
+function coinEntry(id,amount,title,kind) {
+  const c = users.get(id).club, purse = purseFor(id);
+  const balance = purse.coins + amount;
+  if (!Number.isSafeInteger(balance)||balance<0) throw Error('Solde de coins invalide.');
+  purse.coins = balance;
+  touchPurse(purse);
+  if(amount>0)c.stats.earned+=amount;
   c.feed.unshift({id:randomBytes(12).toString('hex'),amount,title,kind,time:Date.now()});c.feed.length=Math.min(c.feed.length,12);
 }
 function rewardHand(id,m,handId) {
   const c=users.get(id).club;if(c.lastHand===handId)return 0;c.lastHand=handId;c.stats.hands++;
   c.stats.streak=m.won?c.stats.streak+1:0;m.streak=c.stats.streak;
   let reward=0;
-  if(m.won){c.stats.wins++;reward=20+(m.showdown?5:0)+(m.allin?10:0);coinEntry(c,reward,`Victoire${m.allin?' au tapis':m.showdown?' à l’abattage':''}`,'win');}
+  if(m.won){c.stats.wins++;reward=20+(m.showdown?5:0)+(m.allin?10:0);coinEntry(id,reward,`Victoire${m.allin?' au tapis':m.showdown?' à l’abattage':''}`,'win');}
   for(let i=0;i<c.quests.length;i++){const q=c.quests[i],task=QUESTS.find(t=>t.id===q.task);if(!task.test(m))continue;q.progress++;
-    if(q.progress<q.target)continue;const amount=task.pay*q.target;c.stats.quests++;coinEntry(c,amount,task.name,'quest');
+    if(q.progress<q.target)continue;const amount=task.pay*q.target;c.stats.quests++;coinEntry(id,amount,task.name,'quest');
     c.quests[i]=makeQuest(task.group,c.quests.map(q=>q.task));}
   c.revision++;
   return reward;
@@ -316,6 +327,11 @@ const validNick = nick => typeof nick === 'string' && /^[\p{L}\p{N}_ -]{2,20}$/u
 const accountByNick = key => [...users].find(([, u]) => nickKey(u.nick) === key);
 const scrypt = promisify(scryptCallback);
 const users = new Map();
+const purses = new Map();
+const purseFor = id => purses.get(users.get(id).purseId);
+function touchPurse(purse) {
+  for (const id of purse.members) users.get(id).club.revision++;
+}
 const sessions = new Map(), authAttempts = new Map();
 const chatMessages = [], chatLimits = new Map(), emoteTimes = new Map();
 const reconnectTimers = new Map();
@@ -333,36 +349,60 @@ const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
 const dataFile = path.join(dataDir, 'accounts.json');
 let capitalResetVersion = 1; // Marqueur historique conservé ; aucune remise à zéro automatique.
 function validateAccounts(saved) {
-  if (saved.version !== 1 || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
+  if (![1, 2].includes(saved?.version) || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
   const previousReset = saved.capitalResetVersion ?? 0;
   if (!Number.isSafeInteger(previousReset) || previousReset < 0)
     throw Error('Version de remise à zéro non prise en charge.');
   const ids = new Set(), names = new Set();
+  const savedPurses = new Map();
+  if (saved.version === 2) {
+    if (!Array.isArray(saved.purses)) throw Error('Sauvegarde de portefeuilles invalide.');
+    for (const purse of saved.purses) {
+      if (!validPurse(purse) || typeof purse.id !== 'string' || savedPurses.has(purse.id))
+        throw Error('Sauvegarde de portefeuilles invalide.');
+      savedPurses.set(purse.id, purse);
+    }
+  }
+  const usedPurses = new Set();
   for (const u of saved.users) {
-    if (typeof u.id !== 'string' || typeof u.nick !== 'string' ||
+    const purse = saved.version === 1 ? u?.club : savedPurses.get(u?.purseId);
+    if (!u || typeof u.id !== 'string' || typeof u.nick !== 'string' ||
       !/^[a-f0-9]{32}$/.test(u.salt) || !/^[a-f0-9]{128}$/.test(u.hash) ||
       !Number.isSafeInteger(u.wallet) || u.wallet < 0 ||
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
       !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id) || names.has(nickKey(u.nick))
-      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo)) || (u.club !== undefined && !validClub(u.club)))
+      || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo))
+      || ((saved.version === 2 || u.club !== undefined) && (!validPurse(purse) || !validClub(u.club, purse.owned))))
       throw Error('Sauvegarde de comptes invalide.');
     ids.add(u.id); names.add(nickKey(u.nick));
+    usedPurses.add(u.purseId);
   }
+  if (saved.version === 2 && usedPurses.size !== savedPurses.size) throw Error('Sauvegarde de portefeuilles invalide.');
   if (saved.history !== undefined && (!Array.isArray(saved.history) || saved.history.length > HISTORY_LIMIT
     || saved.history.some(h => !h || typeof h.id !== 'string' || !Number.isSafeInteger(h.number)
       || !Array.isArray(h.board) || !Array.isArray(h.players) || !Array.isArray(h.winners) || !Array.isArray(h.logs))))
     throw Error('Historique sauvegardé invalide.');
   return saved;
 }
+function createPurse(id, coins = 120, owned = [...FREE_ITEMS]) {
+  purses.set(id, {coins, owned, members: new Set()});
+}
 function restoreUsers(saved) {
-  let migrated = false;
+  let migrated = saved.version === 1;
+  if (saved.version === 2) {
+    for (const {id, coins, owned} of saved.purses) createPurse(id, coins, owned);
+  }
   for (const u of saved.users) {
     const avatar = u.avatar || AVATARS[randomInt(AVATARS.length)];
     if (!u.avatar || !u.club) migrated = true;
-    const club=u.club || newClub();
+    const {coins, owned, ...club} = u.club || newClub();
+    const purseId = saved.version === 1 ? u.id : u.purseId;
+    if (saved.version === 1) createPurse(purseId, coins, owned);
+    const purse = purses.get(purseId);
     // Add the new cosmetic slot once; keep existing coins, purchases, quests and account data intact.
-    if(club.equipped.allin===undefined){club.equipped.allin=LOADOUT.allin;if(!club.owned.includes(LOADOUT.allin))club.owned.push(LOADOUT.allin);club.revision++;migrated=true;}
-    users.set(u.id, { ...u, avatar, club, socket: null });
+    if(club.equipped.allin===undefined){club.equipped.allin=LOADOUT.allin;if(!purse.owned.includes(LOADOUT.allin))purse.owned.push(LOADOUT.allin);club.revision++;migrated=true;}
+    purse.members.add(u.id);
+    users.set(u.id, { ...u, avatar, club, purseId, socket: null });
   }
   return migrated;
 }
@@ -458,7 +498,7 @@ async function initializeStorage() {
   await pool.query('ALTER TABLE river_club_private.state ENABLE ROW LEVEL SECURITY');
   await pool.query('REVOKE ALL ON TABLE river_club_private.state FROM PUBLIC');
   await pool.query(`INSERT INTO river_club_private.state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
-    [JSON.stringify({ version: 1, capitalResetVersion: 1, users: [] })]);
+    [JSON.stringify({ version: 2, capitalResetVersion: 1, users: [], purses: [] })]);
   // Render fait coexister les deux serveurs pendant un déploiement. Le nouveau prend
   // la main et charge le dernier état dans une seule écriture atomique, sans changer les comptes.
   // La révision avancée bloque aussi les anciennes versions qui ne connaissent pas owner.
@@ -496,8 +536,9 @@ async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, photo: u.photo || null, salt: u.salt, hash: u.hash,
-    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt, club:u.club }));
-  const payload = JSON.stringify({ version: 1, capitalResetVersion, users: rows, history: handHistory });
+    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt, club:u.club, purseId: u.purseId }));
+  const savedPurses = [...purses].map(([id, {coins, owned}]) => ({id, coins, owned}));
+  const payload = JSON.stringify({ version: 2, capitalResetVersion, users: rows, purses: savedPurses, history: handHistory });
   if (postgres) {
     const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
       WHERE id = 1 AND revision = $2 AND owner = $3 RETURNING revision`, [payload, dbRevision, storageOwner]);
@@ -528,7 +569,7 @@ function enqueue(action, save = true) {
   const result = mutationQueue.then(async () => {
     await ready;
     if (storageUnavailable) throw Error(STORAGE_MESSAGE);
-    const before = structuredClone({ users, table, logSequence, handHistory });
+    const before = structuredClone({ users, purses, table, logSequence, handHistory });
     clearTimeout(timer); inMutation = true; turnChanged = false; turnBudget = TURN_MS; runoutDelay = 0;
     let writing = false;
     try {
@@ -539,6 +580,7 @@ function enqueue(action, save = true) {
       inMutation = false; scheduleTurn(); scheduleReconnects(); broadcast(); return value;
     } catch (error) {
       users.clear(); for (const [id, u] of before.users) users.set(id, u);
+      purses.clear(); for (const [id, purse] of before.purses) purses.set(id, purse);
       Object.assign(table, before.table); logSequence = before.logSequence; inMutation = false;
       handHistory = before.handHistory;
       if (writing) { storageFailed(error); throw Error(STORAGE_MESSAGE); }
@@ -610,8 +652,10 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
       await enqueue(() => {
         if (accountByNick(key)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
         // L'identifiant du compte reste immuable, même après un changement de pseudo.
-        id = key; while (users.has(id)) id = randomBytes(16).toString('hex');
-        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, club:newClub(), socket: null });
+        id = key; while (users.has(id) || purses.has(id)) id = randomBytes(16).toString('hex');
+        createPurse(id);
+        purses.get(id).members.add(id);
+        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, club:newClub(), purseId: id, socket: null });
       });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
@@ -673,6 +717,7 @@ app.post('/api/profile', async (req, res) => {
         const taken = accountByNick(nickKey(body.nick));
         if (taken && taken[0] !== session.id) throw Object.assign(Error('Ce pseudo est déjà utilisé.'), {status:409});
         const previous = current.nick; current.nick = body.nick.trim();
+        if (previous !== current.nick) touchPurse(purseFor(session.id));
         const player = seat(session.id);
         if (player) { player.nick = current.nick; if (previous !== current.nick) addLog(`change de pseudo : ${previous} devient ${current.nick}.`, player); }
       }
@@ -690,6 +735,68 @@ app.post('/api/profile', async (req, res) => {
     }
     res.json({ ok:true, ...profile });
   } catch (error) { res.status(error.status || 503).json({ error:error.status ? error.message : STORAGE_MESSAGE }); }
+});
+app.post('/api/profile/link', async (req, res) => {
+  const session = sessionFor(req);
+  if (!session) return res.status(401).json({error:'Reconnectez-vous pour regrouper vos comptes.'});
+  if (!consumeAttempt('link-ip:' + req.ip, 20) || !consumeAttempt('link:' + session.id, 10))
+    return res.status(429).json({error:'Trop de tentatives de regroupement. Réessayez dans 15 minutes.'});
+  const {currentPassword, accounts} = req.body || {};
+  const validPassword = value => typeof value === 'string' && value.length >= 8 && value.length <= 128;
+  if (!validPassword(currentPassword) || !Array.isArray(accounts) || !accounts.length || accounts.length >= MAX_PURSE_MEMBERS
+    || accounts.some(account => !validNick(account?.nick) || !validPassword(account.password)))
+    return res.status(400).json({error:`Saisissez le pseudo et le mot de passe de chaque compte (maximum ${MAX_PURSE_MEMBERS} comptes, compte actuel inclus).`});
+
+  try {
+    const current = users.get(session.id);
+    const credentials = [{key:nickKey(current.nick), password:currentPassword},
+      ...accounts.map(({nick, password}) => ({key:nickKey(nick), password}))];
+    if (new Set(credentials.map(({key}) => key)).size !== credentials.length)
+      return res.status(400).json({error:'Saisissez chaque compte une seule fois.'});
+
+    const verified = new Map();
+    for (const {key, password} of credentials) {
+      const found = accountByNick(key);
+      const {salt, hash} = found?.[1] || {};
+      const verifier = await scrypt(password, salt || '00000000000000000000000000000000', 64);
+      if (!hash || !timingSafeEqual(verifier, Buffer.from(hash, 'hex')))
+        return res.status(401).json({error:'Le pseudo ou le mot de passe d’un compte est incorrect.'});
+      verified.set(found[0], {key, salt, hash});
+    }
+
+    const club = await enqueue(() => {
+      const fail = (status, message) => { throw Object.assign(Error(message), {status}); };
+      if (sessionFor(req)?.token !== session.token || !verified.has(session.id))
+        fail(401, 'Session expirée. Reconnectez-vous.');
+      const purseIds = new Set();
+      for (const [id, {key, salt, hash}] of verified) {
+        const user = users.get(id);
+        if (!user || nickKey(user.nick) !== key || user.salt !== salt || user.hash !== hash)
+          fail(409, 'Un compte a changé. Saisissez de nouveau les identifiants actuels.');
+        purseIds.add(user.purseId);
+      }
+      if (purseIds.size === 1) fail(409, 'Ces comptes partagent déjà le même portefeuille.');
+
+      // Recheck membership in the mutation queue in case another request linked a group in the meantime.
+      const selected = [...purseIds].map(id => purses.get(id));
+      if (selected.some(purse => [...purse.members].some(id => !verified.has(id))))
+        fail(409, 'Saisissez les identifiants de tous les comptes des groupes concernés.');
+      const coins = selected.reduce((balance, purse) => balance + purse.coins, 0);
+      if (!Number.isSafeInteger(coins)) fail(409, 'Le solde total dépasse la capacité du portefeuille.');
+
+      const purseId = users.get(session.id).purseId, purse = purses.get(purseId);
+      purse.coins = coins;
+      purse.owned = [...new Set(selected.flatMap(source => source.owned))];
+      purse.members = new Set(verified.keys());
+      for (const id of purse.members) users.get(id).purseId = purseId;
+      for (const id of purseIds) if (id !== purseId) purses.delete(id);
+      touchPurse(purse);
+      return structuredClone(clubState(session.id));
+    });
+    res.json({ok:true, club});
+  } catch (error) {
+    res.status(error.status || 503).json({error:error.status ? error.message : STORAGE_MESSAGE});
+  }
 });
 app.get('/api/avatars/:id/:version', (req,res) => {
   if (!sessionFor(req)) return res.status(401).json({ error:'Connectez-vous.' });
@@ -717,7 +824,7 @@ app.post('/api/store',async(req,res)=>{
     const {action,itemId,slot}=req.body||{};
     const result=await enqueue(()=>{
       if(sessionFor(req)?.token!==session.token)throw Object.assign(Error('Session expirée.'),{status:401});
-      const c=users.get(session.id).club,item=ITEMS.get(itemId);
+      const c=users.get(session.id).club,purse=purseFor(session.id),item=ITEMS.get(itemId);
       const invalid=message=>{throw Object.assign(Error(message),{status:400});};
       if(action==='reroll'){
         if(!Number.isInteger(slot)||slot<0||slot>=c.quests.length)invalid('Quête inconnue.');
@@ -726,11 +833,11 @@ app.post('/api/store',async(req,res)=>{
       }else{
         if(!item)invalid('Objet inconnu.');
         if(action==='buy'){
-          if(c.owned.includes(itemId))invalid('Vous possédez déjà cet objet.');
-          if(c.coins<item.price)invalid(`Il vous manque ${item.price-c.coins} ${CURRENCY}.`);
-          coinEntry(c,-item.price,item.name,'purchase');c.owned.push(itemId);
+          if(purse.owned.includes(itemId))invalid('Vous possédez déjà cet objet.');
+          if(purse.coins<item.price)invalid(`Il vous manque ${item.price-purse.coins} ${CURRENCY}.`);
+          coinEntry(session.id,-item.price,item.name,'purchase');purse.owned.push(itemId);
         }else if(action==='equip'||action==='unequip'){
-          if(!c.owned.includes(itemId))invalid('Achetez cet objet avant de l’équiper.');
+          if(!purse.owned.includes(itemId))invalid('Achetez cet objet avant de l’équiper.');
           if(item.category==='emote'){
             if(action==='unequip')c.equipped.emotes=c.equipped.emotes.filter(id=>id!==itemId);
             else if(!c.equipped.emotes.includes(itemId)){if(c.equipped.emotes.length>=8)invalid('Votre roue contient déjà huit émotes. Retirez-en une avant d’en ajouter.');c.equipped.emotes.push(itemId);}

@@ -208,6 +208,18 @@
     #game #actions #allin{background:linear-gradient(145deg,#b94047,#8f2933);border-color:#e57e7780;color:#fff1de;box-shadow:inset 0 1px 0 #ffc6b530}#game #actions #allin:hover:enabled{background:linear-gradient(145deg,#d45154,#a3323b);border-color:#ffb1a5}#game #actions #allin:focus-visible{outline:2px solid #ffb1a5;outline-offset:3px}
     @media(min-width:1024px) and (max-width:1199px){.raise-control{flex-basis:205px;min-width:190px;gap:8px}.raise-value output{font-size:17px}.raise-limits{font-size:8px}}
     @media(max-width:600px){#actions{gap:8px}#actions #fold,#actions #call{order:1;flex:1 1 calc(50% - 8px)}#actions .raise-control{order:2;flex:1 1 100%;max-width:none;gap:16px;margin:3px 0}#actions .bet-sizes{order:3;flex:1 1 100%;display:flex}#actions .bet-sizes .btn{flex:1}#actions #raise,#actions #allin{order:4;flex:1 1 calc(50% - 8px)}.raise-limits{font-size:10px}.raise-value output{font-size:22px}}
+    .purse-card{grid-column:1/-1}
+    .purse-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px;margin:12px 0;color:#ead8aa}
+    .purse-summary p{overflow-wrap:anywhere}
+    #purseForm{max-width:720px}
+    #purseAccounts{display:grid;gap:10px}
+    .purse-account{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:end;gap:10px}
+    .purse-account label{display:grid;gap:5px}
+    .purse-account input{box-sizing:border-box;width:100%;min-width:0}
+    .purse-confirm{display:flex;align-items:flex-start;gap:8px;margin-top:8px}
+    .purse-confirm input{width:auto;margin-top:3px;accent-color:#d5b76e}
+    #purseForm>button{align-self:flex-start}
+    @media(max-width:600px){.purse-account{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -294,6 +306,31 @@
           <label for="confirmNewPassword">Confirmer le nouveau mot de passe</label><input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128">
           <button id="saveAccount" type="submit" class="btn gold">Enregistrer les modifications</button><p id="accountMessage" class="form-message" role="status"></p>
         </form></section>
+        <section class="panel settings-card purse-card" aria-labelledby="purseTitle">
+          <h3 id="purseTitle">Portefeuille A’ Coins</h3>
+          <div class="purse-summary">
+            <strong id="purseBalance"></strong>
+            <p id="purseMembers"></p>
+          </div>
+          <p class="settings-help">Regroupez vos soldes et vos objets dans une seule collection. Les prochains gains en A’ Coins et les achats seront partagés. Vos jetons de poker, vos quêtes et les objets que vous équipez restent propres à chaque compte.</p>
+          <form id="purseForm" class="account-form" method="post" autocomplete="off" aria-describedby="purseInstructions">
+            <p class="settings-help" id="purseInstructions">Saisissez votre mot de passe et les identifiants de tous les autres comptes concernés, y compris ceux déjà rattachés aux portefeuilles à réunir.</p>
+            <label for="pursePassword">Mot de passe de ce compte</label>
+            <input id="pursePassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
+            <div id="purseAccounts" role="group" aria-label="Autres comptes"></div>
+            <button id="addPurseAccount" type="button" class="btn">Ajouter un compte au formulaire</button>
+            <label class="purse-confirm"><input id="confirmPurseLink" type="checkbox" required>Je confirme le regroupement définitif des portefeuilles.</label>
+            <button id="linkPurses" type="submit" class="btn gold" disabled>Regrouper les portefeuilles</button>
+          </form>
+          <p id="purseMessage" class="form-message" role="status"></p>
+          <template id="purseAccountRow">
+            <div class="purse-account">
+              <label>Pseudo<input name="nick" minlength="2" maxlength="20" required></label>
+              <label>Mot de passe<input name="password" type="password" minlength="8" maxlength="128" required></label>
+              <button type="button" class="btn">Retirer</button>
+            </div>
+          </template>
+        </section>
       </div>
       <section id="profileCollectionPanel" role="tabpanel" aria-labelledby="profileCollectionTab" hidden>
         <div class="collection-heading"><div><p class="eyebrow">VOTRE SIGNATURE</p><h3>Ma collection <span id="profileCollectionCount">0 objets</span></h3><p>Équipez vos trouvailles ou retirez-les pour retrouver le style Signature. Vos objets restent acquis.</p></div><button id="collectionToShop" type="button" class="btn gold">Visiter la boutique →</button></div>
@@ -339,7 +376,7 @@
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
     let joinPending = false;
     let historyVersion = null, historyLoading = false, historyEntries = [], reconnectRetry;
-    let settingsLoadedFor = null, profilePending = false;
+    let settingsLoadedFor = null, profilePending = false, pursePending = null;
     let registerPhoto = null, settingsPhoto = null, registerPhotoBusy = false, settingsPhotoBusy = false, authPending = false;
     const photoJobs = {register:0,settings:0};
     const chatNodes = new Map();
@@ -361,6 +398,7 @@
       clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
       $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
       $('settingsPage').hidden = true; $('settingsTurnAlert').hidden = true; $('openSettings').hidden = true; settingsLoadedFor = null; profilePending = false;
+      pursePending = null; resetPurseForm();
       collectionCategory='all';$('collectionSearch').value='';$('collectionFilter').value='all';$('collectionStatus').textContent='';$('collectionGrid').replaceChildren();$('profileLoadout').replaceChildren();$('profileEmotes').replaceChildren();setProfileTab('account');
       $('settingsPhotoPreview').replaceChildren(); $('settingsAvatarPreview').replaceChildren();
       for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
@@ -733,7 +771,78 @@
     function updateSettingsAvailability() {
       const blocked = !state || !socket.connected || storageBlocked || profilePending || settingsPhotoBusy;
       document.querySelectorAll('#characterForm input,#accountForm input,#characterForm button,#accountForm button').forEach(el => el.disabled = blocked);
+      updatePurseAvailability();
     }
+    function updatePurseAvailability() {
+      const club = state?.club, rows = $('purseAccounts').children;
+      const full = !!club && club.purseMembers.length >= club.purseMemberLimit;
+      const blocked = !club || !socket.connected || storageBlocked || !!pursePending || full;
+      $('purseForm').hidden = full;
+      $('linkPurses').disabled = blocked;
+      $('addPurseAccount').disabled = blocked || rows.length >= club.purseMemberLimit - 1;
+      $('purseForm').querySelectorAll('input').forEach(input => input.disabled = blocked);
+      for (const row of rows) row.querySelector('button').disabled = blocked || rows.length === 1;
+    }
+    function renderPurse(club) {
+      const {coins, purseMembers, purseMemberLimit} = club;
+      $('purseBalance').textContent = `${money(coins)} ${COIN_NAME}`;
+      $('purseMembers').textContent = purseMembers.length === 1 ? 'Portefeuille individuel'
+        : `Comptes liés (${purseMembers.length}/${purseMemberLimit}) · ${purseMembers.join(', ')}`;
+      updatePurseAvailability();
+    }
+    function addPurseAccount() {
+      const row = $('purseAccountRow').content.firstElementChild.cloneNode(true);
+      row.querySelector('button').onclick = () => {
+        row.remove();
+        updatePurseAvailability();
+        $('purseAccounts').lastElementChild.querySelector('input').focus();
+      };
+      $('purseAccounts').append(row);
+      updatePurseAvailability();
+      return row;
+    }
+    function resetPurseForm() {
+      $('purseForm').reset();
+      $('purseAccounts').replaceChildren();
+      addPurseAccount();
+      $('purseMessage').classList.remove('success');
+      $('purseMessage').textContent = '';
+    }
+    $('addPurseAccount').onclick = () => addPurseAccount().querySelector('input').focus();
+    $('purseForm').onsubmit = async event => {
+      event.preventDefault();
+      if ($('linkPurses').disabled) return;
+      const operation = {};
+      const accounts = [...$('purseAccounts').children].map(row => ({
+        nick: row.querySelector('[name="nick"]').value,
+        password: row.querySelector('[name="password"]').value
+      }));
+      const currentPassword = $('pursePassword').value;
+      $('purseForm').querySelectorAll('input[type="password"]').forEach(input => input.value = '');
+      $('confirmPurseLink').checked = false;
+      pursePending = operation;
+      updatePurseAvailability();
+      const status = $('purseMessage');
+      status.classList.remove('success');
+      status.textContent = 'Vérification des identifiants…';
+      try {
+        const reply = await api('profile/link', {currentPassword, accounts});
+        if (pursePending !== operation) return;
+        adoptClub(reply.club);
+        resetPurseForm();
+        renderClub(true);
+        status.classList.add('success');
+        status.textContent = 'Les portefeuilles ont été regroupés.';
+      } catch (error) {
+        if (pursePending === operation) status.textContent = error.message;
+      } finally {
+        if (pursePending === operation) {
+          pursePending = null;
+          updatePurseAvailability();
+        }
+      }
+    };
+    resetPurseForm();
     function previewCharacter(id) {
       const c = character(id); $('settingsAvatarPreview').innerHTML = avatarHTML(c.id,settingsPhoto,state?.club?.equipped);
       $('settingsCharacterName').textContent = settingsPhoto ? 'Votre photo personnelle' : `${c.name} · ${c.tag}`;
@@ -827,6 +936,7 @@
       $('shopTurnAlert').hidden=!shopping||!mine;$('questTurnAlert').hidden=!quests||!mine;
       if (settings && settingsLoadedFor !== state.me) fillSettings();
       if (!settings) { settingsLoadedFor = null; for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = ''; }
+      if (!settings && !enteredSettings && !pursePending) resetPurseForm();
       updateSettingsAvailability();
       if (viewing && !historyLoading && historyVersion !== (state.historyVersion || '')) loadHistory();
       if(shopping&&enteredShop)renderShop();if(quests&&enteredQuests)renderQuests();if(settings&&enteredSettings&&profileTab==='collection')renderCollection();renderClub();
@@ -1279,6 +1389,7 @@
       $('clubNav').hidden=!state;
       if(!state?.club)return;
       $('coinBalance').textContent=money(state.club.coins);$('shopCoins').textContent=money(state.club.coins);$('questCoins').textContent=money(state.club.coins);
+      if(settingsRoute())renderPurse(state.club);
       $('collectionCount').textContent=money(state.club.owned.length);$('completedQuests').textContent=money(state.club.stats.quests);$('clubWins').textContent=money(state.club.stats.wins);
       const almost=state.club.quests.filter(q=>q.progress>0).length;$('questMini').textContent=almost?`${almost} défis en cours`:'12 défis · A’ Coins';
       applyTableTheme();const fingerprint=JSON.stringify(state.club);
