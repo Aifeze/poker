@@ -121,7 +121,7 @@ test('legacy accounts can share assets while keeping their personal poker and cl
   const a = await auth('Lydia'), b = await auth('Marc'), c = await auth('Rose'), d = await auth('Mila','register');
   const beforeA = await store(a), beforeB = await store(b);
   const migrated = JSON.parse(await fs.readFile(file,'utf8'));
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   assert.equal(migrated.capitalResetVersion, legacy.capitalResetVersion);
   assert.equal((await store(c)).coins, 120);
   for (const old of [lydia,marc,ancienneRose]) {
@@ -183,6 +183,10 @@ test('legacy accounts can share assets while keeping their personal poker and cl
   const afterA = await store(a), afterB = await store(b);
   assert.equal(afterA.coins, 424); // 20 for the win and 24 for Lydia's completed quest.
   assert.equal(afterB.coins, 424);
+  const buyer = purchases[0].status === 200 ? 'Lydia' : 'Marc';
+  assert.equal(afterA.purseShares[0].coins, 300 + 24 + afterA.stats.wins*20 - (buyer==='Lydia'?100:0));
+  assert.equal(afterA.purseShares[1].coins, 180 + afterB.stats.wins*20 - (buyer==='Marc'?100:0));
+  assert.deepEqual(afterA.purseShares.filter(share=>share.owned.includes('back-emerald')).map(share=>share.nick), [buyer]);
   assert.equal(afterA.stats.quests, 1);
   assert.equal(afterB.stats.quests, 0);
   assert.equal(afterB.quests[0].progress, 1);
@@ -218,4 +222,69 @@ test('legacy accounts can share assets while keeping their personal poker and cl
   const sol = await store(await auth('Sol'));
   assert.equal(sol.coins, 120);
   assert.deepEqual(sol.purseMembers, ['Sol']);
+
+  const [lydiaCookie, marcCookie, roseCookie, milaCookie] = restarted;
+  const unlink = (cookie,currentPassword,status=200)=>api(server,'profile/unlink',{cookie,body:{currentPassword},status});
+  await unlink(null,password,401);
+  await unlink(milaCookie,'mauvais-mot-de-passe',401);
+  await unlink(milaCookie,password);
+  assert.equal((await store(milaCookie)).coins,120);
+  assert.equal((await store(lydiaCookie)).coins,544);
+  await link(milaCookie,['Lydia','Marc','Rose']);
+  const bought = (await purchase(roseCookie,'back-aurora')).json.club;
+  assert.equal(bought.coins,84);
+  assert.equal(bought.purseShares.find(share=>share.nick==='Rose').coins,0);
+  await api(server,'store',{cookie:marcCookie,body:{action:'equip',itemId:'back-aurora'}});
+  await api(server,'store',{cookie:roseCookie,body:{action:'equip',itemId:'victory-fireworks'}});
+  await unlink(roseCookie,password);
+  const separatedRose = await store(roseCookie), remaining = await store(marcCookie);
+  assert.equal(separatedRose.coins,0);
+  assert.equal(remaining.coins,84);
+  assert.ok(separatedRose.owned.includes('back-aurora'));
+  assert.ok(!remaining.owned.includes('back-aurora'));
+  assert.equal(separatedRose.equipped.victory,'victory-classic');
+  assert.equal(remaining.equipped.back,'back-classic');
+  assert.deepEqual(remaining.quests,afterB.quests);
+  await unlink(roseCookie,password,409);
+  await link(roseCookie,['Lydia','Marc','Mila']);
+  assert.ok((await store(lydiaCookie)).owned.includes('back-aurora'));
+  assert.equal((await store(milaCookie)).coins,84);
+  await server.stop();
+  server = await startServer(directory,t);
+  const persisted = await store(await auth('Rose'));
+  assert.equal(persisted.coins,84);
+  assert.deepEqual(persisted.purseShares.filter(share=>share.owned.includes('back-aurora')).map(share=>share.nick),['Rose']);
+});
+
+test('unattributed assets from an already merged v2 wallet are preserved', {timeout:30000}, async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(),'poker-test-'));
+  t.after(() => fs.rm(directory,{recursive:true,force:true}));
+  const {club:groupClub,...a} = legacyAccount('Ana',923,0,{back:'back-azure'},0);
+  const {club:otherClub,...b} = legacyAccount('Leo',1500,0,{},0);
+  const {club:soloClub,...c} = legacyAccount('Eli',1000,120,{},0);
+  const personal = ({coins,owned,...club})=>club;
+  await fs.writeFile(path.join(directory,'accounts.json'), JSON.stringify({version:2,
+    users:[{...a,club:personal(groupClub),purseId:a.id},{...b,club:personal(otherClub),purseId:a.id},
+      {...c,club:personal(soloClub),purseId:c.id}],
+    purses:[{id:a.id,coins:300,owned:groupClub.owned},{id:c.id,coins:120,owned:soloClub.owned}]
+  }));
+  let server = await startServer(directory,t);
+  const auth = async nick => (await api(server,'login',{body:{nick,password}})).cookie;
+  const store = async cookie => (await api(server,'store',{cookie})).json.club;
+  const ana = await auth('Ana'), eli = await auth('Eli');
+  const original = await store(ana);
+  assert.equal(original.coins,300);
+  assert.equal(original.equipped.back,'back-azure');
+  assert.equal(original.canUnlink,false);
+  assert.deepEqual(original.purseLegacy,[{coins:300,owned:['back-azure']}]);
+  await api(server,'profile/unlink',{cookie:ana,status:409,body:{currentPassword:password}});
+  await api(server,'profile/link',{cookie:ana,body:{currentPassword:password,accounts:[{nick:'Leo',password},{nick:'Eli',password}]}});
+  assert.equal((await store(eli)).canUnlink,true);
+  await api(server,'profile/unlink',{cookie:eli,body:{currentPassword:password}});
+  assert.equal((await store(eli)).coins,120);
+  await server.stop();
+  server = await startServer(directory,t);
+  const reloaded = await store(await auth('Ana'));
+  assert.deepEqual(reloaded.purseLegacy, original.purseLegacy);
+  assert.deepEqual(reloaded.purseMembers, ['Ana','Leo']);
 });

@@ -272,18 +272,36 @@ function validClub(c, owned) {
 }
 function clubState(id) {
   const c=users.get(id).club;
-  const {coins, owned, members} = purseFor(id);
+  const purse = purseFor(id), {members} = purse;
+  const {coins, owned} = purseAssets(purse);
   return {...c,coins,owned,purseMembers:[...members].map(member=>users.get(member).nick),purseMemberLimit:MAX_PURSE_MEMBERS,
+    purseShares:[...members].map(member=>{
+      const user = users.get(member);
+      return {...profileFor(member), self:member===id, coins:user.assets.coins, owned:user.assets.owned.filter(item=>ITEMS.get(item).price>0)};
+    }),
+    purseLegacy:purse.legacy.map(({coins,owned})=>({coins,owned:owned.filter(item=>ITEMS.get(item).price>0)})),
+    canUnlink:members.size>1 && !hasUnassignedAssets(purse,id),
     quests:c.quests.map(q=>{const t=QUESTS.find(t=>t.id===q.task),reward=t.pay*q.target;return {...q,name:t.name,description:t.text(q.target),reward,group:t.group,difficulty:reward>=200?'Prestige':reward>=120?'Expert':reward>=70?'Avancé':'Accessible'};})};
 }
 function publicCosmetics(id) { const {emotes,...loadout}=users.get(id).club.equipped;return loadout; }
 function coinEntry(id,amount,title,kind) {
-  const c = users.get(id).club, purse = purseFor(id);
-  const balance = purse.coins + amount;
+  const {club:c, assets} = users.get(id), purse = purseFor(id);
+  const balance = purseAssets(purse).coins + amount;
   if (!Number.isSafeInteger(balance)||balance<0) throw Error('Solde de coins invalide.');
-  purse.coins = balance;
+  if(amount>0) {
+    assets.coins+=amount;
+    c.stats.earned+=amount;
+  } else {
+    let remaining = -amount;
+    const contributors = [assets, ...[...purse.members].filter(member=>member!==id).map(member=>users.get(member).assets), ...purse.legacy];
+    for (const contributor of contributors) {
+      const debit = Math.min(remaining, contributor.coins);
+      contributor.coins -= debit;
+      remaining -= debit;
+      if (remaining === 0) break;
+    }
+  }
   touchPurse(purse);
-  if(amount>0)c.stats.earned+=amount;
   c.feed.unshift({id:randomBytes(12).toString('hex'),amount,title,kind,time:Date.now()});c.feed.length=Math.min(c.feed.length,12);
 }
 function rewardHand(id,m,handId) {
@@ -329,6 +347,13 @@ const scrypt = promisify(scryptCallback);
 const users = new Map();
 const purses = new Map();
 const purseFor = id => purses.get(users.get(id).purseId);
+function purseAssets(purse, accounts = users) {
+  const shares = [...purse.members].map(id=>accounts.get(id).assets).concat(purse.legacy);
+  return {coins:shares.reduce((total,share)=>total+share.coins,0), owned:[...new Set(shares.flatMap(share=>share.owned))]};
+}
+function hasUnassignedAssets(purse, id) {
+  return purse.legacy.some(share=>share.members.includes(id) && (share.coins>0 || share.owned.length>0));
+}
 function touchPurse(purse) {
   for (const id of purse.members) users.get(id).club.revision++;
 }
@@ -349,21 +374,22 @@ const dataDir = path.resolve(process.env.POKER_DATA_DIR ||
 const dataFile = path.join(dataDir, 'accounts.json');
 let capitalResetVersion = 1; // Marqueur historique conservé ; aucune remise à zéro automatique.
 function validateAccounts(saved) {
-  if (![1, 2].includes(saved?.version) || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
+  if (![1, 2, 3].includes(saved?.version) || !Array.isArray(saved.users)) throw Error('Sauvegarde de comptes invalide.');
   const previousReset = saved.capitalResetVersion ?? 0;
   if (!Number.isSafeInteger(previousReset) || previousReset < 0)
     throw Error('Version de remise à zéro non prise en charge.');
   const ids = new Set(), names = new Set();
   const savedPurses = new Map();
-  if (saved.version === 2) {
+  if (saved.version >= 2) {
     if (!Array.isArray(saved.purses)) throw Error('Sauvegarde de portefeuilles invalide.');
     for (const purse of saved.purses) {
-      if (!validPurse(purse) || typeof purse.id !== 'string' || savedPurses.has(purse.id))
+      if (!purse || typeof purse.id !== 'string' || savedPurses.has(purse.id)
+        || (saved.version === 2 ? !validPurse(purse) : !Array.isArray(purse.legacy)))
         throw Error('Sauvegarde de portefeuilles invalide.');
-      savedPurses.set(purse.id, purse);
+      savedPurses.set(purse.id, {...purse,members:new Set()});
     }
   }
-  const usedPurses = new Set();
+  const accounts = new Map();
   for (const u of saved.users) {
     const purse = saved.version === 1 ? u?.club : savedPurses.get(u?.purseId);
     if (!u || typeof u.id !== 'string' || typeof u.nick !== 'string' ||
@@ -372,37 +398,66 @@ function validateAccounts(saved) {
       !Number.isSafeInteger(u.granted) || u.granted < 1000 ||
       !Number.isSafeInteger(u.lastAidAt) || u.lastAidAt < 0 || ids.has(u.id) || names.has(nickKey(u.nick))
       || (u.avatar !== undefined && !AVATARS.includes(u.avatar)) || (u.photo != null && !photoBuffer(u.photo))
-      || ((saved.version === 2 || u.club !== undefined) && (!validPurse(purse) || !validClub(u.club, purse.owned))))
+      || (saved.version === 3 ? !purse || !validPurse(u.assets)
+        : ((saved.version === 2 || u.club !== undefined) && (!validPurse(purse) || !validClub(u.club, purse.owned)))))
       throw Error('Sauvegarde de comptes invalide.');
     ids.add(u.id); names.add(nickKey(u.nick));
-    usedPurses.add(u.purseId);
+    accounts.set(u.id,u);
+    if (saved.version >= 2) purse.members.add(u.id);
   }
-  if (saved.version === 2 && usedPurses.size !== savedPurses.size) throw Error('Sauvegarde de portefeuilles invalide.');
+  for (const purse of savedPurses.values()) {
+    if (!purse.members.size) throw Error('Sauvegarde de portefeuilles invalide.');
+    if (saved.version < 3) continue;
+    if (purse.legacy.some(share=>!validPurse(share) || !Array.isArray(share.members) || share.members.length<2
+      || new Set(share.members).size!==share.members.length || share.members.some(id=>!purse.members.has(id))))
+      throw Error('Avoirs historiques invalides.');
+    const assets = purseAssets(purse,accounts);
+    if (!Number.isSafeInteger(assets.coins) || [...purse.members].some(id=>!validClub(accounts.get(id).club,assets.owned)))
+      throw Error('Sauvegarde de portefeuilles invalide.');
+  }
   if (saved.history !== undefined && (!Array.isArray(saved.history) || saved.history.length > HISTORY_LIMIT
     || saved.history.some(h => !h || typeof h.id !== 'string' || !Number.isSafeInteger(h.number)
       || !Array.isArray(h.board) || !Array.isArray(h.players) || !Array.isArray(h.winners) || !Array.isArray(h.logs))))
     throw Error('Historique sauvegardé invalide.');
   return saved;
 }
-function createPurse(id, coins = 120, owned = [...FREE_ITEMS]) {
-  purses.set(id, {coins, owned, members: new Set()});
+function createPurse(id, members = [], legacy = []) {
+  const purse = {members:new Set(members),legacy};
+  purses.set(id,purse);
+  return purse;
 }
 function restoreUsers(saved) {
-  let migrated = saved.version === 1;
-  if (saved.version === 2) {
-    for (const {id, coins, owned} of saved.purses) createPurse(id, coins, owned);
+  let migrated = saved.version < 3;
+  const oldPurses = new Map();
+  for (const {id, coins, owned, legacy} of saved.version >= 2 ? saved.purses : []) {
+    createPurse(id, [], legacy);
+    oldPurses.set(id,{coins,owned});
   }
   for (const u of saved.users) {
     const avatar = u.avatar || AVATARS[randomInt(AVATARS.length)];
     if (!u.avatar || !u.club) migrated = true;
     const {coins, owned, ...club} = u.club || newClub();
     const purseId = saved.version === 1 ? u.id : u.purseId;
-    if (saved.version === 1) createPurse(purseId, coins, owned);
-    const purse = purses.get(purseId);
+    if (saved.version === 1) createPurse(purseId);
+    const assets = saved.version === 3 ? u.assets : {coins:coins ?? 120,owned:owned ?? [...FREE_ITEMS]};
+    purses.get(purseId).members.add(u.id);
+    users.set(u.id, { ...u, avatar, club, assets, purseId, socket: null });
+  }
+  if (saved.version === 2) {
+    for (const [id,purse] of purses) {
+      const old = oldPurses.get(id);
+      if (purse.members.size===1) {
+        users.get([...purse.members][0]).assets=old;
+      } else {
+        for (const member of purse.members) users.get(member).assets={coins:0,owned:[...FREE_ITEMS]};
+        const paid = old.owned.filter(item=>ITEMS.get(item).price>0);
+        if (old.coins || paid.length) purse.legacy.push({coins:old.coins,owned:paid,members:[...purse.members]});
+      }
+    }
+  }
+  for (const [id,{club,assets}] of users) {
     // Add the new cosmetic slot once; keep existing coins, purchases, quests and account data intact.
-    if(club.equipped.allin===undefined){club.equipped.allin=LOADOUT.allin;if(!purse.owned.includes(LOADOUT.allin))purse.owned.push(LOADOUT.allin);club.revision++;migrated=true;}
-    purse.members.add(u.id);
-    users.set(u.id, { ...u, avatar, club, purseId, socket: null });
+    if(club.equipped.allin===undefined){club.equipped.allin=LOADOUT.allin;if(!purseAssets(purseFor(id)).owned.includes(LOADOUT.allin))assets.owned.push(LOADOUT.allin);club.revision++;migrated=true;}
   }
   return migrated;
 }
@@ -498,7 +553,7 @@ async function initializeStorage() {
   await pool.query('ALTER TABLE river_club_private.state ENABLE ROW LEVEL SECURITY');
   await pool.query('REVOKE ALL ON TABLE river_club_private.state FROM PUBLIC');
   await pool.query(`INSERT INTO river_club_private.state (id, payload) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING`,
-    [JSON.stringify({ version: 2, capitalResetVersion: 1, users: [], purses: [] })]);
+    [JSON.stringify({ version: 3, capitalResetVersion: 1, users: [], purses: [] })]);
   // Render fait coexister les deux serveurs pendant un déploiement. Le nouveau prend
   // la main et charge le dernier état dans une seule écriture atomique, sans changer les comptes.
   // La révision avancée bloque aussi les anciennes versions qui ne connaissent pas owner.
@@ -536,9 +591,9 @@ async function persist() {
   if (storageUnavailable) throw Error('Le stockage des comptes est indisponible.');
   // Les mises non réglées retournent à leur propriétaire si le serveur redémarre en pleine main.
   const rows = [...users].map(([id, u]) => ({ id, nick: u.nick, avatar: u.avatar, photo: u.photo || null, salt: u.salt, hash: u.hash,
-    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt, club:u.club, purseId: u.purseId }));
-  const savedPurses = [...purses].map(([id, {coins, owned}]) => ({id, coins, owned}));
-  const payload = JSON.stringify({ version: 2, capitalResetVersion, users: rows, purses: savedPurses, history: handHistory });
+    wallet: bankroll(id), granted: u.granted, lastAidAt: u.lastAidAt, club:u.club, assets:u.assets, purseId: u.purseId }));
+  const savedPurses = [...purses].map(([id, {legacy}]) => ({id, legacy}));
+  const payload = JSON.stringify({ version: 3, capitalResetVersion, users: rows, purses: savedPurses, history: handHistory });
   if (postgres) {
     const result = await pool.query(`UPDATE river_club_private.state SET payload = $1::jsonb, revision = revision + 1
       WHERE id = 1 AND revision = $2 AND owner = $3 RETURNING revision`, [payload, dbRevision, storageOwner]);
@@ -653,9 +708,8 @@ for (const mode of ['register', 'login']) app.post('/api/' + mode, async (req, r
         if (accountByNick(key)) throw Object.assign(Error('Ce pseudo est déjà pris. Connectez-vous.'), { status: 409 });
         // L'identifiant du compte reste immuable, même après un changement de pseudo.
         id = key; while (users.has(id) || purses.has(id)) id = randomBytes(16).toString('hex');
-        createPurse(id);
-        purses.get(id).members.add(id);
-        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, club:newClub(), purseId: id, socket: null });
+        createPurse(id,[id]);
+        users.set(id, { nick: nick.trim(), avatar: avatar || AVATARS[randomInt(AVATARS.length)], photo:photo || null, salt, hash, wallet: 1000, granted: 1000, lastAidAt: 0, club:newClub(), assets:{coins:120,owned:[...FREE_ITEMS]}, purseId: id, socket: null });
       });
     } else {
       const hash = await scrypt(password, u ? u.salt : '00000000000000000000000000000000', 64);
@@ -781,12 +835,11 @@ app.post('/api/profile/link', async (req, res) => {
       const selected = [...purseIds].map(id => purses.get(id));
       if (selected.some(purse => [...purse.members].some(id => !verified.has(id))))
         fail(409, 'Saisissez les identifiants de tous les comptes des groupes concernés.');
-      const coins = selected.reduce((balance, purse) => balance + purse.coins, 0);
+      const coins = selected.reduce((balance, purse) => balance + purseAssets(purse).coins, 0);
       if (!Number.isSafeInteger(coins)) fail(409, 'Le solde total dépasse la capacité du portefeuille.');
 
       const purseId = users.get(session.id).purseId, purse = purses.get(purseId);
-      purse.coins = coins;
-      purse.owned = [...new Set(selected.flatMap(source => source.owned))];
+      purse.legacy = selected.flatMap(source=>source.legacy);
       purse.members = new Set(verified.keys());
       for (const id of purse.members) users.get(id).purseId = purseId;
       for (const id of purseIds) if (id !== purseId) purses.delete(id);
@@ -794,6 +847,56 @@ app.post('/api/profile/link', async (req, res) => {
       return structuredClone(clubState(session.id));
     });
     res.json({ok:true, club});
+  } catch (error) {
+    res.status(error.status || 503).json({error:error.status ? error.message : STORAGE_MESSAGE});
+  }
+});
+app.post('/api/profile/unlink', async (req, res) => {
+  const session = sessionFor(req);
+  if (!session) return res.status(401).json({error:'Reconnectez-vous pour quitter le portefeuille partagé.'});
+  if (!consumeAttempt('unlink-ip:' + req.ip, 20) || !consumeAttempt('unlink:' + session.id, 10))
+    return res.status(429).json({error:'Trop de tentatives. Réessayez dans 15 minutes.'});
+  const {currentPassword} = req.body || {};
+  if (typeof currentPassword !== 'string' || currentPassword.length<8 || currentPassword.length>128)
+    return res.status(400).json({error:'Saisissez votre mot de passe actuel.'});
+
+  try {
+    const {id} = session, {hash,salt} = users.get(id);
+    const verifier = await scrypt(currentPassword,salt,64);
+    if (!timingSafeEqual(verifier,Buffer.from(hash,'hex')))
+      return res.status(401).json({error:'Mot de passe actuel incorrect.'});
+    const club = await enqueue(() => {
+      const fail = (status,message) => { throw Object.assign(Error(message),{status}); };
+      const user = users.get(id), purse = purseFor(id);
+      if (sessionFor(req)?.token !== session.token || user.hash !== hash || user.salt !== salt)
+        fail(401,'Session expirée. Reconnectez-vous.');
+      if (purse.members.size<2) fail(409,'Votre portefeuille est déjà individuel.');
+      if (hasUnassignedAssets(purse,id))
+        fail(409,'Des avoirs de votre ancien groupe sont sans propriétaire enregistré. Leur attribution doit être résolue avant la séparation.');
+
+      purse.legacy = purse.legacy.filter(share=>!share.members.includes(id));
+      purse.members.delete(id);
+      let purseId = id;
+      while (purses.has(purseId)) purseId = randomBytes(16).toString('hex');
+      user.purseId = purseId;
+      const individual = createPurse(purseId,[id]);
+      for (const group of [purse,individual]) {
+        const {owned} = purseAssets(group);
+        for (const member of group.members) {
+          const {club:{equipped}, assets} = users.get(member);
+          for (const [category, item] of Object.entries(LOADOUT)) {
+            if (!owned.includes(equipped[category])) {
+              equipped[category] = item;
+              if (!owned.includes(item)) assets.owned.push(item);
+            }
+          }
+          equipped.emotes = equipped.emotes.filter(item=>owned.includes(item));
+        }
+        touchPurse(group);
+      }
+      return structuredClone(clubState(id));
+    });
+    res.json({ok:true,club});
   } catch (error) {
     res.status(error.status || 503).json({error:error.status ? error.message : STORAGE_MESSAGE});
   }
@@ -824,7 +927,7 @@ app.post('/api/store',async(req,res)=>{
     const {action,itemId,slot}=req.body||{};
     const result=await enqueue(()=>{
       if(sessionFor(req)?.token!==session.token)throw Object.assign(Error('Session expirée.'),{status:401});
-      const c=users.get(session.id).club,purse=purseFor(session.id),item=ITEMS.get(itemId);
+      const {club:c, assets}=users.get(session.id),purse=purseAssets(purseFor(session.id)),item=ITEMS.get(itemId);
       const invalid=message=>{throw Object.assign(Error(message),{status:400});};
       if(action==='reroll'){
         if(!Number.isInteger(slot)||slot<0||slot>=c.quests.length)invalid('Quête inconnue.');
@@ -835,7 +938,7 @@ app.post('/api/store',async(req,res)=>{
         if(action==='buy'){
           if(purse.owned.includes(itemId))invalid('Vous possédez déjà cet objet.');
           if(purse.coins<item.price)invalid(`Il vous manque ${item.price-purse.coins} ${CURRENCY}.`);
-          coinEntry(session.id,-item.price,item.name,'purchase');purse.owned.push(itemId);
+          coinEntry(session.id,-item.price,item.name,'purchase');assets.owned.push(itemId);
         }else if(action==='equip'||action==='unequip'){
           if(!purse.owned.includes(itemId))invalid('Achetez cet objet avant de l’équiper.');
           if(item.category==='emote'){

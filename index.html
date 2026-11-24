@@ -209,8 +209,20 @@
     @media(min-width:1024px) and (max-width:1199px){.raise-control{flex-basis:205px;min-width:190px;gap:8px}.raise-value output{font-size:17px}.raise-limits{font-size:8px}}
     @media(max-width:600px){#actions{gap:8px}#actions #fold,#actions #call{order:1;flex:1 1 calc(50% - 8px)}#actions .raise-control{order:2;flex:1 1 100%;max-width:none;gap:16px;margin:3px 0}#actions .bet-sizes{order:3;flex:1 1 100%;display:flex}#actions .bet-sizes .btn{flex:1}#actions #raise,#actions #allin{order:4;flex:1 1 calc(50% - 8px)}.raise-limits{font-size:10px}.raise-value output{font-size:22px}}
     .purse-card{grid-column:1/-1}
-    .purse-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px;margin:12px 0;color:#ead8aa}
-    .purse-summary p{overflow-wrap:anywhere}
+    .purse-totals{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:16px 0}
+    .purse-totals strong{font-size:24px;color:#efd69a}
+    .purse-totals span{color:#d4c9ab;font-size:13px}
+    .purse-shares{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,225px),1fr));gap:10px;margin:14px 0 20px}
+    .purse-share{border:1px solid #c8b17842;border-radius:14px;padding:14px;background:#292722}
+    .purse-share-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .purse-share-head strong{overflow-wrap:anywhere;color:#f0e5cb}
+    .purse-share .avatar{width:36px;height:36px;flex-shrink:0}
+    .purse-share p{font-size:13px;color:#dcd1b2}
+    .purse-share details,.purse-controls summary{font-size:13px;color:#e6ca8a;cursor:pointer}
+    .purse-share details{margin-top:10px}
+    .purse-share ul{list-style:disc;margin:8px 0 0 18px;color:#e2ddd0;font-size:13px}
+    .purse-controls{margin-top:13px;border-top:1px solid #c8b17833;padding-top:13px}
+    .purse-controls summary{font-weight:650}
     #purseForm{max-width:720px}
     #purseAccounts{display:grid;gap:10px}
     .purse-account{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:end;gap:10px}
@@ -218,7 +230,8 @@
     .purse-account input{box-sizing:border-box;width:100%;min-width:0}
     .purse-confirm{display:flex;align-items:flex-start;gap:8px;margin-top:8px}
     .purse-confirm input{width:auto;margin-top:3px;accent-color:#d5b76e}
-    #purseForm>button{align-self:flex-start}
+    #purseForm>button,#purseUnlinkForm>button{align-self:flex-start}
+    #purseUnlinkForm{max-width:520px}
     @media(max-width:600px){.purse-account{grid-template-columns:1fr}}
   </style>
 </head>
@@ -308,20 +321,35 @@
         </form></section>
         <section class="panel settings-card purse-card" aria-labelledby="purseTitle">
           <h3 id="purseTitle">Portefeuille A’ Coins</h3>
-          <div class="purse-summary">
+          <div class="purse-totals">
             <strong id="purseBalance"></strong>
-            <p id="purseMembers"></p>
+            <span id="purseMembers"></span><span id="purseItemCount"></span>
           </div>
-          <p class="settings-help">Regroupez vos soldes et vos objets dans une seule collection. Les prochains gains en A’ Coins et les achats seront partagés. Vos jetons de poker, vos quêtes et les objets que vous équipez restent propres à chaque compte.</p>
+          <p class="settings-help">Les comptes liés utilisent le solde et la collection en commun. Un achat utilise d’abord le solde de l’acheteur, puis celui des autres comptes si nécessaire. Les jetons et les quêtes restent personnels.</p>
+          <p id="purseShareHelp" class="settings-help" hidden>Chaque fiche indique le solde restant et les objets que le compte emporterait en quittant le groupe.</p>
+          <div id="purseShares" class="purse-shares" aria-label="Soldes et objets par compte"></div>
+          <p id="purseLegacyNotice" class="settings-help" hidden>Les anciens avoirs sans attribution restent disponibles dans le groupe. Les comptes d’origine pourront se séparer lorsque ces avoirs auront été attribués.</p>
+          <details id="purseLinkPanel" class="purse-controls">
+          <summary>Associer des comptes</summary>
           <form id="purseForm" class="account-form" method="post" autocomplete="off" aria-describedby="purseInstructions">
             <p class="settings-help" id="purseInstructions">Saisissez votre mot de passe et les identifiants de tous les autres comptes concernés, y compris ceux déjà rattachés aux portefeuilles à réunir.</p>
             <label for="pursePassword">Mot de passe de ce compte</label>
             <input id="pursePassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
             <div id="purseAccounts" role="group" aria-label="Autres comptes"></div>
             <button id="addPurseAccount" type="button" class="btn">Ajouter un compte au formulaire</button>
-            <label class="purse-confirm"><input id="confirmPurseLink" type="checkbox" required>Je confirme le regroupement définitif des portefeuilles.</label>
+            <label class="purse-confirm"><input id="confirmPurseLink" type="checkbox" required>Je confirme la mise en commun des portefeuilles.</label>
             <button id="linkPurses" type="submit" class="btn gold" disabled>Regrouper les portefeuilles</button>
           </form>
+          </details>
+          <details id="purseUnlinkPanel" class="purse-controls" hidden>
+            <summary>Désassocier ce compte</summary>
+            <form id="purseUnlinkForm" class="account-form" method="post" autocomplete="off">
+              <p class="settings-help">Ce compte récupère le solde et les objets affichés sur sa fiche. Les objets empruntés sont retirés de sa sélection. Vous pourrez l’associer à nouveau.</p>
+              <label for="purseUnlinkPassword">Mot de passe de ce compte</label>
+              <input id="purseUnlinkPassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
+              <button id="unlinkPurse" type="submit" class="btn">Quitter le portefeuille partagé</button>
+            </form>
+          </details>
           <p id="purseMessage" class="form-message" role="status"></p>
           <template id="purseAccountRow">
             <div class="purse-account">
@@ -376,7 +404,7 @@
     let chatPending = false, winnerHand = 0, winnerTimer, toastTimer;
     let joinPending = false;
     let historyVersion = null, historyLoading = false, historyEntries = [], reconnectRetry;
-    let settingsLoadedFor = null, profilePending = false, pursePending = null;
+    let settingsLoadedFor = null, profilePending = false, pursePending = null, purseFingerprint = '';
     let registerPhoto = null, settingsPhoto = null, registerPhotoBusy = false, settingsPhotoBusy = false, authPending = false;
     const photoJobs = {register:0,settings:0};
     const chatNodes = new Map();
@@ -398,7 +426,7 @@
       clearTimeout(reconnectRetry); historyVersion = null; historyLoading = false; historyEntries = [];
       $('historyList').replaceChildren(); $('historyPage').hidden = true; $('historyAlert').hidden = true;
       $('settingsPage').hidden = true; $('settingsTurnAlert').hidden = true; $('openSettings').hidden = true; settingsLoadedFor = null; profilePending = false;
-      pursePending = null; resetPurseForm();
+      pursePending = null; purseFingerprint = ''; $('purseShares').replaceChildren(); resetPurseForm();
       collectionCategory='all';$('collectionSearch').value='';$('collectionFilter').value='all';$('collectionStatus').textContent='';$('collectionGrid').replaceChildren();$('profileLoadout').replaceChildren();$('profileEmotes').replaceChildren();setProfileTab('account');
       $('settingsPhotoPreview').replaceChildren(); $('settingsAvatarPreview').replaceChildren();
       for (const id of ['currentPassword','newPassword','confirmNewPassword']) $(id).value = '';
@@ -776,18 +804,38 @@
     function updatePurseAvailability() {
       const club = state?.club, rows = $('purseAccounts').children;
       const full = !!club && club.purseMembers.length >= club.purseMemberLimit;
-      const blocked = !club || !socket.connected || storageBlocked || !!pursePending || full;
-      $('purseForm').hidden = full;
-      $('linkPurses').disabled = blocked;
-      $('addPurseAccount').disabled = blocked || rows.length >= club.purseMemberLimit - 1;
-      $('purseForm').querySelectorAll('input').forEach(input => input.disabled = blocked);
-      for (const row of rows) row.querySelector('button').disabled = blocked || rows.length === 1;
+      const blocked = !club || !socket.connected || storageBlocked || !!pursePending;
+      $('purseLinkPanel').hidden = full;
+      $('linkPurses').disabled = blocked || full;
+      $('addPurseAccount').disabled = blocked || full || rows.length >= club.purseMemberLimit - 1;
+      $('purseForm').querySelectorAll('input').forEach(input => input.disabled = blocked || full);
+      for (const row of rows) row.querySelector('button').disabled = blocked || full || rows.length === 1;
+      $('purseUnlinkPanel').hidden = !club?.canUnlink;
+      $('unlinkPurse').disabled = $('purseUnlinkPassword').disabled = blocked || !club?.canUnlink;
     }
     function renderPurse(club) {
-      const {coins, purseMembers, purseMemberLimit} = club;
+      const {coins, purseMembers, purseMemberLimit, purseShares = [], purseLegacy = []} = club;
       $('purseBalance').textContent = `${money(coins)} ${COIN_NAME}`;
       $('purseMembers').textContent = purseMembers.length === 1 ? 'Portefeuille individuel'
-        : `Comptes liés (${purseMembers.length}/${purseMemberLimit}) · ${purseMembers.join(', ')}`;
+        : `${purseMembers.length}/${purseMemberLimit} comptes liés`;
+      $('purseShareHelp').hidden = purseMembers.length === 1;
+      const legacy = purseLegacy.filter(share=>share.coins || share.owned.length);
+      const count = new Set([...purseShares,...legacy].flatMap(share=>share.owned)).size;
+      $('purseItemCount').textContent = `${money(count)} objet${count===1?' acheté':'s achetés'}`;
+      $('purseLegacyNotice').hidden = !legacy.length;
+      const fingerprint = JSON.stringify([purseShares, legacy, catalogLoaded]);
+      if (fingerprint !== purseFingerprint) {
+        purseFingerprint = fingerprint;
+        const opened = new Set([...$('purseShares').querySelectorAll('details[open]')].map(details=>details.dataset.share));
+        $('purseShares').innerHTML = [...purseShares,...legacy].map((share,index) => {
+          const label = share.nick ? share.nick + (share.self?' · Vous':'') : 'Anciens avoirs sans attribution';
+          const key = share.nick || `legacy-${index}`;
+          const items = share.owned.map(id=>shopItems.get(id)?.name).filter(Boolean);
+          const objects = items.length ? `<ul>${items.map(name=>`<li>${escapeHTML(name)}</li>`).join('')}</ul>` : '';
+          const title = share.owned.length ? `${share.owned.length} objet${share.owned.length===1?' acheté':'s achetés'}` : 'Aucun objet acheté';
+          return `<article class="purse-share"><div class="purse-share-head">${share.nick?avatarHTML(share.avatar,share.photo):''}<strong>${escapeHTML(label)}</strong></div><p>${money(share.coins)} ${COIN_NAME}</p>${objects?`<details data-share="${escapeHTML(key)}"${opened.has(key)?' open':''}><summary>${title}</summary>${objects}</details>`:`<p>${title}</p>`}</article>`;
+        }).join('');
+      }
       updatePurseAvailability();
     }
     function addPurseAccount() {
@@ -803,36 +851,29 @@
     }
     function resetPurseForm() {
       $('purseForm').reset();
+      $('purseUnlinkForm').reset();
+      $('purseLinkPanel').open = $('purseUnlinkPanel').open = false;
       $('purseAccounts').replaceChildren();
       addPurseAccount();
       $('purseMessage').classList.remove('success');
       $('purseMessage').textContent = '';
     }
     $('addPurseAccount').onclick = () => addPurseAccount().querySelector('input').focus();
-    $('purseForm').onsubmit = async event => {
-      event.preventDefault();
-      if ($('linkPurses').disabled) return;
+    async function savePurse(route, data, message) {
       const operation = {};
-      const accounts = [...$('purseAccounts').children].map(row => ({
-        nick: row.querySelector('[name="nick"]').value,
-        password: row.querySelector('[name="password"]').value
-      }));
-      const currentPassword = $('pursePassword').value;
-      $('purseForm').querySelectorAll('input[type="password"]').forEach(input => input.value = '');
-      $('confirmPurseLink').checked = false;
       pursePending = operation;
       updatePurseAvailability();
       const status = $('purseMessage');
       status.classList.remove('success');
       status.textContent = 'Vérification des identifiants…';
       try {
-        const reply = await api('profile/link', {currentPassword, accounts});
+        const reply = await api('profile/' + route, data);
         if (pursePending !== operation) return;
         adoptClub(reply.club);
         resetPurseForm();
         renderClub(true);
         status.classList.add('success');
-        status.textContent = 'Les portefeuilles ont été regroupés.';
+        status.textContent = message;
       } catch (error) {
         if (pursePending === operation) status.textContent = error.message;
       } finally {
@@ -841,6 +882,25 @@
           updatePurseAvailability();
         }
       }
+    }
+    $('purseForm').onsubmit = event => {
+      event.preventDefault();
+      if ($('linkPurses').disabled) return;
+      const accounts = [...$('purseAccounts').children].map(row => ({
+        nick: row.querySelector('[name="nick"]').value,
+        password: row.querySelector('[name="password"]').value
+      }));
+      const currentPassword = $('pursePassword').value;
+      $('purseForm').querySelectorAll('input[type="password"]').forEach(input => input.value = '');
+      $('confirmPurseLink').checked = false;
+      savePurse('link', {currentPassword,accounts}, 'Les portefeuilles ont été regroupés.');
+    };
+    $('purseUnlinkForm').onsubmit = event => {
+      event.preventDefault();
+      if ($('unlinkPurse').disabled) return;
+      const currentPassword = $('purseUnlinkPassword').value;
+      $('purseUnlinkPassword').value = '';
+      savePurse('unlink', {currentPassword}, 'Ce compte a quitté le portefeuille partagé.');
     };
     resetPurseForm();
     function previewCharacter(id) {
